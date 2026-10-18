@@ -40,6 +40,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
@@ -544,9 +545,9 @@ class NonWifiChannelsScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: const [
-                      _HeaderCell('Plan', width: 88),
-                      _HeaderCell('Range MHz', width: 104),
-                      _HeaderCell('Channel plan', width: 280),
+                      ReferenceHeaderCell('Plan', width: 88),
+                      ReferenceHeaderCell('Range MHz', width: 104),
+                      ReferenceHeaderCell('Channel plan', width: 280),
                     ],
                   ),
                   Divider(color: colors.border, height: AppSpacing.sm),
@@ -642,11 +643,11 @@ class NonWifiChannelsScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: const [
-                      _HeaderCell('Band', width: 72),
-                      _HeaderCell('Ch', width: 64),
-                      _HeaderCell('Spacing', width: 72),
-                      _HeaderCell('Centers', width: 120),
-                      _HeaderCell('Region', width: 160),
+                      ReferenceHeaderCell('Band', width: 72),
+                      ReferenceHeaderCell('Ch', width: 64),
+                      ReferenceHeaderCell('Spacing', width: 72),
+                      ReferenceHeaderCell('Centers', width: 120),
+                      ReferenceHeaderCell('Region', width: 160),
                     ],
                   ),
                   Divider(color: colors.border, height: AppSpacing.sm),
@@ -744,9 +745,9 @@ class NonWifiChannelsScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: const [
-                      _HeaderCell('Index', width: 56),
-                      _HeaderCell('Freq MHz', width: 88),
-                      _HeaderCell('Kind', width: 120),
+                      ReferenceHeaderCell('Index', width: 56),
+                      ReferenceHeaderCell('Freq MHz', width: 88),
+                      ReferenceHeaderCell('Kind', width: 120),
                     ],
                   ),
                   Divider(color: colors.border, height: AppSpacing.sm),
@@ -944,30 +945,6 @@ class _Card extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           child,
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

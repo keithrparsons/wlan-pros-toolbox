@@ -8,30 +8,10 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import 'calc_parts.dart';
 
 /// A surface-1 card with the calculator border and padding.
-class MbCard extends StatelessWidget {
-  const MbCard({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
+typedef MbCard = CalcCard;
 
 /// Section heading inside a card.
 class MbSectionLabel extends StatelessWidget {
@@ -109,32 +89,7 @@ class MbRow extends StatelessWidget {
 }
 
 /// Icon plus a small explanatory sentence.
-class MbNote extends StatelessWidget {
-  const MbNote({super.key, required this.icon, required this.message});
-
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 16, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-}
+typedef MbNote = CalcIconNoteBare;
 
 /// A wrapping legend; hidden from screen readers because every painter
 /// carries its own worded label.

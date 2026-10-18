@@ -34,7 +34,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
@@ -508,14 +508,14 @@ class IpAddressReferenceScreen extends StatelessWidget {
     required TextTheme text,
     required AppMonoText mono,
   }) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: title,
       footnote: footnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('CIDR', width: 176),
-          _HeaderCell('Purpose', width: 320),
-          _HeaderCell('RFC', width: 168),
+          ReferenceHeaderCell('CIDR', width: 176),
+          ReferenceHeaderCell('Purpose', width: 320),
+          ReferenceHeaderCell('RFC', width: 168),
         ],
       ),
       rows: blocks.map((SpecialUseBlock b) {
@@ -570,16 +570,16 @@ class IpAddressReferenceScreen extends StatelessWidget {
     TextTheme text,
     AppMonoText mono,
   ) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'IPv6 notation rules',
       footnote:
           'Source: RFC 4291 §2.2-2.3 (IPv6 Addressing Architecture); '
           'RFC 5952 §4 (canonical text representation).',
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Rule', width: 200),
-          _HeaderCell('Definition', width: 420),
-          _HeaderCell('Source', width: 128),
+          ReferenceHeaderCell('Rule', width: 200),
+          ReferenceHeaderCell('Definition', width: 420),
+          ReferenceHeaderCell('Source', width: 128),
         ],
       ),
       rows: ipv6Notation.map((Ipv6NotationRule r) {
@@ -621,94 +621,6 @@ class IpAddressReferenceScreen extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-/// Card surface wrapping a wide table: title (full-width, wraps) over a
-/// horizontally-scrolling IntrinsicWidth grid (header + rows share one width so
-/// columns align), with an optional full-width footnote beneath. Matches the
-/// poe_reference_screen / power_phasing_screen overflow-safe idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
-
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
-      ),
     );
   }
 }

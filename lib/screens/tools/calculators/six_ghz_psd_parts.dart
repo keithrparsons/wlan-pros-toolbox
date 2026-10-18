@@ -9,79 +9,16 @@ import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/six_ghz_psd_math.dart';
 import '../../../theme/app_color_scheme.dart';
-import '../../../theme/app_tokens.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import 'calc_parts.dart';
 import 'fspl_simulator_chart.dart';
 import 'six_ghz_psd_model.dart';
 
-class PsdCard extends StatelessWidget {
-  const PsdCard({super.key, required this.child});
-  final Widget child;
+typedef PsdCard = CalcCard;
 
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
+typedef PsdSectionLabel = CalcSectionLabel;
 
-class PsdSectionLabel extends StatelessWidget {
-  const PsdSectionLabel(this.label, {super.key});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Semantics(
-      header: true,
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: colors.textSecondary,
-          letterSpacing: 0.4,
-          fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
-
-class PsdNote extends StatelessWidget {
-  const PsdNote(this.icon, this.message, {super.key});
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 16, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-}
+typedef PsdNote = CalcNote;
 
 /// The stroke-and-marker sample for one class, matching the chart exactly.
 class PsdClassSample extends StatelessWidget {

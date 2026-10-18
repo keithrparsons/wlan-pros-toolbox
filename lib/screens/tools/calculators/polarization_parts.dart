@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/polarization_model.dart';
 import '../../../theme/app_color_scheme.dart';
-import '../../../theme/app_tokens.dart';
 import '../../../theme/wifi_lab_client_palette.dart';
+import 'calc_parts.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kPolarizationToolId = 'polarization';
@@ -73,45 +73,4 @@ String fmtAmp(double a) => a.toStringAsFixed(2);
 // ── Pieces ──────────────────────────────────────────────────────────────────
 
 /// A switch with its title; the whole row toggles.
-class PolSwitchRow extends StatelessWidget {
-  const PolSwitchRow({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String title;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-    final AppColorScheme colors = context.colors;
-    return MergeSemantics(
-      child: InkWell(
-        onTap: () => onChanged(!value),
-        canRequestFocus: false,
-        excludeFromSemantics: true,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: Text(
-                title,
-                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Switch(
-              value: value,
-              onChanged: onChanged,
-              activeThumbColor: colors.primary,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+typedef PolSwitchRow = CalcSwitchRow;

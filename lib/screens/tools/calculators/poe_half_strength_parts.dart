@@ -12,75 +12,13 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import 'calc_parts.dart';
 
-class PhCard extends StatelessWidget {
-  const PhCard({super.key, required this.child});
-  final Widget child;
+typedef PhCard = CalcCard;
 
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
+typedef PhSectionLabel = CalcSectionLabel;
 
-class PhSectionLabel extends StatelessWidget {
-  const PhSectionLabel(this.label, {super.key});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Semantics(
-      header: true,
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: colors.textSecondary,
-          letterSpacing: 0.4,
-          fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
-
-class PhNote extends StatelessWidget {
-  const PhNote(this.icon, this.message, {super.key});
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 16, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-}
+typedef PhNote = CalcNote;
 
 /// A label over its answer, the answer in the body style. Merged into one
 /// semantics node so a screen reader reads "label: answer".
