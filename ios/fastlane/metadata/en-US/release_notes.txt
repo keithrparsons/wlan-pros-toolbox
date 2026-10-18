@@ -4,6 +4,8 @@ PoE Budget now works by PoE class. Pick each device's class, set the switch's PS
 
 PoE Budget: a device you enter in watts is now counted at the power the switch must supply (PSE watts), so totals come out a little higher and closer to what the switch sees. Entries above 71.3 W are refused, since no PoE class delivers more.
 
+Test My Connection now grades download speed on one scale, the same one Network Quality's help describes: Strong is 100 Mbps or more, Moderate 25 to 99, Weak under 25.
+
 Link Budget now works out free space path loss from frequency and distance, and shows the transmitter's EIRP.
 
 Fixed: in Rate vs Range, distances under 100 m or 100 ft now show one decimal, so the ring edges and the client readings agree.
