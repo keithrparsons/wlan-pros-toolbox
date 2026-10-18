@@ -2,6 +2,8 @@ New: My Tools. Press and hold any tool, or any entry in Educational Resources, a
 
 PoE Budget now works by PoE class. Pick each device's class, set the switch's PSE type, port count and a reserve to keep back, and see whether everything fits, with a check on every port.
 
+PoE Budget: a device you enter in watts is now counted at the power the switch must supply (PSE watts), so totals come out a little higher and closer to what the switch sees. Entries above 71.3 W are refused, since no PoE class delivers more.
+
 Link Budget now works out free space path loss from frequency and distance, and shows the transmitter's EIRP.
 
 Fixed: in Rate vs Range, distances under 100 m or 100 ft now show one decimal, so the ring edges and the client readings agree.
