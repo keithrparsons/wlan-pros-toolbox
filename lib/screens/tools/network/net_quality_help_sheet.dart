@@ -29,6 +29,7 @@
 // the interactive Close affordance; there is no loading/empty/error/data axis.
 
 import 'package:flutter/material.dart';
+import 'package:net_quality/net_quality.dart';
 
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -139,7 +140,7 @@ class NetQualityHelpSheet extends StatelessWidget {
   ];
 
   // ---- Grade bands (label + the four thresholds), per the approved table. ----
-  static const List<_GradeBand> _bands = <_GradeBand>[
+  static final List<_GradeBand> _bands = <_GradeBand>[
     _GradeBand(
       'Latency',
       'under 20 ms',
@@ -162,9 +163,26 @@ class NetQualityHelpSheet extends StatelessWidget {
       '100+ RPM',
       'under 100 RPM',
     ),
-    _GradeBand('Download', '100+ Mbps', '25+ Mbps', '5+ Mbps', 'under 5 Mbps'),
-    _GradeBand('Upload', '20+ Mbps', '5+ Mbps', '1+ Mbps', 'under 1 Mbps'),
+    _GradeBand(
+      'Download',
+      _plus(ThroughputBands.downloadExcellentMbps),
+      _plus(ThroughputBands.downloadGoodMbps),
+      _plus(ThroughputBands.downloadFairMbps),
+      _under(ThroughputBands.downloadFairMbps),
+    ),
+    _GradeBand(
+      'Upload',
+      _plus(ThroughputBands.uploadExcellentMbps),
+      _plus(ThroughputBands.uploadGoodMbps),
+      _plus(ThroughputBands.uploadFairMbps),
+      _under(ThroughputBands.uploadFairMbps),
+    ),
   ];
+
+  // Shown as stored: 2.5 stays 2.5, 100 prints without a decimal point.
+  static String _mbps(double v) => '${v == v.roundToDouble() ? v.round() : v}';
+  static String _plus(double mbps) => '${_mbps(mbps)}+ Mbps';
+  static String _under(double mbps) => 'under ${_mbps(mbps)} Mbps';
 
   @override
   Widget build(BuildContext context) {

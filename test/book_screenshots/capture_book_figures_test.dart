@@ -643,13 +643,13 @@ void main() {
       build: () => TestMyConnectionScreen(
         enableLiveSampling: false,
         sourceOverride: WifiInfoSource.macosCoreWlan,
-        // Tx 720 → usable 396 (Strong). Internet download 140 (Moderate); the
+        // Tx 720 → usable 396 (Strong). Internet download 60 (Moderate); the
         // consumer internet number is the DOWNLOAD, and 140 < 0.40 × 396 so the
         // verdict names the internet as the slower side (ratio ≈ 0.35 → upstream).
         macAdapter: _TxLinkMacAdapter(720),
         qualityClient: MockQualityClient(
           scriptedResult: _internetResult(
-            down: 140, up: 100, latencyMs: 22, jitterMs: 4, lossPct: 0,
+            down: 60, up: 40, latencyMs: 22, jitterMs: 4, lossPct: 0,
             downUpGrade: QualityGrade.fair,
           ),
         ),
@@ -704,12 +704,12 @@ void main() {
   // open, the ratio diagnoses, and the verdict lands on the Wi-Fi link.
   //
   // The two axis CHIPS are absolute-rate driven (independent of the verdict /
-  // grades): usable Wi-Fi 33 Mbps → "Weak", internet download 440 Mbps → "Strong".
+  // grades): usable Wi-Fi 19.8 Mbps → "Weak", internet download 440 Mbps → "Strong".
   // Wi-Fi Weak ≠ Internet Strong (different tiers), so the same-tier hero
   // override does not fire and the per-outcome "Your Wi-Fi is the slow part."
   // hero stands. Mirrors fig-8-2 (Linksys-Home, 2.4 GHz, -68 Fair, SNR 18).
   //
-  //   Tx 60   → usable 0.55×60 = 33 Mbps  → Wi-Fi chip "Weak"
+  //   Tx 36   → usable 0.55×36 = 19.8 Mbps  → Wi-Fi chip "Weak"
   //   440/360 → internet down  = 440 Mbps → Internet chip "Strong"
   //   ratio   = 440 / 33 = 13.3 ≥ 0.70    → wifiLimiter
   testWidgets('fig-8-1 Test My Connection — Wi-Fi is the slow part',
@@ -721,8 +721,8 @@ void main() {
       build: () => TestMyConnectionScreen(
         enableLiveSampling: false,
         sourceOverride: WifiInfoSource.macosCoreWlan,
-        // Tx 60 → usable 33 (Weak), RSSI -68 / SNR 18 (matches fig-8-2).
-        macAdapter: _TxLinkMacAdapter(60, rssi: -68, snr: 18),
+        // Tx 36 → usable 19.8 (Weak), RSSI -68 / SNR 18 (matches fig-8-2).
+        macAdapter: _TxLinkMacAdapter(36, rssi: -68, snr: 18),
         qualityClient: MockQualityClient(
           // Internet download 440 (Strong chip) but graded FAIR so the grade gate
           // stays open and the verdict lands on the Wi-Fi link.

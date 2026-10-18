@@ -9,7 +9,7 @@
 // REVISION 2 (2026-06-07, Keith family-dinner feedback): the two axis chips are
 // now an ABSOLUTE 3-tier scale — Strong / Moderate / Weak — bucketed from each
 // axis's data rate in Mbps via AxisStatusThresholds (same thresholds both axes:
-// >250 Strong, 100-250 inclusive Moderate, <100 Weak, unmeasured Unknown). The
+// >=100 Strong, 25 to under 100 Moderate, <25 Weak, unmeasured Unknown). The
 // chips therefore depend on the engine's usableWifiMbps / internetMbps, NOT
 // on the comparative verdict. These tests assert (a) the threshold boundaries
 // directly, and (b) that each verdict row still carries the right outcome/copy
@@ -51,22 +51,22 @@ WifiVsInternetResult result(
 
 void main() {
   group('AxisStatusThresholds.tierFor — absolute 3-tier boundaries', () {
-    // The exact cut points Keith specified: >250 Strong, 100-250 inclusive
-    // Moderate, <100 Weak, null/unmeasured Unknown (GL-005).
-    test('251 Mbps → Strong (just above the 250 ceiling)', () {
-      expect(AxisStatusThresholds.tierFor(251), AxisStatus.strong);
+    // One scale (Keith, 13 OCT 2026): Strong = Excellent (100+), Moderate =
+    // Good (25 to under 100), Weak = Fair or Poor (under 25), null Unknown.
+    test('100 Mbps → Strong (bottom of the band is inclusive)', () {
+      expect(AxisStatusThresholds.tierFor(100), AxisStatus.strong);
     });
 
-    test('250 Mbps → Moderate (top of the band is inclusive)', () {
-      expect(AxisStatusThresholds.tierFor(250), AxisStatus.moderate);
+    test('99 Mbps → Moderate (just below the 100 floor)', () {
+      expect(AxisStatusThresholds.tierFor(99), AxisStatus.moderate);
     });
 
-    test('100 Mbps → Moderate (bottom of the band is inclusive)', () {
-      expect(AxisStatusThresholds.tierFor(100), AxisStatus.moderate);
+    test('25 Mbps → Moderate (bottom of the band is inclusive)', () {
+      expect(AxisStatusThresholds.tierFor(25), AxisStatus.moderate);
     });
 
-    test('99 Mbps → Weak (just below the 100 floor)', () {
-      expect(AxisStatusThresholds.tierFor(99), AxisStatus.weak);
+    test('24 Mbps → Weak (just below the 25 floor)', () {
+      expect(AxisStatusThresholds.tierFor(24), AxisStatus.weak);
     });
 
     test('null → Unknown (unmeasured, never forced to a tier)', () {
@@ -81,14 +81,10 @@ void main() {
     test('representative values land in the right tiers', () {
       expect(AxisStatusThresholds.tierFor(800), AxisStatus.strong);
       expect(AxisStatusThresholds.tierFor(300), AxisStatus.strong);
-      expect(AxisStatusThresholds.tierFor(175), AxisStatus.moderate);
-      expect(AxisStatusThresholds.tierFor(40), AxisStatus.weak);
+      expect(AxisStatusThresholds.tierFor(175), AxisStatus.strong);
+      expect(AxisStatusThresholds.tierFor(60), AxisStatus.moderate);
+      expect(AxisStatusThresholds.tierFor(10), AxisStatus.weak);
       expect(AxisStatusThresholds.tierFor(1), AxisStatus.weak);
-    });
-
-    test('the named threshold constants match the spec', () {
-      expect(AxisStatusThresholds.strongAboveMbps, 250);
-      expect(AxisStatusThresholds.moderateAtOrAboveMbps, 100);
     });
   });
 
@@ -111,8 +107,8 @@ void main() {
       final v = ConsumerVerdictMapper.map(
         result(
           WifiVsInternetVerdict.upstream,
-          usableWifiMbps: 150,
-          internetMbps: 40,
+          usableWifiMbps: 60,
+          internetMbps: 10,
         ),
       );
       expect(v.wifiStatus, AxisStatus.moderate);
@@ -123,20 +119,20 @@ void main() {
       final v = ConsumerVerdictMapper.map(
         result(
           WifiVsInternetVerdict.wifiLimiter,
-          usableWifiMbps: 60,
-          internetMbps: 180,
+          usableWifiMbps: 10,
+          internetMbps: 60,
         ),
       );
       expect(v.wifiStatus, AxisStatus.weak);
       expect(v.internetStatus, AxisStatus.moderate);
     });
 
-    test('250 on both → both Moderate (inclusive top boundary on each axis)', () {
+    test('99 on both → both Moderate (just under the Strong floor, each axis)', () {
       final v = ConsumerVerdictMapper.map(
         result(
           WifiVsInternetVerdict.bothContributing,
-          usableWifiMbps: 250,
-          internetMbps: 250,
+          usableWifiMbps: 99,
+          internetMbps: 99,
         ),
       );
       expect(v.wifiStatus, AxisStatus.moderate);
@@ -150,8 +146,8 @@ void main() {
       final v = ConsumerVerdictMapper.map(
         result(
           WifiVsInternetVerdict.wifiLimiter,
-          usableWifiMbps: 60,
-          internetMbps: 180,
+          usableWifiMbps: 10,
+          internetMbps: 60,
         ),
       );
       expect(v.outcome, ConsumerOutcome.wifi);
@@ -170,8 +166,8 @@ void main() {
       final v = ConsumerVerdictMapper.map(
         result(
           WifiVsInternetVerdict.bothContributing,
-          usableWifiMbps: 80,
-          internetMbps: 40,
+          usableWifiMbps: 20,
+          internetMbps: 10,
         ),
       );
       expect(v.outcome, ConsumerOutcome.wifiLead);
@@ -244,7 +240,7 @@ void main() {
         // Wi-Fi rate is null on this path → honest Unknown chip (GL-005).
         expect(v.wifiStatus, AxisStatus.unknown);
         // Internet chip is the absolute tier of the measured internet rate.
-        expect(v.internetStatus, AxisStatus.moderate);
+        expect(v.internetStatus, AxisStatus.strong);
         expect(v.headline, 'Couldn’t check everything');
         // UPDATED 2026-09-17. These two lines asserted `[X] Mbps` and
         // `[fine/slow]`, the spec's own placeholders, so the test was PINNING
@@ -485,32 +481,32 @@ void main() {
     }
 
     test('low link vs faster internet → A (Wi-Fi)', () {
-      // usable = 0.55 × avg(200,200) = 110 (Moderate); internet download 250
-      // (Moderate) → ratio ≈ 2.3 → wifiLimiter.
+      // usable = 0.55 × avg(200,200) = 110 (Strong); internet download 250
+      // (Strong) → ratio ≈ 2.3 → wifiLimiter. Same-tier chips, different outcome.
       final v = mapFromEngine(tx: 200, rx: 200, down: 250, up: 150);
       expect(v.outcome, ConsumerOutcome.wifi);
-      expect(v.wifiStatus, AxisStatus.moderate);
-      expect(v.internetStatus, AxisStatus.moderate);
+      expect(v.wifiStatus, AxisStatus.strong);
+      expect(v.internetStatus, AxisStatus.strong);
     });
 
     test('link headroom, slow internet → B (Internet), Wi-Fi Strong', () {
-      // usable = 0.55 × avg(1000,1000) = 550 (Strong); internet download 25 (Weak).
+      // usable = 0.55 × avg(1000,1000) = 550 (Strong); internet download 25 (Moderate, the Good floor).
       final v = mapFromEngine(tx: 1000, rx: 1000, down: 25, up: 15);
       expect(v.outcome, ConsumerOutcome.internet);
       expect(v.wifiStatus, AxisStatus.strong);
-      expect(v.internetStatus, AxisStatus.weak);
+      expect(v.internetStatus, AxisStatus.moderate);
     });
 
     test('mid band → A (Wi-Fi lead)', () {
-      // usable = 0.55 × avg(200,200) = 110 (Moderate); internet download 60 (Weak).
+      // usable = 0.55 × avg(200,200) = 110 (Strong); internet download 60 (Moderate).
       final v = mapFromEngine(tx: 200, rx: 200, down: 60, up: 50);
       expect(v.outcome, ConsumerOutcome.wifiLead);
-      expect(v.wifiStatus, AxisStatus.moderate);
-      expect(v.internetStatus, AxisStatus.weak);
+      expect(v.wifiStatus, AxisStatus.strong);
+      expect(v.internetStatus, AxisStatus.moderate);
     });
 
     test('good internet grade-gate → C (Both fine), tiers track the rates', () {
-      // usable = 0.55 × avg(400,400) = 220 (Moderate); internet download 300
+      // usable = 0.55 × avg(400,400) = 220 (Strong); internet download 300
       // (Strong). Tiers track the absolute rates even on the bothHealthy row.
       final v = mapFromEngine(
         tx: 400,
@@ -520,16 +516,16 @@ void main() {
         health: InternetHealth.good,
       );
       expect(v.outcome, ConsumerOutcome.bothFine);
-      expect(v.wifiStatus, AxisStatus.moderate);
+      expect(v.wifiStatus, AxisStatus.strong);
       expect(v.internetStatus, AxisStatus.strong);
     });
 
     test('no link rate but internet measured → D1, Wi-Fi Unknown', () {
-      // No Tx/Rx → basis none → wifiUnknown; internet download 80 (Weak).
+      // No Tx/Rx → basis none → wifiUnknown; internet download 80 (Moderate).
       final v = mapFromEngine(tx: null, rx: null, down: 80, up: 40);
       expect(v.outcome, ConsumerOutcome.couldntCheckWifi);
       expect(v.wifiStatus, AxisStatus.unknown);
-      expect(v.internetStatus, AxisStatus.weak);
+      expect(v.internetStatus, AxisStatus.moderate);
     });
 
     test('neither link nor internet → D2, both Unknown', () {

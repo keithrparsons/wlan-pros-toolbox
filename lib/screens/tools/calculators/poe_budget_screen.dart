@@ -2,17 +2,22 @@
 //
 // Enter a switch PoE budget, its PoE port count, its PSE type and a reserve %,
 // then up to six device rows. Each row is either a PoE class (0-8), budgeted at
-// that class's PSE allocation, or watts per device, budgeted as entered (PD
-// watts, nothing added for cable loss). Read the total PSE allocation, the
-// watts left after the reserve, ports needed vs available, a per-row port-type
-// check, and a fits / caution / does-not-fit verdict.
+// that class's PSE allocation, or watts per device (the PD draw), converted to
+// the PSE watts of the class that wattage falls in. Read the total PSE
+// allocation, the watts left after the reserve, ports needed vs available, a
+// per-row port-type check, and a fits / caution / does-not-fit verdict.
 //
 // Class PSE allocations and per-type class ranges are NOT duplicated here: they
 // are read from PoeReferenceScreen.classes / .standards (IEEE Std 802.3-2022,
-// Clause 33 and Table 145-11), so the two screens cannot disagree.
+// Clause 33 and Table 145-11), so the two screens cannot disagree. That
+// includes the two reference cards at the foot of this screen
+// (standardsCardRows, classesCardRows): they hold no figures of their own.
 //
-// Math. With reserve 0 and every row in watts, this is the RF Tools PWA
-// reference (app.js calcPoeBudget, line 1147) VERBATIM:
+// Math. The RF Tools PWA reference (app.js calcPoeBudget, line 1147) budgets a
+// watts row as entered. This screen does not: Keith ruled (11 OCT 2026, review
+// M1) that a watts row is converted to the PSE watts the switch must supply, so
+// the total is the real switch load. See [PoeBudgetScreen.pseWattsForPd]. The
+// rest follows the PWA:
 //   total     = Σ (allocation_i × qty_i) over the 6 rows
 //   usable    = budget × (1 − reserve% / 100)
 //   remaining = usable − total
@@ -63,7 +68,7 @@ enum PoePortType { notSet, af, at, bt3, bt4 }
 
 /// A single device row: either a PoE class or watts per device, and a quantity.
 class PoeDeviceRow {
-  /// A watts row: [watts] is the device's PD draw, budgeted as entered.
+  /// A watts row: [watts] is the device's PD draw, converted to PSE watts.
   const PoeDeviceRow(this.watts, this.qty) : poeClass = null;
 
   /// A class row: budgeted at the PSE allocation for [poeClass] (0-8).
@@ -102,7 +107,7 @@ class PoeBudgetResult {
     this.usesWattsRows = false,
   });
 
-  final double total; // Σ PSE allocation (class rows) + PD watts (watts rows).
+  final double total; // Σ PSE allocation (class rows and converted watts rows).
   final double budget;
   final double reservePct;
   final double remaining; // usable − total; negative when over budget.
@@ -112,9 +117,10 @@ class PoeBudgetResult {
   final int? portsAvailable; // null when the port count was not entered.
   final PoePortType portType;
   final List<PoeRowProblem> rowProblems;
-  final bool usesWattsRows; // any active watts row: PD watts, no cable loss.
+  final bool usesWattsRows; // any active watts row: converted PD to PSE watts.
 
-  double get reserveWatts => budget * reservePct / 100;
+  double get reserveWatts =>
+      PoeBudgetScreen.reserveWattsFor(budget, reservePct);
   double get usable => budget - reserveWatts;
   bool get overBudget => remaining < 0;
   bool get portsShort =>
@@ -173,10 +179,71 @@ class PoeBudgetScreen extends StatefulWidget {
     return null;
   }
 
-  /// What one device in [row] is budgeted at: its class's PSE allocation, or
-  /// the watts entered (PD watts, nothing added for cable loss).
-  static double allocationFor(PoeDeviceRow row) =>
-      row.isClass ? (classPseWatts(row.poeClass!) ?? 0) : row.watts;
+  /// The PSE watts the switch must supply for a device that draws [pdWatts] at
+  /// the device (PD watts).
+  ///
+  /// Rule: find the lowest PoE class (1-8) whose maximum PD power
+  /// (`PoeClass.maxPdWatts`) is at least [pdWatts], and return that class's PSE
+  /// allocation. So 25.5 W is Class 4 and budgets at 30.0 W; 25.6 W is Class 5
+  /// and budgets at 45.0 W. Class 0 is skipped: it shares Class 3's figures.
+  /// Above the highest class's PD power ([maxPdWatts], Class 8) no PoE type can
+  /// deliver that much to a device, so there is no answer and this returns
+  /// null. Keith, 11 OCT 2026: "Refuse the entry". [compute] returns no result
+  /// for such a row and the watts field shows an error; nothing is invented.
+  ///
+  /// Source: IEEE Std 802.3-2022, Clause 33 (Class 0-4) and Table 145-11
+  /// (P_Class, Class 5-8), as held in PoeReferenceScreen.classes (PSE and
+  /// max-PD watts per class). Keith's ruling, 11 OCT 2026.
+  static double? pseWattsForPd(double pdWatts) {
+    if (pdWatts <= 0) return 0;
+    for (final PoeClass c in PoeReferenceScreen.classes) {
+      if (c.classNum == 0) continue;
+      if (pdWatts <= c.maxPdWatts) return c.pseWatts;
+    }
+    return null;
+  }
+
+  static double _classPdWatts(int poeClass) => PoeReferenceScreen.classes
+      .firstWhere((PoeClass c) => c.classNum == poeClass)
+      .maxPdWatts;
+
+  /// Rows for the PoE standards card: [standard, name, PSE W, PD W], built from
+  /// [standards] (default: the reference table). The card holds no figures of
+  /// its own, so it can never disagree with the PoE Reference screen.
+  static List<List<String>> standardsCardRows([List<PoeStandard>? standards]) =>
+      <List<String>>[
+        for (final PoeStandard s in standards ?? PoeReferenceScreen.standards)
+          <String>[
+            s.standard,
+            s.name,
+            '${_trim(s.pseWatts)} W',
+            '${_trim(s.pdWatts)} W',
+          ],
+      ];
+
+  /// Rows for the PD power classes card: [class, max PD W, standard], built from
+  /// [classes] (default: the reference table).
+  static List<List<String>> classesCardRows([List<PoeClass>? classes]) =>
+      <List<String>>[
+        for (final PoeClass c in classes ?? PoeReferenceScreen.classes)
+          <String>['${c.classNum}', '${_trim(c.maxPdWatts)} W', c.standard],
+      ];
+
+  /// The most PD watts any PoE type delivers to a device: the Class 8 row of
+  /// the reference table (71.3 W). The limit for a watts row; never a literal.
+  static double get maxPdWatts => PoeReferenceScreen.classes
+      .firstWhere((PoeClass c) => c.classNum == 8)
+      .maxPdWatts;
+
+  /// True when [row] asks for power with a watts figure no PoE type delivers.
+  static bool exceedsMaxPd(PoeDeviceRow row) =>
+      row.isActive && !row.isClass && row.watts > maxPdWatts;
+
+  /// What one device in [row] is budgeted at: its class's PSE allocation, or,
+  /// for a watts row, the PSE watts for the class that PD wattage falls in.
+  static double allocationFor(PoeDeviceRow row) => row.isClass
+      ? (classPseWatts(row.poeClass!) ?? 0)
+      : (pseWattsForPd(row.watts) ?? 0);
 
   /// Sum of allocation × qty across [rows] (PWA: total += w * q).
   static double totalDraw(List<PoeDeviceRow> rows) {
@@ -211,12 +278,8 @@ class PoeBudgetScreen extends StatefulWidget {
     );
   }
 
-  /// Highest class a port of [type] supports, from the table's "0-4" range.
-  static int? maxClassFor(PoePortType type) {
-    final PoeStandard? s = standardFor(type);
-    if (s == null) return null;
-    return int.parse(s.classes.split('-').last);
-  }
+  /// Highest class a port of [type] supports, from the table's `maxClass`.
+  static int? maxClassFor(PoePortType type) => standardFor(type)?.maxClass;
 
   /// Why one device in [row] cannot run from a port of [type], or null if it
   /// can (or if the type is not set, or the row asks for nothing). A class row
@@ -232,12 +295,16 @@ class PoeBudgetScreen extends StatefulWidget {
           'gives (up to Class $max)';
     }
     if (row.watts <= s.pdWatts) return null;
-    return '${row.watts.toStringAsFixed(1)} W needs more than an '
+    return '${_trim(row.watts)} W needs more than an '
         '${s.standard} port gives (${_trim(s.pdWatts)} W at the device)';
   }
 
-  static String _trim(double w) =>
-      w == w.roundToDouble() ? w.toStringAsFixed(1) : w.toString();
+  /// Watts to at most two decimals, at least one: 25.5, 25.54, 26.0. Enough
+  /// digits that a row which just failed never reads the same as the limit.
+  static String _trim(double w) {
+    final String two = w.toStringAsFixed(2);
+    return two.endsWith('0') ? two.substring(0, two.length - 1) : two;
+  }
 
   /// The verdict bucket. PWA order: over (remaining < 0) → caution (pct > 80)
   /// → ok. The check is on the UNCAPPED total/budget ratio for `remaining`, and
@@ -249,8 +316,17 @@ class PoeBudgetScreen extends StatefulWidget {
     return PoeVerdict.ok;
   }
 
+  /// Highest reserve the screen accepts, in percent. The field error and the
+  /// help entry both say "0 to 99.9".
+  static const double maxReservePct = 99.9;
+
+  /// The watts a [reservePct] holds back from [budget]. The one reserve
+  /// formula: compute() and [PoeBudgetResult] both call it.
+  static double reserveWattsFor(double budget, double reservePct) =>
+      budget * reservePct / 100;
+
   /// Full compute. Returns null when [budget] is non-finite or ≤ 0 (PWA error
-  /// path renders no result block), or when [reservePct] is not 0 ≤ r < 100.
+  /// path renders no result block), or when [reservePct] is not 0 to 99.9.
   /// [ports] null means the port count was not entered, so it is not checked.
   static PoeBudgetResult? compute(
     double budget,
@@ -260,11 +336,14 @@ class PoeBudgetScreen extends StatefulWidget {
     PoePortType portType = PoePortType.notSet,
   }) {
     if (!budget.isFinite || budget <= 0) return null;
-    if (!reservePct.isFinite || reservePct < 0 || reservePct >= 100) {
+    if (!reservePct.isFinite || reservePct < 0 || reservePct > maxReservePct) {
       return null;
     }
+    // A watts row above the highest class's PD power is an input error (Keith,
+    // 11 OCT 2026): no result, with or without a port type.
+    if (rows.any(exceedsMaxPd)) return null;
     final double total = totalDraw(rows);
-    final double usable = budget * (1 - reservePct / 100);
+    final double usable = budget - reserveWattsFor(budget, reservePct);
     final double remaining = usable - total;
     final double pct = math.min(100, (total / usable) * 100);
     final List<PoeRowProblem> problems = <PoeRowProblem>[
@@ -314,8 +393,11 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   // Unsigned-decimal for watts/budget; unsigned-integer for quantity.
   static final List<TextInputFormatter> _unsignedDecimal =
       unsignedDecimalFormatters;
+  // Four digits is plenty for a port count or a quantity, and keeps a pasted
+  // 20-digit number from parsing to null and being ignored without a word.
   static final List<TextInputFormatter> _unsignedInteger = [
     FilteringTextInputFormatter.digitsOnly,
+    LengthLimitingTextInputFormatter(4),
   ];
 
   @override
@@ -389,8 +471,23 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   bool get _reserveInvalid {
     if (_reserveCtrl.text.trim().isEmpty) return false;
     final double? r = tryParseFlexibleDouble(_reserveCtrl.text);
-    return r == null || r < 0 || r >= 100;
+    return r == null || r < 0 || r > PoeBudgetScreen.maxReservePct;
   }
+
+  /// True when device row [i] is a watts row above what any PoE type delivers.
+  bool _wattsTooHigh(int i) {
+    if (_rowKinds[i] != _wattsKind) return false;
+    final double w = tryParseFlexibleDouble(_wattsCtrls[i].text) ?? 0;
+    final int q = _tryParseInt(_qtyCtrls[i].text) ?? 0;
+    return PoeBudgetScreen.exceedsMaxPd(PoeDeviceRow(w, q));
+  }
+
+  /// Error text for a watts field over the limit.
+  static String get _wattsTooHighText =>
+      'No PoE type delivers more than ${_trimW(PoeBudgetScreen.maxPdWatts)} W '
+      'to a device';
+
+  static String _trimW(double w) => w.toStringAsFixed(1);
 
   // ─── Parsing ──────────────────────────────────────────────────────────────
 
@@ -418,10 +515,18 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   static String _verdictText(PoeBudgetResult r) {
     switch (r.verdict) {
       case PoeVerdict.over:
-        if (!r.overBudget) {
-          return 'Does not fit. See the port checks above';
+        if (r.overBudget) {
+          return 'Over budget. Reduce devices or upgrade switch';
         }
-        return 'Over budget. Reduce devices or upgrade switch';
+        // Name the cause: a port shortfall, a failed port-type check, or both.
+        if (r.portsShort && r.rowProblems.isNotEmpty) {
+          return 'Does not fit. Not enough PoE ports, and see the port checks '
+              'above';
+        }
+        if (r.portsShort) {
+          return 'Does not fit. Not enough PoE ports for these devices';
+        }
+        return 'Does not fit. See the port checks above';
       case PoeVerdict.caution:
         return 'Caution: within 20% of budget limit';
       case PoeVerdict.ok:
@@ -442,8 +547,9 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   static const String _wattsRowNote =
-      'Watts rows are budgeted at the PD watts entered, with nothing added '
-      'for cable loss. Pick the device\'s class to budget PSE watts.';
+      'Watts rows are the PD watts at the device, converted to the PSE watts '
+      'of the class that wattage falls in (for example 25.5 W is Class 4, '
+      '30.0 W). Pick the device\'s class to be exact.';
 
   static String _portTypeLabel(PoePortType t) =>
       PoeBudgetScreen.standardFor(t)?.standard ?? 'not set';
@@ -734,7 +840,11 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           enableSuggestions: false,
           style: mono.outputLarge.copyWith(fontSize: AppTextSize.fieldNumeric),
           cursorColor: colors.textAccent,
-          decoration: const InputDecoration(hintText: 'W (PD)'),
+          decoration: InputDecoration(
+            hintText: 'W (PD)',
+            errorText: _wattsTooHigh(i) ? _wattsTooHighText : null,
+            errorMaxLines: 3,
+          ),
         ),
       );
     } else {
@@ -853,6 +963,10 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             Text(
               _reserveInvalid
                   ? 'Enter a reserve from 0 to 99.9% to calculate.'
+                  : Iterable<int>.generate(
+                      PoeBudgetScreen.deviceRowCount,
+                    ).any(_wattsTooHigh)
+                  ? 'Fix the watts entry to calculate. $_wattsTooHighText.'
                   : 'Enter a switch PoE budget to calculate.',
               style: text.bodyMedium?.copyWith(color: colors.textTertiary),
             )
@@ -918,7 +1032,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
       children: [
         Semantics(
           label: 'Utilization',
-          value: '${r.pct.toStringAsFixed(0)} percent of budget',
+          value: '${r.pct.toStringAsFixed(0)} percent of usable budget',
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.control),
             child: Stack(
@@ -1051,17 +1165,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
     // 370 W switch and look comfortable; the switch actually delivers 360 W and
     // is nearly exhausted. Both columns now render, labeled.
     //
-    final List<List<String>> rows = <List<String>>[
-      const <String>['802.3af', 'PoE', '15.4 W', '12.95 W'],
-      const <String>['802.3at', 'PoE+', '30.0 W', '25.5 W'],
-      const <String>['802.3bt Type 3', 'PoE++ / 4PPoE', '60.0 W', '51.0 W'],
-      <String>[
-        '802.3bt Type 4',
-        'PoE++ Hi',
-        '${PoeBudgetScreen.typeFourPseWatts.toStringAsFixed(1)} W',
-        '71.3 W',
-      ],
-    ];
+    final List<List<String>> rows = PoeBudgetScreen.standardsCardRows();
 
     return Container(
       decoration: BoxDecoration(
@@ -1183,7 +1287,8 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             'PSE W is what the switch port must supply. This is the number a '
             'switch budget is spent in. PD W is what reaches the device after '
             'cable loss. Budget in PSE watts: a rack of Class-4 APs draws '
-            '30.0 W each from the switch, not 25.5 W.',
+            '${PoeBudgetScreen._trim(PoeBudgetScreen.classPseWatts(4)!)} W each from the switch, not '
+            '${PoeBudgetScreen._trim(PoeBudgetScreen._classPdWatts(4))} W.',
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -1191,7 +1296,8 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           // line cannot drift away from the number it justifies.
           Text(
             'PSE figures per ${PoeBudgetScreen.typeFourPseCitation}. Type 4 '
-            'supplies 90 W: the 99.9 W figure sometimes quoted is the PSE '
+            'supplies ${PoeBudgetScreen.typeFourPseWatts.toStringAsFixed(0)} W: '
+            'the 99.9 W figure sometimes quoted is the PSE '
             'power rating band (P_Type), not the per-class output power.',
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
@@ -1202,18 +1308,8 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
 
   Widget _classesCard(TextTheme text, AppMonoText mono) {
     final AppColorScheme colors = context.colors;
-    // POE_CLASSES mirror: [class, max PD W, standard].
-    final List<List<String>> rows = const [
-      ['0', '12.95 W', '802.3af'],
-      ['1', '3.84 W', '802.3af'],
-      ['2', '6.49 W', '802.3af'],
-      ['3', '12.95 W', '802.3af'],
-      ['4', '25.5 W', '802.3at'],
-      ['5', '40.0 W', '802.3bt'],
-      ['6', '51.0 W', '802.3bt'],
-      ['7', '62.0 W', '802.3bt'],
-      ['8', '71.3 W', '802.3bt'],
-    ];
+    // [class, max PD W, standard], from the reference table.
+    final List<List<String>> rows = PoeBudgetScreen.classesCardRows();
 
     return Container(
       decoration: BoxDecoration(

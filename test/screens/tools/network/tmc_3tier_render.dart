@@ -11,8 +11,8 @@
 // internet tier). No real platform channel, socket, or poll timer is touched.
 //
 // Tiers are absolute (Keith, 2026-06-07): usable Wi-Fi = 0.55 × avg(Tx,Rx);
-// internet = avg(down,up); each bucketed > 250 Strong / 100-250 Moderate /
-// < 100 Weak / unmeasured Unknown.
+// internet = avg(down,up); each bucketed 100+ Strong / 25 to under 100 Moderate /
+// under 25 Weak / unmeasured Unknown.
 //
 // This is a capture utility, not a regression gate. Run it explicitly:
 //   flutter test test/screens/tools/network/tmc_3tier_render.dart

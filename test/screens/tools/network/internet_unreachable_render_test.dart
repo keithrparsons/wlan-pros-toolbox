@@ -73,7 +73,7 @@ class _OnWifiNetworkInfo implements NetworkInfo {
 }
 
 /// Keith's ACTUAL conference link: Tx 97 / Rx 77 Mbps, a Ubiquiti AP, plainly
-/// associated. avg(97,77)=87 -> 0.55*87 = 47.85 -> "48 Mbps" usable, "Weak" tier.
+/// associated. avg(97,77)=87 -> 0.55*87 = 47.85 -> "48 Mbps" usable, "Moderate" tier.
 /// A WORKING link. The whole point is that the app stopped blaming it.
 class _WorkingLinkBridge implements WiFiDetailsBridge {
   int oneShotCalls = 0;
@@ -293,11 +293,11 @@ void main() {
       expect(screen, contains('Not reachable'));
       expect(screen, isNot(contains("Couldn't check")));
 
-      // THE WI-FI CHIP KEEPS ITS MEASURED TIER. 47.85 Mbps usable IS Weak — that is
+      // THE WI-FI CHIP KEEPS ITS MEASURED TIER. 47.85 Mbps usable IS Moderate — that is
       // correct and must NOT be softened or faked. The lie was never the tier; it
       // was the FRAME. The chip must not read "Couldn't check" (a failed read the
       // app never had) — the rate was measured and is printed.
-      expect(screen, contains('Weak'),
+      expect(screen, contains('Moderate'),
           reason: 'the Wi-Fi keeps the tier it actually measured');
 
       // THE FRAME names the Wi-Fi as FINE — the suspect is the internet, not the
@@ -336,7 +336,7 @@ void main() {
       expect(screen, isNot(contains("Couldn't complete the check")));
 
       // The Wi-Fi is up here too; the chip keeps its measured tier.
-      expect(screen, contains('Weak'));
+      expect(screen, contains('Moderate'));
       // And the internet chip is the reachability fault, not a failed read.
       expect(screen, contains('Not reachable'));
       expect(screen, isNot(contains("Couldn't check")));

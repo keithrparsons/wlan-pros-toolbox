@@ -12,8 +12,8 @@
 // platform channel, socket, or poll timer is touched.
 //
 // Tiers are absolute (Keith, 2026-06-07): usable Wi-Fi = 0.55 × Tx (Rx not
-// exposed on public CoreWLAN); internet = avg(down,up); bucketed > 250 Strong /
-// 100-250 Moderate / < 100 Weak. Margin reuses the +/-10% comparison band.
+// exposed on public CoreWLAN); internet = avg(down,up); bucketed 100+ Strong /
+// 25 to under 100 Moderate / under 25 Weak. Margin reuses the +/-10% comparison band.
 //
 // This is a capture utility, not a regression gate. Run it explicitly:
 //   flutter test test/screens/tools/network/tmc_sametier_render.dart

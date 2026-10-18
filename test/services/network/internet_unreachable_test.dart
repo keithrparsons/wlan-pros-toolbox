@@ -224,10 +224,10 @@ void main() {
       expect(v.internetStatus, AxisStatus.unreachable);
 
       // LIE 3 — the Wi-Fi axis. It keeps its MEASURED tier: 47.85 Mbps usable really
-      // is below the 100 Mbps `weak` threshold, and that grade is CORRECT — the lie
+      // is in the 25 to under 100 Mbps `moderate` band, and that grade is CORRECT — the lie
       // was never the tier, it was the FRAME around it. The app is no longer claiming
       // it could not read a link whose rate it is printing.
-      expect(v.wifiStatus, AxisStatus.weak);
+      expect(v.wifiStatus, AxisStatus.moderate);
 
       // LIE 4 — "Make sure you are on Wi-Fi". He WAS on Wi-Fi.
       expect(v.body, contains("You're connected to Wi-Fi"));
@@ -247,7 +247,7 @@ void main() {
           ConsumerVerdictMapper.map(_evaluate(evidence: _portal));
       expect(v.outcome, ConsumerOutcome.signInRequired);
       expect(v.internetStatus, AxisStatus.unreachable);
-      expect(v.wifiStatus, AxisStatus.weak); // measured, kept
+      expect(v.wifiStatus, AxisStatus.moderate); // measured, kept
       expect(v.selfHelp, SelfHelpTopic.signIn);
       expect(v.body, contains('sign-in page'));
     });
@@ -280,8 +280,8 @@ void main() {
       final ConsumerVerdict v =
           ConsumerVerdictMapper.map(healthy, internetHealthy: true);
       expect(v.outcome, ConsumerOutcome.bothFine);
-      expect(v.internetStatus, AxisStatus.strong); // 400 > 250
-      expect(v.wifiStatus, AxisStatus.strong); // 0.55 * 900 = 495 > 250
+      expect(v.internetStatus, AxisStatus.strong); // 400 >= 100
+      expect(v.wifiStatus, AxisStatus.strong); // 0.55 * 900 = 495 >= 100
     });
   });
 }

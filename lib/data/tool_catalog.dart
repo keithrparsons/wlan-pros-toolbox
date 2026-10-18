@@ -1081,7 +1081,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'poe-budget',
         title: 'PoE Budget',
-        description: 'Switch PoE budget vs connected device draw',
+        description:
+            'Switch PoE budget, ports and port type vs device class or watts',
         routeName: '/tools/poe-budget',
         isLive: true,
         subgroup: 'Capacity & Power',

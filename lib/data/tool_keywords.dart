@@ -2836,6 +2836,11 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'pd',
     '802.3bt',
     'power draw',
+    'poe class',
+    'reserve',
+    'port count',
+    'pse type',
+    'poe switch',
   ],
   'throughput-calc': <String>[
     'data rate',
