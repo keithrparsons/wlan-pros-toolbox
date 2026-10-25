@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/ie_parser.dart';
 import 'package:wlan_pros_toolbox/services/network/rsn_security_parser.dart';
 
+import '../../fixtures/keith_guest_ch108_beacons.dart';
+
 /// Builds one `[id][len][body]` element.
 Uint8List _ie(int id, List<int> body) =>
     Uint8List.fromList(<int>[id, body.length, ...body]);
@@ -237,6 +239,31 @@ void main() {
         0x30, 0x40, 0x01, // element 48 claiming 64 bytes, supplying 1
       ]);
       expect(securityTokensFromIes(ies), <String>['wpa2Personal']);
+    });
+  });
+
+  // Real beacons off Keith's AP (see the fixture for provenance). These pin the
+  // decoder to what radios actually emit, not only to bytes built from the
+  // standard: the case macOS gets wrong is the OWE one.
+  group('real beacons, Keith Guest in OWE Transition on channel 108', () {
+    test('the OWE half (AKM 00-0F-AC:18) is owe', () {
+      expect(securityTokensFromIes(hexBytes(kKeithGuestOweBeaconIes)),
+          <String>['owe']);
+    });
+
+    test('the WPA3 SAE network is wpa3Personal, not owe', () {
+      expect(securityTokensFromIes(hexBytes(kKeithSaeBeaconIes)),
+          <String>['wpa3Personal']);
+    });
+
+    test('the open half is none: its OWE Transition element is not OWE', () {
+      expect(
+        securityTokensFromIes(
+          hexBytes(kKeithGuestOpenHalfBeaconIes),
+          capabilityInformation: kKeithGuestOpenHalfCapability,
+        ),
+        <String>['none'],
+      );
     });
   });
 }

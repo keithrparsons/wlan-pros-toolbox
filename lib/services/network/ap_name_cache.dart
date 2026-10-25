@@ -51,6 +51,16 @@ class ApNameCache {
   /// not-yet-known BSSID inside that window.
   final Map<String, DateTime> _lastScanAtByBssid = <String, DateTime>{};
 
+  /// What the connected BSS's OWN beacon said about OWE, per BSSID, and when
+  /// it was read: `owe` is true when its RSN element carries AKM 00-0F-AC:18,
+  /// false when it does not; absent when never read. Kept beside the name
+  /// because the same beacon scan yields both. Unlike a name it CAN change for
+  /// a BSSID (an AP switched between OWE and open), hence the read time.
+  /// Needed because CoreWLAN `security()` reports Enhanced Open as `.none`
+  /// (seen 25 OCT 2026 on Keith's OWE SSID).
+  final Map<String, ({bool owe, DateTime readAt})> _beaconOweByBssid =
+      <String, ({bool owe, DateTime readAt})>{};
+
   /// The in-flight name scan per normalized BSSID, so EVERY adapter interested
   /// in a BSSID can await the ONE scan that is actually running for it — not
   /// just the adapter that happened to start it.
@@ -128,6 +138,17 @@ class ApNameCache {
     _nameByBssid[normBssid] = name;
   }
 
+  /// Whether [normBssid]'s beacon advertised OWE and when that was read, or
+  /// null when not yet read.
+  ({bool owe, DateTime readAt})? beaconOweFor(String normBssid) =>
+      _beaconOweByBssid[normBssid];
+
+  /// Records what [normBssid]'s own beacon said about OWE at [readAt]. Callers
+  /// pass only a verdict decoded from that BSS's beacon IEs.
+  void cacheBeaconOwe(String normBssid, bool owe, DateTime readAt) {
+    _beaconOweByBssid[normBssid] = (owe: owe, readAt: readAt);
+  }
+
   /// The last time a scan was ATTEMPTED for [normBssid], or null if never.
   DateTime? lastScanAt(String normBssid) => _lastScanAtByBssid[normBssid];
 
@@ -144,6 +165,7 @@ class ApNameCache {
   /// scan, which is exactly what isolation needs.
   void clear() {
     _nameByBssid.clear();
+    _beaconOweByBssid.clear();
     _lastScanAtByBssid.clear();
     _inFlightScanByBssid.clear();
   }

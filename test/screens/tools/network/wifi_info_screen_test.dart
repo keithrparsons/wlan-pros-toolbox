@@ -17,6 +17,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,6 +34,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_live_shortcuts_config.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_security.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/sparkline.dart';
@@ -1945,6 +1947,68 @@ void main() {
         find.textContaining('not the configured AP name'),
         findsOneWidget,
       );
+    });
+
+    // CoreWLAN reports Enhanced Open (OWE) as open (25 OCT 2026, Keith Guest),
+    // so a macOS "Open" must never stand alone as "no encryption".
+    testWidgets('macOS Open carries the OWE-reported-as-open caveat',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: macSecuritySample('open')),
+          ouiService: ouiStub(),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Open (no encryption)'), findsOneWidget);
+      expect(
+        find.textContaining('macOS also reports Enhanced Open (OWE) as open'),
+        findsOneWidget,
+      );
+
+      // The copied report carries the same caveat, so a pasted help-desk
+      // ticket never says "no encryption" on macOS's word alone.
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map<Object?, Object?>)['text']
+                as String?;
+          }
+          return null;
+        },
+      );
+      await tester.tap(find.byTooltip('Copy results'));
+      await tester.pump(const Duration(milliseconds: 1600));
+      await tester.pumpAndSettle();
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+      expect(
+        copied,
+        contains('Security type: Open (no encryption) (macOS also reports '
+            'Enhanced Open (OWE) as open)'),
+      );
+    });
+
+    testWidgets('macOS OWE (proven from the beacon) carries no open caveat',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(
+            snapshot: macSecuritySample('open').withSecurity(WifiSecurity.owe),
+          ),
+          ouiService: ouiStub(),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('OWE (Enhanced Open)'), findsOneWidget);
+      expect(find.textContaining('reports Enhanced Open (OWE) as open'),
+          findsNothing);
     });
 
     testWidgets(

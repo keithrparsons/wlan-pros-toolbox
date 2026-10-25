@@ -9,6 +9,11 @@
 //     null, no fabricated name);
 //   - a stale-scan BSSID mismatch, an empty blob, or a channel failure all yield
 //     honest null and never throw into the RF read.
+//
+// The same beacon scan also settles security when macOS says "open": CoreWLAN
+// reports Enhanced Open (OWE) as `.none` (seen 25 OCT 2026 on Keith Guest), so
+// the adapter upgrades to OWE only when the connected BSS's own beacon carries
+// AKM 00-0F-AC:18. Those tests use real beacon bytes from Keith's AP.
 
 import 'dart:typed_data';
 
@@ -17,6 +22,9 @@ import 'package:wlan_pros_toolbox/services/network/ap_name_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_security.dart';
+
+import '../../fixtures/keith_guest_ch108_beacons.dart';
 
 /// One non-extended IE element: [id][len][...data].
 List<int> _ie(int id, List<int> data) => <int>[id, data.length, ...data];
@@ -30,12 +38,14 @@ List<int> _unifiNameBlob(String name) =>
 Map<String, Object?> _wifiInfoMap({
   required String? bssid,
   required bool locationAuthorized,
+  String? securityToken,
 }) =>
     <String, Object?>{
       'ssid': 'KeithNet',
       'bssid': bssid,
       'poweredOn': true,
       'locationAuthorized': locationAuthorized,
+      'securityToken': securityToken,
     };
 
 /// A counting fake WifiInfoService (platform macos). [ieBlobFor] returns the IE
@@ -182,6 +192,137 @@ void main() {
       await adapter.fetch();
       await adapter.pendingApNameScan;
       expect(fake.scanCount, 2);
+    });
+  });
+
+  group('MacWifiInfoAdapter OWE from the beacon when macOS says open', () {
+    const String oweBssid = 'b2:05:d6:56:cb:2c';
+
+    _CountingService macSays(String token, Map<String, Object?> blob) =>
+        _CountingService(
+          wifiInfo: _wifiInfoMap(
+            bssid: oweBssid,
+            locationAuthorized: true,
+            securityToken: token,
+          ),
+          ieBlob: blob,
+        );
+
+    test('Open first, then OWE once the beacon shows AKM 00-0F-AC:18',
+        () async {
+      final _CountingService fake = macSays(
+        'open',
+        _blob(oweBssid, hexBytes(kKeithGuestOweBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
+
+      final ConnectedAp first = await adapter.fetch();
+      expect(first.securityType, WifiSecurity.open);
+      await adapter.pendingApNameScan;
+
+      final ConnectedAp second = await adapter.fetch();
+      expect(second.securityType, WifiSecurity.owe);
+    });
+
+    test('the open half of a transition pair stays Open', () async {
+      final _CountingService fake = macSays(
+        'open',
+        _blob(oweBssid, hexBytes(kKeithGuestOpenHalfBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      final ConnectedAp second = await adapter.fetch();
+      expect(second.securityType, WifiSecurity.open);
+    });
+
+    test('a non-open macOS answer is never overridden by the beacon', () async {
+      final _CountingService fake = macSays(
+        'wpa3Personal',
+        _blob(oweBssid, hexBytes(kKeithGuestOweBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      final ConnectedAp second = await adapter.fetch();
+      expect(second.securityType, WifiSecurity.wpa3Personal);
+    });
+
+    test('a stale-scan BSSID mismatch never upgrades', () async {
+      final _CountingService fake = macSays(
+        'open',
+        _blob('ae:05:d6:56:cb:2c', hexBytes(kKeithGuestOweBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      final ConnectedAp second = await adapter.fetch();
+      expect(second.securityType, WifiSecurity.open);
+    });
+
+    test('a cached AP name still gets one scan to settle Open vs OWE, then '
+        'none', () async {
+      ApNameCache.instance.cacheName(oweBssid, 'Workroom');
+      final _CountingService fake = macSays(
+        'open',
+        _blob(oweBssid, hexBytes(kKeithGuestOweBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
+
+      final ConnectedAp first = await adapter.fetch();
+      expect(first.apName, 'Workroom');
+      await adapter.pendingApNameScan;
+      expect(fake.scanCount, 1);
+
+      final ConnectedAp second = await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect(second.securityType, WifiSecurity.owe);
+      expect(second.apName, 'Workroom');
+      expect(fake.scanCount, 1);
+    });
+
+    test('an OWE verdict is re-read after 5 minutes, so an AP switched back '
+        'to open is not called OWE for the rest of the session', () async {
+      // Keith switched Keith Guest between OWE and OWE Transition on 25 OCT
+      // 2026; the same BSSID can stop being OWE while the app stays open.
+      DateTime clock = DateTime(2026, 10, 25, 12, 0, 0);
+      final _CountingService fake = macSays(
+        'open',
+        _blob(oweBssid, hexBytes(kKeithGuestOweBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(
+        service: fake.service,
+        enrichApName: true,
+        now: () => clock,
+      );
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect((await adapter.fetch()).securityType, WifiSecurity.owe);
+      await adapter.pendingApNameScan;
+      expect(fake.scanCount, 1);
+
+      // Inside 5 minutes the verdict stands without another scan.
+      clock = clock.add(const Duration(minutes: 4));
+      expect((await adapter.fetch()).securityType, WifiSecurity.owe);
+      await adapter.pendingApNameScan;
+      expect(fake.scanCount, 1);
+
+      // The AP is reconfigured: this BSSID now beacons as plain open.
+      fake.ieBlob = _blob(oweBssid, hexBytes(kKeithGuestOpenHalfBeaconIes));
+      clock = clock.add(const Duration(minutes: 2));
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect(fake.scanCount, 2);
+      expect((await adapter.fetch()).securityType, WifiSecurity.open);
     });
   });
 }
