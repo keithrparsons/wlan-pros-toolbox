@@ -3510,7 +3510,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _CopyRow('Channel width', _channelWidth(ap)),
       _CopyRow('Band', _orUnavailable(ap?.band)),
       _CopyRow('Standard (PHY)', _orUnavailable(ap?.standard)),
-      _CopyRow('Security', _security(ap)),
+      _CopyRow('Security', _securityText(ap)),
       // THE TWO KINDS OF NULL, NAMED (GL-005). The empty rows above mean one of
       // two completely different things, and the help-desk reader must not have to
       // guess which:
@@ -3688,13 +3688,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final int? w = ap?.channelWidthMhz;
     if (w != null) return '$w MHz';
     return 'Unavailable';
-  }
-
-  /// Security scheme label, or "Unavailable" when the platform did not report
-  /// one. Never invents a scheme (GL-005).
-  static String _security(ConnectedAp? ap) {
-    final WifiSecurity? s = ap?.securityType;
-    return s != null ? s.label : 'Unavailable';
   }
 
   // ---- Analyze Results (local, in-app report) ----
@@ -7101,4 +7094,14 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
       ),
     );
   }
+}
+
+/// Security scheme label, or "Unavailable" when the platform did not report
+/// one. Never invents a scheme (GL-005). A macOS Open carries its note (beacon
+/// confirmed, or may be OWE), because CoreWLAN reports OWE as open.
+String _securityText(ConnectedAp? ap) {
+  final WifiSecurity? s = ap?.securityType;
+  if (s == null) return 'Unavailable';
+  final String? note = ap?.securityNote;
+  return note != null ? '${s.label} ($note)' : s.label;
 }

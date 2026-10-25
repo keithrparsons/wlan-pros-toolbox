@@ -244,7 +244,9 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// How long a beacon's security verdict stands before an Open-reported BSSID's
   /// beacon is read again. An AP can be switched between OWE and open under the
   /// same BSSID (Keith did, 25 OCT 2026), so the verdict cannot be kept for the
-  /// whole session the way an AP name is.
+  /// whole session the way an AP name is. Five minutes is a chosen balance, not
+  /// a measured or published value: often enough to catch a reconfiguration,
+  /// rare enough that the extra off-channel scans do not disturb the link.
   static const Duration _beaconRecheckAfter = Duration(minutes: 5);
 
   /// Injectable clock (for the throttle), so tests are deterministic.
@@ -407,15 +409,19 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
       // the BSSID we asked about.
       final String? scanned = _normBssid(blob.bssid);
       if (scanned != null && scanned != bssid) return;
-      _apNameCache.cacheBeaconSecurity(
-        bssid,
-        securityTokensFromIes(bytes).contains('owe')
-            ? BeaconSecurity.owe
-            : hasRsnOrWpaElement(bytes)
-            ? BeaconSecurity.other
-            : BeaconSecurity.noSecurityElement,
-        _now(),
-      );
+      // A security verdict needs the bytes positively tied to this BSSID; the
+      // name path above tolerates a missing BSSID, a security claim does not.
+      if (scanned == bssid) {
+        _apNameCache.cacheBeaconSecurity(
+          bssid,
+          securityTokensFromIes(bytes).contains('owe')
+              ? BeaconSecurity.owe
+              : hasRsnOrWpaElement(bytes)
+              ? BeaconSecurity.other
+              : BeaconSecurity.noSecurityElement,
+          _now(),
+        );
+      }
       final String? name = decodeApName(bytes);
       // Write the decoded name to the SHARED cache so every other adapter (every
       // other screen) serves it instantly. Only a real decoded name is stored;

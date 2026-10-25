@@ -29,9 +29,6 @@
 // the map (null stays null); the cache NEVER holds a guessed or BSSID-derived
 // name. It is a store of already-decoded truth, not a source of guesses.
 
-/// App-wide, BSSID-keyed cache of decoded AP names plus the per-BSSID scan
-/// throttle. Adapters read/write [instance]; tests may construct an isolated
-/// cache directly, or call [clear] to reset the singleton between cases.
 /// What a BSS's own beacon says about its security, as far as the macOS
 /// adapter needs it.
 enum BeaconSecurity {
@@ -45,6 +42,9 @@ enum BeaconSecurity {
   other,
 }
 
+/// App-wide, BSSID-keyed cache of decoded AP names plus the per-BSSID scan
+/// throttle. Adapters read/write [instance]; tests may construct an isolated
+/// cache directly, or call [clear] to reset the singleton between cases.
 class ApNameCache {
   /// The app-wide shared cache. Every name-enriching adapter reads and writes
   /// THIS instance, so a name decoded on one screen shows instantly on all.

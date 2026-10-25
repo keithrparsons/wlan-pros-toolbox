@@ -47,6 +47,7 @@ class AnalyzeInput {
     this.channelWidthMhz,
     this.channelWidthAvailable = false,
     this.security,
+    this.securityOpenMayBeOwe = false,
     this.downloadMbps,
     this.uploadMbps,
     this.latencyMs,
@@ -94,6 +95,10 @@ class AnalyzeInput {
 
   /// The connected network's security classification. Null when not reported.
   final WifiSecurity? security;
+
+  /// True when [security] is a macOS Open the beacon has not settled; CoreWLAN
+  /// reports Enhanced Open (OWE) as open, so it may be encrypted.
+  final bool securityOpenMayBeOwe;
 
   /// Measured download / upload throughput, Mbps. Null when not measured.
   final double? downloadMbps;
@@ -200,6 +205,7 @@ class AnalyzeInput {
       channelWidthMhz: ap?.channelWidthMhz,
       channelWidthAvailable: ap?.channelWidthAvailable ?? false,
       security: ap?.securityType,
+      securityOpenMayBeOwe: ap?.openMayBeOwe ?? false,
       downloadMbps: down,
       uploadMbps: up,
       latencyMs: latency,

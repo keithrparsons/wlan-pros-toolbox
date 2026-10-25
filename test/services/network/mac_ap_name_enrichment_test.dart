@@ -296,6 +296,22 @@ void main() {
       expect(second.securityType, WifiSecurity.wpa3Personal);
     });
 
+    test('bytes returned without a BSSID are no evidence either way',
+        () async {
+      final _CountingService fake = macSays(
+        'open',
+        _blob(null, hexBytes(kKeithGuestOweBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      final ConnectedAp second = await adapter.fetch();
+      expect(second.securityType, WifiSecurity.open);
+      expect(second.beaconConfirmsOpen, isFalse);
+    });
+
     test('a stale-scan BSSID mismatch never upgrades', () async {
       final _CountingService fake = macSays(
         'open',

@@ -1139,7 +1139,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ..writeln(
         '  Security type: ${info.securityAvailable ? _copyVal(info.securityType?.label, null) : 'Not exposed by $platformLabel'}'
         '${(info.securityType?.isPersonalCoarse ?? false) || (info.securityType?.isEnterpriseCoarse ?? false) ? ' (iOS coarse, WPA2/WPA3 not distinguished)' : ''}'
-        '${_macOpenNote(info) != null ? ' (${_macOpenNote(info)})' : ''}',
+        '${info.securityNote != null ? ' (${info.securityNote})' : ''}',
       );
 
     // Android exposes no noise floor, so Noise + SNR carry an explicit reason in
@@ -1815,21 +1815,6 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     return ' ($p)';
   }
 
-  /// The note on a macOS "Open". CoreWLAN `security()` reports Enhanced Open
-  /// (OWE) as `.none` (seen 25 OCT 2026 on Keith's OWE SSID, whose beacon
-  /// advertised AKM 00-0F-AC:18), and the adapter upgrades to OWE only when the
-  /// beacon proves it. So an Open says the beacon confirmed it when it did, and
-  /// otherwise warns that it may be OWE. Null for anything else.
-  String? _macOpenNote(ConnectedAp info) {
-    if (_source != WifiInfoSource.macosCoreWlan ||
-        info.securityType != WifiSecurity.open) {
-      return null;
-    }
-    return info.beaconConfirmsOpen
-        ? "The access point's beacon confirms this network is open"
-        : 'macOS also reports Enhanced Open (OWE) as open';
-  }
-
   /// The Security card. Renders the normalized security label, with the honest
   /// iOS-coarse footnote and the iOS Location-gate affordance when the native
   /// read is blocked by a missing permission.
@@ -1882,7 +1867,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           'iOS reports only Open / Personal / Enterprise. It cannot '
           'distinguish WPA2 from WPA3';
     } else {
-      note = _macOpenNote(info);
+      note = info.securityNote;
     }
 
     return _Card(
