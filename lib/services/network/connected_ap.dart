@@ -52,6 +52,7 @@ class ConnectedAp {
     this.bandDerived = false,
     this.snrDerived = false,
     this.securityAvailable = false,
+    this.beaconConfirmsOpen = false,
   });
 
   /// Connected network name. Null when not connected, hidden, or omitted.
@@ -124,6 +125,12 @@ class ConnectedAp {
   /// unsupported platform cannot. When false the UI shows a precise
   /// "Not exposed by `<platform>`" reason rather than a generic blank.
   final bool securityAvailable;
+
+  /// True only on macOS, when CoreWLAN reports the network as open AND the
+  /// connected BSS's own beacon has been read and carries no RSN or WPA
+  /// element. CoreWLAN also reports Enhanced Open (OWE) as open, so without
+  /// this evidence an Open reading cannot rule OWE out.
+  final bool beaconConfirmsOpen;
 
   /// Whether the Wi-Fi radio is powered on. Defaults true for sources that do
   /// not report a radio-power state (the iOS Shortcut only runs while connected).
@@ -365,30 +372,13 @@ class ConnectedAp {
   /// Shortcut-derived model. A null [security] leaves the field unset (honest
   /// "not in this reading"). All other fields are preserved.
   ConnectedAp withSecurity(WifiSecurity? security) {
-    return ConnectedAp(
-      ssid: ssid,
-      bssid: bssid,
-      apName: apName,
-      rssiDbm: rssiDbm,
-      noiseDbm: noiseDbm,
-      snrDb: snrDb,
-      txRateMbps: txRateMbps,
-      rxRateMbps: rxRateMbps,
-      channel: channel,
-      channelWidthMhz: channelWidthMhz,
-      band: band,
-      standard: standard,
-      countryCode: countryCode,
-      interfaceName: interfaceName,
-      hardwareAddress: hardwareAddress,
-      securityType: security ?? securityType,
-      poweredOn: poweredOn,
-      rxRateAvailable: rxRateAvailable,
-      channelWidthAvailable: channelWidthAvailable,
-      bandDerived: bandDerived,
-      snrDerived: snrDerived,
-      securityAvailable: securityAvailable,
-    );
+    return _copyWith(securityType: security);
+  }
+
+  /// Returns a copy marked [beaconConfirmsOpen]. Used by the macOS adapter
+  /// once the connected BSS's own beacon shows no security element.
+  ConnectedAp withBeaconConfirmsOpen() {
+    return _copyWith(beaconConfirmsOpen: true);
   }
 
   /// Returns a copy with the vendor-advertised AP name filled in. Used by the
@@ -396,10 +386,19 @@ class ConnectedAp {
   /// onto the connected-interface snapshot. A null [name] leaves the field unset
   /// (honest "no name advertised / not readable"). All other fields are preserved.
   ConnectedAp withApName(String? name) {
+    return _copyWith(apName: name);
+  }
+
+  /// A copy with only the given enrichment fields changed.
+  ConnectedAp _copyWith({
+    String? apName,
+    WifiSecurity? securityType,
+    bool? beaconConfirmsOpen,
+  }) {
     return ConnectedAp(
       ssid: ssid,
       bssid: bssid,
-      apName: name ?? apName,
+      apName: apName ?? this.apName,
       rssiDbm: rssiDbm,
       noiseDbm: noiseDbm,
       snrDb: snrDb,
@@ -412,13 +411,14 @@ class ConnectedAp {
       countryCode: countryCode,
       interfaceName: interfaceName,
       hardwareAddress: hardwareAddress,
-      securityType: securityType,
+      securityType: securityType ?? this.securityType,
       poweredOn: poweredOn,
       rxRateAvailable: rxRateAvailable,
       channelWidthAvailable: channelWidthAvailable,
       bandDerived: bandDerived,
       snrDerived: snrDerived,
       securityAvailable: securityAvailable,
+      beaconConfirmsOpen: beaconConfirmsOpen ?? this.beaconConfirmsOpen,
     );
   }
 
@@ -485,6 +485,8 @@ class ConnectedAp {
                 // We synthesized SNR from merged rssi/noise above → it is derived.
                 : true),
       securityAvailable: securityAvailable || other.securityAvailable,
+      beaconConfirmsOpen:
+          securityType != null ? beaconConfirmsOpen : other.beaconConfirmsOpen,
     );
   }
 

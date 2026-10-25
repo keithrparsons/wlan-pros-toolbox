@@ -241,7 +241,7 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// cached. Throttles the radio; a cached BSSID is never re-scanned at all.
   final Duration _apNameRescanFloor;
 
-  /// How long a beacon's OWE verdict stands before an Open-reported BSSID's
+  /// How long a beacon's security verdict stands before an Open-reported BSSID's
   /// beacon is read again. An AP can be switched between OWE and open under the
   /// same BSSID (Keith did, 25 OCT 2026), so the verdict cannot be kept for the
   /// whole session the way an AP name is.
@@ -304,11 +304,15 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
 
     // CoreWLAN reports Enhanced Open (OWE) as open, so "open" is upgraded only
     // when this BSS's own beacon proved OWE. Any other macOS answer stands.
+    // A beacon with no security element at all confirms the open answer.
     final bool macSaysOpen = ap.securityType == WifiSecurity.open;
-    final ({bool owe, DateTime readAt})? beacon =
-        _apNameCache.beaconOweFor(bssid);
-    if (macSaysOpen && (beacon?.owe ?? false)) {
+    final ({BeaconSecurity security, DateTime readAt})? beacon =
+        _apNameCache.beaconSecurityFor(bssid);
+    if (macSaysOpen && beacon?.security == BeaconSecurity.owe) {
       ap = ap.withSecurity(WifiSecurity.owe);
+    }
+    if (macSaysOpen && beacon?.security == BeaconSecurity.noSecurityElement) {
+      ap = ap.withBeaconConfirmsOpen();
     }
 
     // Shared-cache hit → attach it with NO scan. This is the cross-screen win:
@@ -381,8 +385,9 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     });
   }
 
-  /// Reads the connected AP's beacon IE bytes, decodes the name and whether the
-  /// beacon advertises OWE, and caches both.
+  /// Reads the connected AP's beacon IE bytes, decodes the name and what the
+  /// beacon says about security (OWE, no security element, or other), and
+  /// caches both.
   /// Total and best-effort: any failure, timeout, empty blob, or stale-scan
   /// BSSID mismatch leaves the cache untouched (honest-null), never a fabricated
   /// value, and never throws.
@@ -402,9 +407,13 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
       // the BSSID we asked about.
       final String? scanned = _normBssid(blob.bssid);
       if (scanned != null && scanned != bssid) return;
-      _apNameCache.cacheBeaconOwe(
+      _apNameCache.cacheBeaconSecurity(
         bssid,
-        securityTokensFromIes(bytes).contains('owe'),
+        securityTokensFromIes(bytes).contains('owe')
+            ? BeaconSecurity.owe
+            : hasRsnOrWpaElement(bytes)
+            ? BeaconSecurity.other
+            : BeaconSecurity.noSecurityElement,
         _now(),
       );
       final String? name = decodeApName(bytes);

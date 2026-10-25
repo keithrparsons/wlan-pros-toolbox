@@ -225,7 +225,8 @@ void main() {
       expect(second.securityType, WifiSecurity.owe);
     });
 
-    test('the open half of a transition pair stays Open', () async {
+    test('the open half of a transition pair stays Open, and once its beacon '
+        'is read (no RSN element) the Open is confirmed', () async {
       final _CountingService fake = macSays(
         'open',
         _blob(oweBssid, hexBytes(kKeithGuestOpenHalfBeaconIes)),
@@ -233,10 +234,52 @@ void main() {
       final MacWifiInfoAdapter adapter =
           MacWifiInfoAdapter(service: fake.service, enrichApName: true);
 
-      await adapter.fetch();
+      final ConnectedAp first = await adapter.fetch();
+      expect(first.beaconConfirmsOpen, isFalse); // no evidence yet
       await adapter.pendingApNameScan;
       final ConnectedAp second = await adapter.fetch();
       expect(second.securityType, WifiSecurity.open);
+      expect(second.beaconConfirmsOpen, isTrue);
+    });
+
+    test('an OWE beacon never confirms Open', () async {
+      final _CountingService fake = macSays(
+        'open',
+        _blob(oweBssid, hexBytes(kKeithGuestOweBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect((await adapter.fetch()).beaconConfirmsOpen, isFalse);
+    });
+
+    test('a non-open macOS answer is never marked confirmed open', () async {
+      final _CountingService fake = macSays(
+        'wpa2Personal',
+        _blob(oweBssid, hexBytes(kKeithGuestOpenHalfBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect((await adapter.fetch()).beaconConfirmsOpen, isFalse);
+    });
+
+    test('an unmatched BSSID gives no evidence: Open stays unconfirmed',
+        () async {
+      final _CountingService fake = macSays(
+        'open',
+        _blob('22:0b:8b:c2:76:c4', hexBytes(kKeithGuestOpenHalfBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect((await adapter.fetch()).beaconConfirmsOpen, isFalse);
     });
 
     test('a non-open macOS answer is never overridden by the beacon', () async {

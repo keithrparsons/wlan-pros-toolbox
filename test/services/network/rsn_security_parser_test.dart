@@ -266,4 +266,34 @@ void main() {
       );
     });
   });
+
+  // Whether a beacon carries ANY security element. With no capability field
+  // (CoreWLAN's IE blob has none) this is how "the beacon proves open" is told
+  // apart from "the beacon names an AKM we do not classify".
+  group('hasRsnOrWpaElement', () {
+    test('the real open half has none', () {
+      expect(hasRsnOrWpaElement(hexBytes(kKeithGuestOpenHalfBeaconIes)),
+          isFalse);
+    });
+
+    test('the real OWE and SAE beacons have one', () {
+      expect(hasRsnOrWpaElement(hexBytes(kKeithGuestOweBeaconIes)), isTrue);
+      expect(hasRsnOrWpaElement(hexBytes(kKeithSaeBeaconIes)), isTrue);
+    });
+
+    test('a WPA1 vendor element counts; another vendor element does not', () {
+      expect(hasRsnOrWpaElement(_ie(kEidVendorSpecific, _wpaBody(<int>[2]))),
+          isTrue);
+      expect(
+        hasRsnOrWpaElement(
+          _ie(kEidVendorSpecific, <int>[0x00, 0x15, 0x6d, 0x01, 0x41]),
+        ),
+        isFalse,
+      );
+    });
+
+    test('an RSN element with an unclassified AKM still counts', () {
+      expect(hasRsnOrWpaElement(_ie(kEidRsn, _rsnBody(<int>[99]))), isTrue);
+    });
+  });
 }

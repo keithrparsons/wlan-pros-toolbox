@@ -1993,6 +1993,53 @@ void main() {
       );
     });
 
+    testWidgets(
+        'macOS Open confirmed by the beacon says so and drops the caveat',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(
+            snapshot: macSecuritySample('open').withBeaconConfirmsOpen(),
+          ),
+          ouiService: ouiStub(),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Open (no encryption)'), findsOneWidget);
+      expect(
+        find.textContaining(
+            "The access point's beacon confirms this network is open"),
+        findsOneWidget,
+      );
+      expect(find.textContaining('reports Enhanced Open (OWE) as open'),
+          findsNothing);
+
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map<Object?, Object?>)['text']
+                as String?;
+          }
+          return null;
+        },
+      );
+      await tester.tap(find.byTooltip('Copy results'));
+      await tester.pump(const Duration(milliseconds: 1600));
+      await tester.pumpAndSettle();
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+      expect(
+        copied,
+        contains("Security type: Open (no encryption) (The access point's "
+            'beacon confirms this network is open)'),
+      );
+      expect(copied, isNot(contains('reports Enhanced Open (OWE) as open')));
+    });
+
     testWidgets('macOS OWE (proven from the beacon) carries no open caveat',
         (tester) async {
       await tester.pumpWidget(host(
