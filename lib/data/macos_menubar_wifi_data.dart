@@ -6,8 +6,14 @@
 // (per the SSOT note in the DATA file). Verified live 2026-06-12.
 //
 // Standing Keith decision: the airport CLI is removed on current macOS and is
-// NOT documented as usable. The wdutil sudo-masking callout is carried as a real
+// NOT documented as usable. The wdutil needs-sudo callout is carried as a real
 // on-screen note.
+//
+// Corrected 25 OCT 2026 on Keith's Mac (macOS 26.7.1): plain `wdutil info`
+// prints only its usage text, so nothing is "masked without sudo"; the
+// Option-click menu prints width inside the Channel line and also shows
+// Security, MCS Index and NSS. macOS (menu, wdutil, CoreWLAN) reported Keith's
+// OWE SSID as open/None while the AP beacon advertised AKM 00-0F-AC:18 (OWE).
 //
 // Glyph note: ASCII hyphen-minus only; no em dash. "Wi-Fi" / "802.11" casing.
 
@@ -69,7 +75,7 @@ const List<MenuBarPath> kMenuBarPaths = <MenuBarPath>[
     'wdutil info',
     'Apple supported Wireless Diagnostics CLI',
     'Full Wi-Fi block plus network / BT / power',
-    'Yes, for unmasked RF',
+    'Yes',
   ),
   MenuBarPath(
     'Wireless Diagnostics app',
@@ -88,10 +94,24 @@ const List<MenuBarPath> kMenuBarPaths = <MenuBarPath>[
 // ── Section A — Option-click Wi-Fi menu fields ──
 
 const String kMenuBarOptionClickIntro =
-    'Hold Option and click the Wi-Fi icon. Under the connected SSID, macOS '
-    'prints the live association detail.';
+    'Hold Option and click the Wi-Fi icon. Above the network list macOS shows '
+    'the Wi-Fi interface; under the connected SSID it prints the live '
+    'association detail, in the order below.';
 
+// Order as printed on macOS 26.7.1 (Keith's Mac, Option-click screenshot on
+// Keith Guest, 25 OCT 2026). Interface Name and Hardware Address sit above the
+// network list; the rest are under the connected network name.
 const List<RfField> kMenuBarOptionClickFields = <RfField>[
+  RfField(
+    'Interface Name',
+    'The Wi-Fi interface, e.g. en0 (shown above the network list)',
+    proNote: 'Names the interface to use with command-line tools',
+  ),
+  RfField(
+    'Hardware Address',
+    'The Wi-Fi interface own MAC (shown above the network list)',
+    proNote: 'The burned-in address, not necessarily the one on the air',
+  ),
   RfField(
     'IP Address',
     'The Mac IPv4 address on this network',
@@ -103,19 +123,27 @@ const List<RfField> kMenuBarOptionClickFields = <RfField>[
     proNote: 'Confirms the gateway the Mac is using',
   ),
   RfField(
+    'MAC Address',
+    'The MAC address this Mac uses on this network',
+    proNote: 'Differs from the Hardware Address when a private Wi-Fi '
+        'address is in use; this is the one the AP and DHCP server see',
+  ),
+  RfField(
+    'Security',
+    'Authentication the Mac reports for this network (e.g. WPA3 Personal)',
+    proNote: 'macOS also reports Enhanced Open (OWE) as open; check the '
+        'AP beacon before calling the link unencrypted',
+  ),
+  RfField(
     'BSSID',
     'MAC address of the AP radio you are joined to',
     proNote: 'Identifies which AP/radio you are on; track roaming',
   ),
   RfField(
     'Channel',
-    'Operating channel + band',
-    proNote: 'Confirms band (2.4 / 5 / 6 GHz) and channel plan',
-  ),
-  RfField(
-    'Channel width',
-    '20 / 40 / 80 / 160 MHz',
-    proNote: 'Width vs interference trade-off; spec compliance',
+    'Channel, band and width on one line, e.g. 149 (5 GHz, 80 MHz); a DFS '
+        'channel is prefixed, e.g. DFS, 108 (5 GHz, 80 MHz)',
+    proNote: 'Confirms band (2.4 / 5 / 6 GHz), channel plan and width',
   ),
   RfField(
     'Country Code',
@@ -142,24 +170,34 @@ const List<RfField> kMenuBarOptionClickFields = <RfField>[
     '802.11 generation in use (a/n/ac/ax/be)',
     proNote: 'Confirms the client negotiated the expected standard',
   ),
+  RfField(
+    'MCS Index',
+    'Modulation-and-coding-scheme index of the current Tx rate',
+    proNote: 'Low MCS at strong RSSI points to noise or interference',
+  ),
+  RfField(
+    'NSS',
+    'Number of spatial streams in use',
+    proNote: 'With MCS and width, explains the Tx rate',
+  ),
 ];
 
 const String kMenuBarOptionClickNote =
     'The exact field set varies slightly by macOS version and adapter. RSSI, '
     'noise, Tx rate, channel, and BSSID are consistently present. For the '
-    'complete machine-readable set, use wdutil info below.';
+    'complete machine-readable set, use sudo wdutil info below.';
 
 // ── Section B: wdutil Wi-Fi block ──
 
 const String kMenuBarWdutilIntro =
     'wdutil is Apple supported command-line Wireless Diagnostics utility and the '
-    'replacement for the retired airport tool. Plain wdutil info works without '
-    'sudo, but RF-sensitive fields are masked unless you run sudo wdutil info.';
+    'replacement for the retired airport tool. It needs an admin password: run '
+    'it as sudo wdutil info.';
 
 /// Load-bearing sudo-masks-RF callout (carried on-screen).
 const String kMenuBarSudoCallout =
-    'Run sudo wdutil info for the real numbers: without sudo, RSSI, noise, MCS, '
-    'and BSSID are masked.';
+    'Run sudo wdutil info. Without sudo, wdutil prints only its usage text '
+    '(checked on macOS 26.7.1).';
 
 const List<RfField> kMenuBarWdutilFields = <RfField>[
   RfField('MAC Address', 'The Mac Wi-Fi interface own MAC'),
@@ -167,12 +205,15 @@ const List<RfField> kMenuBarWdutilFields = <RfField>[
   RfField('Power', 'Radio on/off'),
   RfField('Op Mode', 'Operating mode (station, etc.)'),
   RfField('SSID', 'Network name joined'),
-  RfField('BSSID', 'AP radio MAC (masked without sudo)'),
-  RfField('RSSI', 'Signal strength, dBm (masked without sudo)'),
+  RfField('BSSID', 'AP radio MAC'),
+  RfField('RSSI', 'Signal strength, dBm'),
   RfField('CCA', 'Clear-channel-assessment / channel-busy indicator'),
   RfField('Noise', 'Noise floor, dBm'),
   RfField('Tx Rate', 'Negotiated transmit rate, Mbps'),
-  RfField('Security', 'Auth/cipher (e.g. WPA3 Personal)'),
+  RfField(
+    'Security',
+    'Auth/cipher (e.g. WPA3 Personal). Reports Enhanced Open (OWE) as None',
+  ),
   RfField('PHY Mode', '802.11 generation'),
   RfField('MCS Index', 'Modulation-and-coding-scheme index'),
   RfField('Guard Interval', 'Long / short GI'),

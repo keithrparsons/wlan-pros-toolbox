@@ -43,6 +43,19 @@ void main() {
       }
     });
 
+    // Checked 25 OCT 2026 on macOS 26.7.1: without sudo, wdutil prints only
+    // its usage text, so there is no masked output for sudo to unmask.
+    test('wdutil is described as needing sudo, never as masking RF', () {
+      final CliCommand c = CliCommandsScreen.commands
+          .firstWhere((CliCommand c) => c.macCmd == 'wdutil info');
+      final String text = <String>[
+        c.description,
+        for (final CliOption o in c.options) o.meaning,
+      ].join(' ');
+      expect(text.toLowerCase().contains('mask'), isFalse, reason: text);
+      expect(text.contains('needs sudo'), isTrue, reason: text);
+    });
+
     test('macOS and Linux diverge on a real row (3-column split is load-bearing)',
         () {
       // netstat connections: macOS netstat -an vs Linux ss -tunap.

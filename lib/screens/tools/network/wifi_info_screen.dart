@@ -1138,7 +1138,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ..writeln('Security')
       ..writeln(
         '  Security type: ${info.securityAvailable ? _copyVal(info.securityType?.label, null) : 'Not exposed by $platformLabel'}'
-        '${(info.securityType?.isPersonalCoarse ?? false) || (info.securityType?.isEnterpriseCoarse ?? false) ? ' (iOS coarse, WPA2/WPA3 not distinguished)' : ''}',
+        '${(info.securityType?.isPersonalCoarse ?? false) || (info.securityType?.isEnterpriseCoarse ?? false) ? ' (iOS coarse, WPA2/WPA3 not distinguished)' : ''}'
+        '${info.securityNote != null ? ' (${info.securityNote})' : ''}',
       );
 
     // Android exposes no noise floor, so Noise + SNR carry an explicit reason in
@@ -1865,6 +1866,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       note =
           'iOS reports only Open / Personal / Enterprise. It cannot '
           'distinguish WPA2 from WPA3';
+    } else {
+      note = info.securityNote;
     }
 
     return _Card(

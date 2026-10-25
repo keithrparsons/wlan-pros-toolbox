@@ -598,6 +598,45 @@ class _SlowLinkMacAdapter implements WifiInfoAdapter {
   Future<bool> openNamePermissionSettings() async => true;
 }
 
+/// macOS adapter whose CoreWLAN reading says Open, as it does on an Enhanced
+/// Open (OWE) network before the beacon is read (25 OCT 2026, Keith Guest).
+class _OpenMacAdapter implements WifiInfoAdapter {
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+  @override
+  bool get gatesNameBehindPermission => true;
+  @override
+  Future<ConnectedAp> fetch() async => ConnectedAp.fromWifiInfo(
+        const WifiInfo(
+          interfaceName: 'en0',
+          ssid: 'Keith Guest',
+          bssid: '22:0b:8b:c2:76:c4',
+          rssiDbm: -55,
+          noiseDbm: -95,
+          snrDb: 40,
+          txRateMbps: 866,
+          phyMode: '802.11ax',
+          channel: 149,
+          channelWidthMhz: 80,
+          band: '5 GHz',
+          countryCode: 'US',
+          hardwareAddress: 'a4:83:e7:aa:bb:cc',
+          securityToken: 'open',
+          poweredOn: true,
+          locationAuthorized: true,
+        ),
+      );
+  @override
+  Future<bool> requestNamePermission() async => true;
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
+}
+
 /// iOS bridge modeling the FIRST-RUN stuck condition: a payload was received
 /// before AND a STALE App Group monitoring flag is still set `true` (a prior
 /// session's loop was killed without a clean Stop). No live producer exists. The
@@ -1429,6 +1468,42 @@ void main() {
       expect(find.text('20 Mbps'), findsOneWidget);
       // The old combined string must be gone.
       expect(find.textContaining(' down / '), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a macOS Open carries the OWE caveat in the copied report (macOS shows no '
+    'on-screen Security row here)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _OpenMacAdapter(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+      await settleDetails(tester);
+
+      final Finder copyBtn = find.text('Copy these details');
+      await tester.ensureVisible(copyBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(copyBtn);
+      await tester.pumpAndSettle();
+      expect(
+        clipboardWrites.last,
+        contains('Security: Open (no encryption) (macOS also reports '
+            'Enhanced Open (OWE) as open)'),
+      );
+      // No "wide open" critical finding on an Open macOS has not proven.
+      expect(clipboardWrites.last, isNot(contains('wide open')));
+      await tester.pump(const Duration(milliseconds: 1600));
     },
   );
 

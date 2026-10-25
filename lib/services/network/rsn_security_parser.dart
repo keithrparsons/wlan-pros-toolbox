@@ -114,6 +114,20 @@ List<String> securityTokensFromIes(
   return const <String>[];
 }
 
+/// Whether [ies] carry any RSN element or WPA1 vendor element at all, whether
+/// or not its AKM is one we classify.
+///
+/// CoreWLAN's per-BSS IE blob comes without the Capability Information field,
+/// so [securityTokensFromIes] cannot say "open" from it. When the OS already
+/// reports the network as open, a beacon with no security element at all is
+/// what confirms that answer.
+bool hasRsnOrWpaElement(Uint8List ies) =>
+    walkInformationElements(ies).any(
+      (InformationElement e) =>
+          e.id == kEidRsn ||
+          (e.id == kEidVendorSpecific && _isWpaVendorIe(e.bytes)),
+    );
+
 /// True when a vendor-specific element body is the WPA1 element: OUI `00-50-F2`
 /// followed by type byte `1`.
 bool _isWpaVendorIe(Uint8List body) {

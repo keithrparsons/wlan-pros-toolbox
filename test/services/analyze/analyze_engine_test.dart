@@ -12,7 +12,9 @@ import 'package:wlan_pros_toolbox/services/network/analyze/analyze_engine.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_input.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_report_text.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_rules.dart';
+import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_grading.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_security.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_vs_internet.dart';
 
@@ -467,6 +469,49 @@ void main() {
           AnalyzeEngine.analyze(const AnalyzeInput(security: WifiSecurity.open));
       final f = report.findings.firstWhere((f) => f.ruleId == 'R-35');
       expect(f.severity, FindingSeverity.critical);
+    });
+
+    // CoreWLAN reports Enhanced Open (OWE) as open (25 OCT 2026). An Open it
+    // has not proven is not grounds for "your Wi-Fi is wide open".
+    test('a macOS Open that may be OWE does NOT fire R-35', () {
+      expect(
+        _firedIds(const AnalyzeInput(
+          security: WifiSecurity.open,
+          securityOpenMayBeOwe: true,
+        )),
+        isNot(contains('R-35')),
+      );
+    });
+
+    test('fromConnectionState carries may-be-OWE from the macOS reading', () {
+      final ConnectedAp unproven = ConnectedAp.fromWifiInfo(
+        const WifiInfo(
+          interfaceName: 'en0',
+          ssid: 'Keith Guest',
+          bssid: '22:0b:8b:c2:76:c4',
+          rssiDbm: -60,
+          noiseDbm: -95,
+          snrDb: 35,
+          txRateMbps: 600,
+          phyMode: '802.11ax',
+          channel: 149,
+          channelWidthMhz: 80,
+          band: '5 GHz',
+          countryCode: 'US',
+          hardwareAddress: null,
+          securityToken: 'open',
+          poweredOn: true,
+          locationAuthorized: true,
+        ),
+      );
+      AnalyzeInput input(ConnectedAp ap) => AnalyzeInput.fromConnectionState(
+            ap: ap,
+            internet: null,
+            engine: null,
+          );
+      expect(_firedIds(input(unproven)), isNot(contains('R-35')));
+      expect(_firedIds(input(unproven.withBeaconConfirmsOpen())),
+          contains('R-35'));
     });
 
     test('WEP fires R-36 critical', () {

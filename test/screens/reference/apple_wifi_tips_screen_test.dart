@@ -44,6 +44,12 @@ void main() {
       expect(kAppleIosSingleSourceNote.contains('111786'), isTrue);
     });
 
+    test('the Option-click summary names security, MCS and NSS', () {
+      for (final String field in <String>['security', 'MCS index', 'NSS']) {
+        expect(kAppleOptionClickBody.contains(field), isTrue, reason: field);
+      }
+    });
+
     test('no em dash anywhere in the data', () {
       final List<String> all = <String>[
         kAppleSettingsIntro,

@@ -29,6 +29,19 @@
 // the map (null stays null); the cache NEVER holds a guessed or BSSID-derived
 // name. It is a store of already-decoded truth, not a source of guesses.
 
+/// What a BSS's own beacon says about its security, as far as the macOS
+/// adapter needs it.
+enum BeaconSecurity {
+  /// The RSN element lists AKM 00-0F-AC:18 (OWE).
+  owe,
+
+  /// No RSN element and no WPA1 element: the beacon advertises no security.
+  noSecurityElement,
+
+  /// A security element that is not OWE.
+  other,
+}
+
 /// App-wide, BSSID-keyed cache of decoded AP names plus the per-BSSID scan
 /// throttle. Adapters read/write [instance]; tests may construct an isolated
 /// cache directly, or call [clear] to reset the singleton between cases.
@@ -50,6 +63,16 @@ class ApNameCache {
   /// and because the timestamp is shared, two adapters cannot each scan the same
   /// not-yet-known BSSID inside that window.
   final Map<String, DateTime> _lastScanAtByBssid = <String, DateTime>{};
+
+  /// What the connected BSS's OWN beacon said about its security, per BSSID,
+  /// and when it was read; absent when never read. Kept beside the name
+  /// because the same beacon scan yields both. Unlike a name it CAN change for
+  /// a BSSID (an AP switched between OWE and open), hence the read time.
+  /// Needed because CoreWLAN `security()` reports Enhanced Open as `.none`
+  /// (seen 25 OCT 2026 on Keith's OWE SSID).
+  final Map<String, ({BeaconSecurity security, DateTime readAt})>
+      _beaconSecurityByBssid =
+      <String, ({BeaconSecurity security, DateTime readAt})>{};
 
   /// The in-flight name scan per normalized BSSID, so EVERY adapter interested
   /// in a BSSID can await the ONE scan that is actually running for it — not
@@ -128,6 +151,23 @@ class ApNameCache {
     _nameByBssid[normBssid] = name;
   }
 
+  /// What [normBssid]'s beacon said about its security and when that was
+  /// read, or null when not yet read.
+  ({BeaconSecurity security, DateTime readAt})? beaconSecurityFor(
+    String normBssid,
+  ) =>
+      _beaconSecurityByBssid[normBssid];
+
+  /// Records what [normBssid]'s own beacon said at [readAt]. Callers pass only
+  /// a verdict decoded from that BSS's beacon IEs.
+  void cacheBeaconSecurity(
+    String normBssid,
+    BeaconSecurity security,
+    DateTime readAt,
+  ) {
+    _beaconSecurityByBssid[normBssid] = (security: security, readAt: readAt);
+  }
+
   /// The last time a scan was ATTEMPTED for [normBssid], or null if never.
   DateTime? lastScanAt(String normBssid) => _lastScanAtByBssid[normBssid];
 
@@ -144,6 +184,7 @@ class ApNameCache {
   /// scan, which is exactly what isolation needs.
   void clear() {
     _nameByBssid.clear();
+    _beaconSecurityByBssid.clear();
     _lastScanAtByBssid.clear();
     _inFlightScanByBssid.clear();
   }

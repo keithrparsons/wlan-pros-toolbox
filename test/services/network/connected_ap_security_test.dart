@@ -179,4 +179,60 @@ void main() {
       expect(oneShot.mergedWith(live).rxRateAvailable, isTrue);
     });
   });
+
+  // CoreWLAN reports Enhanced Open (OWE) as open (25 OCT 2026, Keith Guest),
+  // so a macOS Open is "may be OWE" until the BSS's own beacon settles it.
+  group('ConnectedAp macOS Open vs OWE', () {
+    const String caveat = 'macOS also reports Enhanced Open (OWE) as open';
+    const String confirmed =
+        "The access point's beacon confirms this network is open";
+
+    test('a macOS Open may be OWE and says so', () {
+      final ConnectedAp ap =
+          ConnectedAp.fromWifiInfo(_macInfo(securityToken: 'open'));
+      expect(ap.openMayBeOwe, isTrue);
+      expect(ap.securityNote, caveat);
+    });
+
+    test('a beacon-confirmed macOS Open is not OWE and says so', () {
+      final ConnectedAp ap = ConnectedAp.fromWifiInfo(
+        _macInfo(securityToken: 'open'),
+      ).withBeaconConfirmsOpen();
+      expect(ap.openMayBeOwe, isFalse);
+      expect(ap.securityNote, confirmed);
+    });
+
+    test('a macOS Open upgraded to OWE carries no note', () {
+      final ConnectedAp ap = ConnectedAp.fromWifiInfo(
+        _macInfo(securityToken: 'open'),
+      ).withSecurity(WifiSecurity.owe);
+      expect(ap.openMayBeOwe, isFalse);
+      expect(ap.securityNote, isNull);
+    });
+
+    test('a non-open macOS answer carries no note', () {
+      final ConnectedAp ap =
+          ConnectedAp.fromWifiInfo(_macInfo(securityToken: 'wpa2Personal'));
+      expect(ap.openMayBeOwe, isFalse);
+      expect(ap.securityNote, isNull);
+    });
+
+    test('an Open from another platform carries no macOS note', () {
+      const ConnectedAp ap = ConnectedAp(
+        securityType: WifiSecurity.open,
+        securityAvailable: true,
+      );
+      expect(ap.openMayBeOwe, isFalse);
+      expect(ap.securityNote, isNull);
+    });
+
+    test('the flag survives the name enrichment and a gap-fill merge', () {
+      final ConnectedAp ap = ConnectedAp.fromWifiInfo(
+        _macInfo(securityToken: 'open'),
+      ).withApName('Workroom');
+      expect(ap.openMayBeOwe, isTrue);
+      expect(const ConnectedAp().mergedWith(ap).openMayBeOwe, isTrue);
+      expect(ap.mergedWith(const ConnectedAp()).openMayBeOwe, isTrue);
+    });
+  });
 }

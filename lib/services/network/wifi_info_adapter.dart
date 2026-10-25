@@ -40,7 +40,9 @@ import 'ap_name_decoder.dart';
 import 'connected_ap.dart';
 import 'pi_backend.dart';
 import 'pi_backend_client.dart';
+import 'rsn_security_parser.dart';
 import 'wifi_info_service.dart';
+import 'wifi_security.dart';
 import 'windows_wifi_reader.dart';
 
 /// Which data source backs the Wi-Fi Information tool on the current platform.
@@ -239,6 +241,14 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// cached. Throttles the radio; a cached BSSID is never re-scanned at all.
   final Duration _apNameRescanFloor;
 
+  /// How long a beacon's security verdict stands before an Open-reported BSSID's
+  /// beacon is read again. An AP can be switched between OWE and open under the
+  /// same BSSID (Keith did, 25 OCT 2026), so the verdict cannot be kept for the
+  /// whole session the way an AP name is. Five minutes is a chosen balance, not
+  /// a measured or published value: often enough to catch a reconfiguration,
+  /// rare enough that the extra off-channel scans do not disturb the link.
+  static const Duration _beaconRecheckAfter = Duration(minutes: 5);
+
   /// Injectable clock (for the throttle), so tests are deterministic.
   final DateTime Function() _now;
 
@@ -289,24 +299,44 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
         'Wi-Fi snapshot read timed out.',
       ),
     );
-    final ConnectedAp ap = ConnectedAp.fromWifiInfo(info);
+    ConnectedAp ap = ConnectedAp.fromWifiInfo(info);
     if (!_enrichApName) return ap;
     final String? bssid = _normBssid(ap.bssid);
     if (bssid == null) return ap;
+
+    // CoreWLAN reports Enhanced Open (OWE) as open, so "open" is upgraded only
+    // when this BSS's own beacon proved OWE. Any other macOS answer stands.
+    // A beacon with no security element at all confirms the open answer.
+    final bool macSaysOpen = ap.securityType == WifiSecurity.open;
+    final ({BeaconSecurity security, DateTime readAt})? beacon =
+        _apNameCache.beaconSecurityFor(bssid);
+    if (macSaysOpen && beacon?.security == BeaconSecurity.owe) {
+      ap = ap.withSecurity(WifiSecurity.owe);
+    }
+    if (macSaysOpen && beacon?.security == BeaconSecurity.noSecurityElement) {
+      ap = ap.withBeaconConfirmsOpen();
+    }
 
     // Shared-cache hit → attach it with NO scan. This is the cross-screen win:
     // if ANY other adapter (another screen) already decoded this BSSID's name,
     // it is served here instantly, cold-start scan skipped entirely.
     final String? cached = _apNameCache.nameFor(bssid);
-    if (cached != null) return ap.withApName(cached);
+    if (cached != null) ap = ap.withApName(cached);
+    // An unread beacon, or one read too long ago, is re-read. The last verdict
+    // keeps showing until the new one lands, so the label never flickers.
+    final bool beaconDue = macSaysOpen &&
+        (beacon == null ||
+            _now().difference(beacon.readAt) >= _beaconRecheckAfter);
+    if (cached != null && !beaconDue) return ap;
 
-    // Not cached. Fire-and-forget a throttled background scan ONLY when Location
-    // is authorized (the IE bytes are nil without it). Crucially, do NOT await
-    // it: the RF snapshot and the roam recording never wait on a scan, so the
-    // main thread and the poll loop are never blocked (the beachball fix's Dart
-    // half). The name fills in on a later poll once the scan caches it.
+    // Not settled. Fire-and-forget a throttled background scan ONLY when
+    // Location is authorized (the IE bytes are nil without it). Crucially, do
+    // NOT await it: the RF snapshot and the roam recording never wait on a
+    // scan, so the main thread and the poll loop are never blocked (the
+    // beachball fix's Dart half). The name and any OWE proof fill in on a later
+    // poll once the scan caches them.
     if (info.locationAuthorized) _maybeScheduleApNameScan(bssid);
-    return ap; // honest-null until the async scan resolves
+    return ap; // honest Open / null name until the async scan resolves
   }
 
   /// Normalizes a BSSID to a stable cache key, or null when it carries no usable
@@ -357,7 +387,9 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     });
   }
 
-  /// Reads the connected AP's beacon IE bytes, decodes the name, and caches it.
+  /// Reads the connected AP's beacon IE bytes, decodes the name and what the
+  /// beacon says about security (OWE, no security element, or other), and
+  /// caches both.
   /// Total and best-effort: any failure, timeout, empty blob, or stale-scan
   /// BSSID mismatch leaves the cache untouched (honest-null), never a fabricated
   /// value, and never throws.
@@ -377,6 +409,19 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
       // the BSSID we asked about.
       final String? scanned = _normBssid(blob.bssid);
       if (scanned != null && scanned != bssid) return;
+      // A security verdict needs the bytes positively tied to this BSSID; the
+      // name path above tolerates a missing BSSID, a security claim does not.
+      if (scanned == bssid) {
+        _apNameCache.cacheBeaconSecurity(
+          bssid,
+          securityTokensFromIes(bytes).contains('owe')
+              ? BeaconSecurity.owe
+              : hasRsnOrWpaElement(bytes)
+              ? BeaconSecurity.other
+              : BeaconSecurity.noSecurityElement,
+          _now(),
+        );
+      }
       final String? name = decodeApName(bytes);
       // Write the decoded name to the SHARED cache so every other adapter (every
       // other screen) serves it instantly. Only a real decoded name is stored;

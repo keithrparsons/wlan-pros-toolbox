@@ -731,7 +731,9 @@ bool _dnsSlow(AnalyzeInput i) =>
     i.dnsResolutionMs != null && i.dnsResolutionMs! >= kDnsSlowMs;
 
 // G. Security, read off the WifiSecurity classification.
-bool _securityOpen(AnalyzeInput i) => i.security == WifiSecurity.open;
+// An Open macOS has not proven may be OWE, so it is not "wide open".
+bool _securityOpen(AnalyzeInput i) =>
+    i.security == WifiSecurity.open && !i.securityOpenMayBeOwe;
 bool _securityWep(AnalyzeInput i) => i.security == WifiSecurity.wep;
 bool _securityWpa2OrOlder(AnalyzeInput i) =>
     i.security == WifiSecurity.wpaPersonal ||
