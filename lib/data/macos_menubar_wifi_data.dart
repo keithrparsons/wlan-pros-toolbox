@@ -94,10 +94,24 @@ const List<MenuBarPath> kMenuBarPaths = <MenuBarPath>[
 // ── Section A — Option-click Wi-Fi menu fields ──
 
 const String kMenuBarOptionClickIntro =
-    'Hold Option and click the Wi-Fi icon. Under the connected SSID, macOS '
-    'prints the live association detail.';
+    'Hold Option and click the Wi-Fi icon. Above the network list macOS shows '
+    'the Wi-Fi interface; under the connected SSID it prints the live '
+    'association detail, in the order below.';
 
+// Order as printed on macOS 26.7.1 (Keith's Mac, Option-click screenshot on
+// Keith Guest, 25 OCT 2026). Interface Name and Hardware Address sit above the
+// network list; the rest are under the connected network name.
 const List<RfField> kMenuBarOptionClickFields = <RfField>[
+  RfField(
+    'Interface Name',
+    'The Wi-Fi interface, e.g. en0 (shown above the network list)',
+    proNote: 'Names the interface to use with command-line tools',
+  ),
+  RfField(
+    'Hardware Address',
+    'The Wi-Fi interface own MAC (shown above the network list)',
+    proNote: 'The burned-in address, not necessarily the one on the air',
+  ),
   RfField(
     'IP Address',
     'The Mac IPv4 address on this network',
@@ -107,6 +121,12 @@ const List<RfField> kMenuBarOptionClickFields = <RfField>[
     'Router',
     'Default-gateway IP',
     proNote: 'Confirms the gateway the Mac is using',
+  ),
+  RfField(
+    'MAC Address',
+    'The MAC address this Mac uses on this network',
+    proNote: 'Differs from the Hardware Address when a private Wi-Fi '
+        'address is in use; this is the one the AP and DHCP server see',
   ),
   RfField(
     'Security',
@@ -121,7 +141,8 @@ const List<RfField> kMenuBarOptionClickFields = <RfField>[
   ),
   RfField(
     'Channel',
-    'Channel, band and width on one line, e.g. 108 (5 GHz, 80 MHz)',
+    'Channel, band and width on one line, e.g. 149 (5 GHz, 80 MHz); a DFS '
+        'channel is prefixed, e.g. DFS, 108 (5 GHz, 80 MHz)',
     proNote: 'Confirms band (2.4 / 5 / 6 GHz), channel plan and width',
   ),
   RfField(

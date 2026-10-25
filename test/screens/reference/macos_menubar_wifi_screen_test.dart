@@ -55,6 +55,39 @@ void main() {
       }
     });
 
+    // Keith's Mac, macOS 26.7.1, Option-click screenshot 25 OCT 2026. Interface
+    // Name and Hardware Address sit above the network list; the rest are under
+    // the connected network name, in this order.
+    test('Option-click fields are in the order macOS prints them', () {
+      expect(
+        kMenuBarOptionClickFields.map((f) => f.field).toList(),
+        <String>[
+          'Interface Name',
+          'Hardware Address',
+          'IP Address',
+          'Router',
+          'MAC Address',
+          'Security',
+          'BSSID',
+          'Channel',
+          'Country Code',
+          'RSSI',
+          'Noise',
+          'Tx Rate',
+          'PHY Mode',
+          'MCS Index',
+          'NSS',
+        ],
+      );
+    });
+
+    test('Channel shows the "DFS, " prefix macOS prints on a DFS channel', () {
+      final RfField channel =
+          kMenuBarOptionClickFields.firstWhere((f) => f.field == 'Channel');
+      expect(channel.meaning, contains('149 (5 GHz, 80 MHz)'));
+      expect(channel.meaning, contains('DFS, 108 (5 GHz, 80 MHz)'));
+    });
+
     test('Option-click prints width inside Channel, not as its own line', () {
       expect(
         kMenuBarOptionClickFields.any((f) => f.field == 'Channel width'),
