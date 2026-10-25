@@ -249,6 +249,13 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// rare enough that the extra off-channel scans do not disturb the link.
   static const Duration _beaconRecheckAfter = Duration(minutes: 5);
 
+  /// Ceiling on the background beacon scan, separate from [_fetchTimeout]. A
+  /// full CoreWLAN scan took 15.2 s on Keith's Mac (25 OCT 2026, 2.4/5/6 GHz
+  /// with DFS); the 5 s snapshot timeout cut every scan off, so no AP name and
+  /// no OWE proof ever landed. Twice the measured time; the scan runs off the
+  /// main thread and nothing waits on it, so a long ceiling costs nothing.
+  static const Duration _beaconScanTimeout = Duration(seconds: 30);
+
   /// Injectable clock (for the throttle), so tests are deterministic.
   final DateTime Function() _now;
 
@@ -310,10 +317,20 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     final bool macSaysOpen = ap.securityType == WifiSecurity.open;
     final ({BeaconSecurity security, DateTime readAt})? beacon =
         _apNameCache.beaconSecurityFor(bssid);
-    if (macSaysOpen && beacon?.security == BeaconSecurity.owe) {
+    final Duration? beaconAge =
+        beacon == null ? null : _now().difference(beacon.readAt);
+    // A verdict speaks only until its re-read has had the full scan window. A
+    // re-read that lands replaces it without a flicker; one that cannot land
+    // (a hidden OWE BSS is left out of every macOS scan) lets it expire rather
+    // than keep claiming something about a BSS that may since have changed.
+    final BeaconSecurity? verdict = beaconAge != null &&
+            beaconAge < _beaconRecheckAfter + _beaconScanTimeout
+        ? beacon!.security
+        : null;
+    if (macSaysOpen && verdict == BeaconSecurity.owe) {
       ap = ap.withSecurity(WifiSecurity.owe);
     }
-    if (macSaysOpen && beacon?.security == BeaconSecurity.noSecurityElement) {
+    if (macSaysOpen && verdict == BeaconSecurity.noSecurityElement) {
       ap = ap.withBeaconConfirmsOpen();
     }
 
@@ -325,8 +342,7 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     // An unread beacon, or one read too long ago, is re-read. The last verdict
     // keeps showing until the new one lands, so the label never flickers.
     final bool beaconDue = macSaysOpen &&
-        (beacon == null ||
-            _now().difference(beacon.readAt) >= _beaconRecheckAfter);
+        (beaconAge == null || beaconAge >= _beaconRecheckAfter);
     if (cached != null && !beaconDue) return ap;
 
     // Not settled. Fire-and-forget a throttled background scan ONLY when
@@ -396,7 +412,7 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   Future<void> _scanAndCacheApName(String bssid) async {
     try {
       final ApIeBlob blob = await _service.connectedApIeBlob().timeout(
-        _fetchTimeout,
+        _beaconScanTimeout,
         onTimeout: () => const ApIeBlob(
           ieBytes: null,
           bssid: null,
@@ -404,6 +420,10 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
         ),
       );
       final Uint8List? bytes = blob.ieBytes;
+      // macOS leaves a hidden OWE BSS (the OWE half of a transition pair) out
+      // of every scan, even with includeHidden and its open twin with it (seen
+      // 25 OCT 2026 on Keith Guest), so for that BSS there are no bytes and the
+      // reading stays an unproven Open.
       if (bytes == null || bytes.isEmpty) return;
       // Guard a stale-scan mismatch: only trust bytes whose scanned BSS matches
       // the BSSID we asked about.

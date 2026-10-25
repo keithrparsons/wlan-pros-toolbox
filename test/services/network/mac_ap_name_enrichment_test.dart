@@ -58,6 +58,10 @@ class _CountingService {
   Map<dynamic, dynamic>? ieBlob;
   int scanCount = 0;
 
+  /// How long the beacon scan takes. A real CoreWLAN scan took 15.2 s on
+  /// Keith's Mac (25 OCT 2026), far longer than the 5 s snapshot timeout.
+  Duration scanTakes = Duration.zero;
+
   WifiInfoService get service => WifiInfoService(
         platformOverride: 'macos',
         invoke: (String method, [dynamic args]) async {
@@ -66,6 +70,7 @@ class _CountingService {
               return wifiInfo;
             case 'connectedApIeBlob':
               scanCount++;
+              await Future<void>.delayed(scanTakes);
               return ieBlob;
             default:
               return null;
@@ -223,6 +228,61 @@ void main() {
 
       final ConnectedAp second = await adapter.fetch();
       expect(second.securityType, WifiSecurity.owe);
+    });
+
+    // Keith, 25 OCT 2026: 22:0b:8b:c2:76:c4 was the open half (verdict:
+    // confirmed open), then UniFi made it OWE under the same BSSID. While a Mac
+    // sits on a hidden OWE BSS macOS leaves it out of every scan, so the
+    // re-read can fail for good; an expired verdict must not keep speaking.
+    test('an expired "confirms open" verdict stops showing when the re-read '
+        'finds nothing', () async {
+      DateTime clock = DateTime(2026, 10, 25, 9, 20);
+      final _CountingService fake = macSays(
+        'open',
+        _blob(oweBssid, hexBytes(kKeithGuestOpenHalfBeaconIes)),
+      );
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(
+        service: fake.service,
+        enrichApName: true,
+        now: () => clock,
+      );
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect((await adapter.fetch()).beaconConfirmsOpen, isTrue);
+      await adapter.pendingApNameScan;
+
+      // The BSS turns OWE and vanishes from the scan.
+      fake.ieBlob = _blob(null, null);
+      clock = clock.add(const Duration(minutes: 6));
+      final ConnectedAp afterExpiry = await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect(afterExpiry.beaconConfirmsOpen, isFalse);
+      expect(afterExpiry.securityNote,
+          'macOS also reports Enhanced Open (OWE) as open');
+      expect((await adapter.fetch()).beaconConfirmsOpen, isFalse);
+    });
+
+    test('a beacon scan slower than the snapshot timeout still lands',
+        () async {
+      // Keith, 25 OCT 2026: joined to OWE BSS 2e:0b:8b:c2:76:c4, the screen
+      // never left "Open" and showed no AP name, because the scan (15.2 s on
+      // his Mac) was cut off by the 5 s snapshot timeout and cached nothing.
+      final _CountingService fake = macSays(
+        'open',
+        _blob(oweBssid, hexBytes(kKeithGuestOweBeaconIes)),
+      )..scanTakes = const Duration(milliseconds: 300);
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(
+        service: fake.service,
+        enrichApName: true,
+        fetchTimeout: const Duration(milliseconds: 100),
+      );
+
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      final ConnectedAp second = await adapter.fetch();
+      expect(second.securityType, WifiSecurity.owe);
+      expect(second.apName, 'Workroom');
     });
 
     test('the open half of a transition pair stays Open, and once its beacon '
