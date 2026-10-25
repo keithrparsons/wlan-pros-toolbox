@@ -130,11 +130,11 @@ class CliCommandsScreen extends StatefulWidget {
       linCmd: 'iw dev wlan0 link',
       description:
           'Show the connected Wi-Fi interface state: SSID, BSSID, channel, '
-          'RSSI, PHY rate (macOS wdutil needs sudo for full RF; Linux iw is '
+          'RSSI, PHY rate (macOS wdutil needs sudo; Linux iw is '
           'current, iwconfig is legacy)',
       options: <CliOption>[
         CliOption('show interfaces', 'Windows: current Wi-Fi link details'),
-        CliOption('sudo wdutil info', 'macOS: unmasked RF (RSSI/noise/MCS)'),
+        CliOption('sudo wdutil info', 'macOS: the Wi-Fi block (RSSI/noise/MCS)'),
         CliOption('iw dev wlan0 link', 'Linux: current association detail'),
       ],
     ),

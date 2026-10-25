@@ -6,7 +6,7 @@
 // Four sections:
 //   The four built-in paths (overview table).
 //   A. Option-click Wi-Fi menu fields (what each value means).
-//   B. sudo wdutil info — the Wi-Fi block, with the sudo-masks-RF callout.
+//   B. sudo wdutil info — the Wi-Fi block, with the needs-sudo callout.
 //   C. Wireless Diagnostics app (Window-menu tools).
 //   D. Shortcuts "Get Network Details".
 //
@@ -21,7 +21,7 @@
 //    global §8.3 icon-button focus theme).
 //  - disabled → copy is always enabled (const content always present).
 //
-// HONESTY (GL-005, load-bearing): the wdutil sudo-masks-RF callout and the
+// HONESTY (GL-005, load-bearing): the wdutil needs-sudo callout and the
 // "airport is gone" standing decision are carried as real on-screen notes.
 //
 // THEME: every color comes from context.colors so the screen renders correctly

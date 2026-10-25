@@ -2,7 +2,7 @@
 //
 // Dataset assertions guard the four built-in paths, the per-field RF tables
 // (this screen OWNS the "what each field means" reference), and the two
-// load-bearing on-screen callouts: the wdutil sudo-masks-RF note and the
+// load-bearing on-screen callouts: the wdutil needs-sudo note and the
 // airport-is-gone standing decision. Widget smokes confirm render at small
 // widths and in both color modes.
 
@@ -31,9 +31,49 @@ void main() {
       expect(kMenuBarWdutilFields.any((f) => f.field == 'NSS'), isTrue);
     });
 
-    test('the sudo-masks-RF callout is carried (load-bearing)', () {
-      expect(kMenuBarSudoCallout.contains('sudo'), isTrue);
-      expect(kMenuBarSudoCallout.toLowerCase().contains('masked'), isTrue);
+    // Corrected 25 OCT 2026: on macOS 26.7.1 plain `wdutil info` prints only
+    // its usage text. It does not run and mask fields, so the old
+    // "masked without sudo" claim was wrong.
+    test('the sudo callout says wdutil info needs sudo, not that it masks', () {
+      expect(kMenuBarSudoCallout.contains('sudo wdutil info'), isTrue);
+      for (final String s in <String>[
+        kMenuBarWdutilIntro,
+        kMenuBarSudoCallout,
+        for (final RfField f in kMenuBarWdutilFields) f.meaning,
+      ]) {
+        expect(s.toLowerCase().contains('masked'), isFalse, reason: s);
+      }
+    });
+
+    test('the Option-click list carries Security, MCS Index and NSS', () {
+      for (final String field in <String>['Security', 'MCS Index', 'NSS']) {
+        expect(
+          kMenuBarOptionClickFields.any((f) => f.field == field),
+          isTrue,
+          reason: 'Option-click table missing $field',
+        );
+      }
+    });
+
+    test('Option-click prints width inside Channel, not as its own line', () {
+      expect(
+        kMenuBarOptionClickFields.any((f) => f.field == 'Channel width'),
+        isFalse,
+      );
+      final RfField channel =
+          kMenuBarOptionClickFields.firstWhere((f) => f.field == 'Channel');
+      expect(channel.meaning.contains('MHz'), isTrue);
+    });
+
+    test('both Security rows warn that macOS reports OWE as open', () {
+      for (final List<RfField> list in <List<RfField>>[
+        kMenuBarOptionClickFields,
+        kMenuBarWdutilFields,
+      ]) {
+        final RfField security = list.firstWhere((f) => f.field == 'Security');
+        final String text = '${security.meaning} ${security.proNote ?? ''}';
+        expect(text.contains('Enhanced Open (OWE)'), isTrue, reason: text);
+      }
     });
 
     test('airport is documented as gone, never as a working path', () {
@@ -55,6 +95,7 @@ void main() {
         kMenuBarShortcutsBody,
         for (final MenuBarPath p in kMenuBarPaths) ...<String>[p.what, p.detail],
         for (final RfField f in kMenuBarOptionClickFields) f.meaning,
+        for (final RfField f in kMenuBarOptionClickFields) f.proNote ?? '',
         for (final RfField f in kMenuBarWdutilFields) f.meaning,
       ];
       for (final String s in all) {

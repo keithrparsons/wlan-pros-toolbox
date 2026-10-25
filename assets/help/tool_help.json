@@ -9586,7 +9586,7 @@
       "purpose": "The RF data a Wi-Fi pro can pull from a stock Mac with no extra app: the four built-in paths (Option-click menu, wdutil info, the Wireless Diagnostics app, and Shortcuts) and what every RF field means (RSSI, noise, SNR, Tx rate, BSSID, channel, width, PHY mode, MCS, NSS).",
       "whyHere": "On a Mac you do not need an extra app to read live Wi-Fi RF data. This is the field reference for what each value means and which built-in path gives you which detail. The Apple Wi-Fi Tips screen links here for the per-field meaning.",
       "howToUse": [
-        "Use the Option-click Wi-Fi menu for a quick inline read of the current connection. Use sudo wdutil info for the full Wi-Fi detail block; without sudo the sensitive RF fields (RSSI, noise, MCS, BSSID) are hidden.",
+        "Use the Option-click Wi-Fi menu for a quick inline read of the current connection. The menu also shows security, MCS index and NSS, and prints the channel width inside the Channel line. Use sudo wdutil info for the full Wi-Fi detail block; wdutil needs sudo, and without it prints only its usage text.",
         "Open the Wireless Diagnostics app from the Option-click menu, then use its Window menu for Scan, Performance graphs, and a channel Sniffer that captures to a .pcap file.",
         "Tap the copy action in the top bar to copy the whole reference, including the wdutil field list and the sudo note."
       ],
@@ -9594,7 +9594,8 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "The sudo note matters and is carried on screen: run sudo wdutil info, or RSSI, noise, MCS, and BSSID come back hidden.",
+        "The sudo note matters and is carried on screen: run sudo wdutil info. Without sudo, wdutil prints only its usage text (checked on macOS 26.7.1, 25 October 2026).",
+        "Security caveat: the Option-click menu, wdutil and the CoreWLAN API all reported an Enhanced Open (OWE) network as open or None while the access point's beacon advertised OWE (checked 25 October 2026). Do not call a link unencrypted on the Mac's word alone; check the beacon with a scanner.",
         "The airport command is gone (retired in macOS Sonoma 14.4). This reference does not list airport as a working path, because on current macOS it is not one; use wdutil and Wireless Diagnostics instead.",
         "RSSI is your coverage number, noise is the background floor, and RSSI minus noise is the SNR that predicts link quality. Tx rate is the negotiated link rate, not throughput. BSSID identifies the exact AP radio, which is how you track roaming.",
         "Sources: Apple \"Use Wireless Diagnostics on your Mac\" plus corroborating field-availability references and the Toolbox team's on-device Shortcuts verification. Verified live 2026-06-12."

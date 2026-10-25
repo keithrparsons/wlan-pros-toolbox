@@ -194,8 +194,8 @@ const List<DiagUtility> kAppleDiagUtilities = <DiagUtility>[
 const String kAppleOptionClickBody =
     'Holding Option while clicking the Wi-Fi menu-bar icon reveals the RF '
     'detail of the current association inline under the connected SSID: IP '
-    'address, router, BSSID, channel, width, band, country code, RSSI, noise, '
-    'Tx rate, and PHY mode.';
+    'address, router, security, BSSID, channel (with band and width), country '
+    'code, RSSI, noise, Tx rate, PHY mode, MCS index, and NSS.';
 
 const String kAppleOptionClickLinkNote =
     'For the field-by-field meaning of every value the Option-click menu shows, '
