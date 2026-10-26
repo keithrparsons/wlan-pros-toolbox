@@ -65,7 +65,10 @@ class LinkTableService {
     bool? piAvailable,
     bool? isMacOS,
     bool? isWeb,
-  }) : _pi = pi,
+  }) // Public param names (`pi`, `routeProbe`) for callers; private fields.
+    // ignore: prefer_initializing_formals
+    : _pi = pi,
+       // ignore: prefer_initializing_formals
        _routeProbe = routeProbe,
        _run = runner ?? _runProcess,
        _piAvailable = piAvailable ?? PiBackend.available,

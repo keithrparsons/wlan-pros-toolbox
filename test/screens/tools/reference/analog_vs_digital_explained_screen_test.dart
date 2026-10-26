@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/analog_vs_digital_explained_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/lessons/analog_vs_digital_lesson.dart';
-import 'package:wlan_pros_toolbox/widgets/lesson/lesson.dart';
 
 import '../../../widgets/lesson/lesson_suite.dart';
 

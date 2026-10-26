@@ -1,3 +1,6 @@
+@Tags(['golden'])
+library;
+
 // Phone width, because the Pi edition is reached from a BROWSER, and on a job
 // that browser is usually on a phone.
 import 'package:flutter/material.dart';

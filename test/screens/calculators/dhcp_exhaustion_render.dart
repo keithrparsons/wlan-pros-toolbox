@@ -17,7 +17,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/dhcp_exhaustion_screen.dart';
-import 'package:wlan_pros_toolbox/services/wifi_lab/dhcp_exhaustion_model.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 import '../../widgets/presenter/presenter_test_support.dart';

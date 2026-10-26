@@ -80,7 +80,7 @@ void main() {
   // ---- 1. the proven control -------------------------------------------
   _rule('1. CONNECTED AP  (proven path -- a failure here is environmental)');
   try {
-    final Object? info = await readConnectedApFromNativeWifi();
+    final Object info = readConnectedApFromNativeWifi();
     stdout.writeln(const JsonEncoder.withIndent('  ').convert(
       info is Map ? info : <String, Object?>{'value': info.toString()},
     ));
@@ -94,7 +94,7 @@ void main() {
   List<Map<String, Object?>> rows = <Map<String, Object?>>[];
   final Stopwatch sw = Stopwatch()..start();
   try {
-    rows = await enumerateNearbyBssFromNativeWifi();
+    rows = enumerateNearbyBssFromNativeWifi();
     sw.stop();
     stdout.writeln('RETURNED ${rows.length} row(s) in ${sw.elapsedMilliseconds} ms '
         '-- no access violation, the FFI walk completed.');
@@ -137,7 +137,7 @@ void main() {
   stdout.writeln('Waiting 12 s, then enumerating again with no explicit WlanScan...');
   await Future<void>.delayed(const Duration(seconds: 12));
   final List<Map<String, Object?>> again =
-      await enumerateNearbyBssFromNativeWifi();
+      enumerateNearbyBssFromNativeWifi();
   final Set<String> a = rows.map((Map<String, Object?> r) => '${r['bssid']}').toSet();
   final Set<String> b = again.map((Map<String, Object?> r) => '${r['bssid']}').toSet();
   stdout.writeln('first=${a.length}  second=${b.length}  '

@@ -162,8 +162,8 @@ class PingPlotController {
        _service = service ?? PingService(),
        // Keep the public param name clean (`pingStreamFactory`) rather than
        // leaking the private field name into the constructor signature.
-       _pingStreamFactory =
-           pingStreamFactory; // ignore: prefer_initializing_formals
+       // ignore: prefer_initializing_formals
+       _pingStreamFactory = pingStreamFactory;
 
   final PingService _service;
   final int _windowSize;

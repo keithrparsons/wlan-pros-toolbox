@@ -168,8 +168,9 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
       2300,
       (e) => _beaconError = e,
     );
-    if (ssids == null || co == null || tu == null || beacon == null)
+    if (ssids == null || co == null || tu == null || beacon == null) {
       return null;
+    }
 
     return SsidAirtimeCalculator(_shared).compute(
       SsidAirtimeBand(

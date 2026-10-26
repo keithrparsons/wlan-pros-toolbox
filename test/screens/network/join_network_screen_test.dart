@@ -137,8 +137,20 @@ Future<void> pump(WidgetTester tester, PiBackendClient pi) async {
 Future<void> shot(WidgetTester tester, String slug) => expectLater(
     find.byType(MaterialApp), matchesGoldenFile('goldens/$slug.png'));
 
+/// Registers [body] twice: once untagged, so its behavior assertions still run
+/// in CI, and once tagged `golden` with the pixel comparison appended. CI
+/// excludes the `golden` tag (see dart_test.yaml).
+void testWithGolden(
+    String name, String slug, Future<void> Function(WidgetTester) body) {
+  testWidgets(name, body);
+  testWidgets('$name (golden)', (WidgetTester tester) async {
+    await body(tester);
+    await shot(tester, slug);
+  }, tags: <String>['golden']);
+}
+
 void main() {
-  testWidgets('idle: action panel above the list, radio picker present',
+  testWithGolden('idle: action panel above the list, radio picker present', 'join_idle',
       (WidgetTester tester) async {
     await pump(tester, FakePi());
     // REQUIREMENT 1: the panel is above the list even before anything is
@@ -147,10 +159,9 @@ void main() {
     expect(find.text('Radio that scans and joins'), findsOneWidget);
     // THE DEDUPE: MUDI must appear TWICE, once per band.
     expect(find.text('MUDI'), findsNWidgets(2));
-    await shot(tester, 'join_idle');
   });
 
-  testWidgets('802.1X: no passphrase box, and it says why',
+  testWithGolden('802.1X: no passphrase box, and it says why', 'join_8021x',
       (WidgetTester tester) async {
     await pump(tester, FakePi());
     await tester.tap(find.text('CorpSecure').first);
@@ -168,7 +179,6 @@ void main() {
         reason: 'an 802.1X network must not be described as OWE');
     expect(find.byType(TextField), findsNothing,
         reason: 'a passphrase box that cannot work must not be offered');
-    await shot(tester, 'join_8021x');
   });
 
   testWidgets('open network: no passphrase box, and it says why',
@@ -192,7 +202,7 @@ void main() {
     expect(find.textContaining('WPA3-SAE'), findsWidgets);
   });
 
-  testWidgets('connected: the verdict is the largest thing on the card',
+  testWithGolden('connected: the verdict is the largest thing on the card', 'join_connected',
       (WidgetTester tester) async {
     await pump(tester, FakePi(joinResult: connected()));
     await tester.tap(find.text('MUDI').last);
@@ -211,10 +221,9 @@ void main() {
     expect(find.text('86:8f:31:56:df:b9'), findsOneWidget);
     // The transport honesty, which the endpoint deliberately cannot enforce.
     expect(find.textContaining('plain HTTP'), findsOneWidget);
-    await shot(tester, 'join_connected');
   });
 
-  testWidgets('a wrong passphrase is NOT reported as success',
+  testWithGolden('a wrong passphrase is NOT reported as success', 'join_wrong_key',
       (WidgetTester tester) async {
     await pump(tester, FakePi(joinResult: wrongKey()));
     await tester.tap(find.text('MUDI').last);
@@ -228,7 +237,6 @@ void main() {
     // The Pi's own words distinguish a refused handshake from never reaching
     // the network. Both are failures and they need different next actions.
     expect(find.textContaining('handshake was refused'), findsOneWidget);
-    await shot(tester, 'join_wrong_key');
   });
 
   testWidgets('a hidden network cannot be joined from a list, and says so',

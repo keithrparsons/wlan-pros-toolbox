@@ -153,8 +153,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   Future<void> _prefillFromCurrentNetwork() async {
     final NetworkSuggestion s = await _network.suggest();
     if (!mounted || _userTouched) return;
-    if (s.cidr == null)
+    if (s.cidr == null) {
       return; // NONE — keep the generic default, no fabrication.
+    }
 
     _applyingPrefill = true;
     _subnetCtrl.text = s.cidr!;

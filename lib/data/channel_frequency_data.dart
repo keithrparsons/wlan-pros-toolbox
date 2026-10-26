@@ -431,8 +431,9 @@ List<BondedChannel> bondedChannels({
   required int primaryChannel,
   required int widthMHz,
 }) {
-  if (!isValid20MhzPrimary(band, primaryChannel))
+  if (!isValid20MhzPrimary(band, primaryChannel)) {
     return const <BondedChannel>[];
+  }
 
   // 20 MHz: the channel is its own only component.
   if (widthMHz == 20) {

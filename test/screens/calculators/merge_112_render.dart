@@ -11,7 +11,6 @@
 // 802.1X and EAP Ladder with a Break it fault; and the ? list in each mode.
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';

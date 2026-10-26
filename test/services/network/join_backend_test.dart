@@ -9,7 +9,7 @@ import 'package:wlan_pros_toolbox/services/network/pi_backend_client.dart';
 
 /// Minimal Pi double. Returns whatever the test hands it.
 class _Pi implements PiBackendClient {
-  _Pi({this.connectResult, this.throwOnConnect});
+  _Pi({this.connectResult}) : throwOnConnect = null;
   final PiJoinResult? connectResult;
   final Object? throwOnConnect;
 
@@ -69,8 +69,8 @@ PiJoinResult _result({required bool associated, String? reason, String? ssid}) {
     link: PiWifiLink.fromJson(<String, dynamic>{
       'interface': 'wlan0',
       'associated': associated,
-      if (reason != null) 'reason': reason,
-      if (ssid != null) 'ssid': ssid,
+      'reason': ?reason,
+      'ssid': ?ssid,
     }),
     requestedSsid: ssid,
     secureTransport: false,

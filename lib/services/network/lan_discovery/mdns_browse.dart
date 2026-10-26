@@ -436,8 +436,9 @@ class MdnsBrowser {
     MdnsDiscoveryFactory? discoveryFactory,
     // Public-named so callers in other libraries (tests) can supply it; an
     // initializing formal would force the param name to start with `_`.
-  }) : _discoveryFactory =
-           discoveryFactory; // ignore: prefer_initializing_formals
+  })
+    // ignore: prefer_initializing_formals
+    : _discoveryFactory = discoveryFactory;
 
   final List<String> serviceTypes;
   final Duration timeout;
