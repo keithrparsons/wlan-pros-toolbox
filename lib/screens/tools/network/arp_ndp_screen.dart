@@ -771,9 +771,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             'iOS does not give third-party apps access to the ARP/NDP neighbor '
             'table, so there is no reliable way to list IP-to-MAC mappings for '
             'the local network on this device. Run ARP / NDP from the macOS, '
-            'Windows, Linux, or Android build. On macOS and Windows the toolbox '
-            'lists reachable hosts; on Linux and Android it also attaches the '
-            'real MAC addresses.',
+            'Windows, or Android build. On macOS and Windows the toolbox lists '
+            'reachable hosts and attaches their real MAC addresses; on Android '
+            'it lists reachable hosts without MAC addresses.',
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
         ],
