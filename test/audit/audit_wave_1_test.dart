@@ -141,7 +141,7 @@ void main() {
   // Signal thresholds — the help must match the screen's CANONICAL scale.
   //
   // Canonical (Keith, confirmed 2026-07-12): Excellent > -60 / Good -60..-67 /
-  // Fair -67..-72 / Poor -73 or weaker. Earlier the help and the screen carried
+  // Fair -68..-72 / Poor -73 or weaker. Earlier the help and the screen carried
   // different numbers (the app told the user one scale and showed another); this
   // pins the help to the single canonical scale the screen renders.
   // ─────────────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@
 // table, and the SNR→MCS table.
 //
 // The RSSI quality scale uses KEITH PARSONS' OWN canonical thresholds
-// (Excellent > -60, Good -60..-67, Fair -67..-72, Poor -73 or weaker), confirmed
+// (Excellent > -60, Good -60..-67, Fair -68..-72, Poor -73 or weaker), confirmed
 // 2026-07-12 — his domain expertise over the internet/vendor-appropriated values
 // that previously shipped (GL-005, domain-proof-over-consensus). These are read
 // from the SINGLE SOURCE, [WifiGradingBands.kRssiBands], the very same list the

@@ -8496,7 +8496,7 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: three blocks. RSSI quality scale: Excellent (> -60 dBm) / Good (-60 to -67) / Fair (-67 to -72) / Poor (-73 or weaker). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with a minimum RSSI, minimum SNR, and a note. SNR to MCS (80 MHz, 1 spatial stream): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
+        "What it shows: three blocks. RSSI quality scale: Excellent (> -60 dBm) / Good (-60 to -67) / Fair (-68 to -72) / Poor (-73 or weaker). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with a minimum RSSI, minimum SNR, and a note. SNR to MCS (80 MHz, 1 spatial stream): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
         "These are recommended design targets, not an industry standard. IEEE 802.11 does not define \"good\" or \"poor\" signal levels, and appropriate thresholds vary by site and by customer requirement.",
         "Values vary by client hardware, environment, and AP vendor; treat them as field-planning guidelines, not guarantees.",
         "The SNR-to-MCS rates are indicative (80 MHz, single stream); the MCS 10 and 11 rates are noted as 802.11ax."

@@ -24,7 +24,8 @@
 // ── BANDS ARE KEITH-REVIEWED THRESHOLDS (canonical, confirmed 2026-07-12) ──
 // The dBm / dB cut points below are Keith's reviewed thresholds. The RSSI scale
 // was CONFIRMED as canonical on 2026-07-12 (Excellent > -60, Good -60..-67,
-// Fair -67..-72, Poor -73 or weaker).
+// Fair -68..-72, Poor -73 or weaker). -67 is Good only (Keith, 2026-10-27):
+// the printed Fair range starts at -68 so no reading sits in two bands.
 //
 // SINGLE SOURCE OF TRUTH. These live as named constants — and, for RSSI, as the
 // [WifiGradingBands.kRssiBands] list — in ONE place. BOTH the grading engine
@@ -126,8 +127,8 @@ class WifiGradingBands {
     RssiBand(
       grade: QualityGrade.fair,
       label: 'Fair',
-      minDbm: rssiFairDbm, // -72  → -67 to -72
-      displayRange: '-67 to -72',
+      minDbm: rssiFairDbm, // -72  → -68 to -72
+      displayRange: '-68 to -72',
     ),
     RssiBand(
       grade: QualityGrade.poor,

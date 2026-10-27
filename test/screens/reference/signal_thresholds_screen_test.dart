@@ -2,7 +2,7 @@
 //
 // Dataset tests assert the load-bearing thresholds: the RSSI quality-scale
 // bands use KEITH PARSONS' OWN canonical values (Excellent > -60, Good
-// -60..-67, Fair -67..-72, Poor -73 or weaker — confirmed 2026-07-12,
+// -60..-67, Fair -68..-72, Poor -73 or weaker — confirmed 2026-07-12,
 // domain-proof over consensus, GL-005). The screen builds these from the single
 // source WifiGradingBands.kRssiBands; the values below are hand-typed from
 // Keith's confirmed bands (NOT read back from the constant under test), so a
@@ -67,7 +67,7 @@ void main() {
           .range;
       expect(range('Excellent'), '> -60 dBm');
       expect(range('Good'), '-60 to -67');
-      expect(range('Fair'), '-67 to -72');
+      expect(range('Fair'), '-68 to -72');
       expect(range('Poor'), '-73 or weaker');
     });
 
