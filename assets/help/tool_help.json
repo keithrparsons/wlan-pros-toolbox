@@ -7327,7 +7327,7 @@
       "purpose": "Estimates the total signal loss for a run of coax of a known type, length, and frequency, plus the loss per 100 feet at that frequency.",
       "whyHere": "Cable loss comes straight off both your transmit and receive signal. Pick a cable type and length, and the tool tells you how much signal the feedline will eat.",
       "howToUse": [
-        "Pick the cable type from the list (six LMR types).",
+        "Pick the cable type from the list (five LMR types).",
         "Enter the frequency and pick its unit (GHz or MHz).",
         "Enter the run length and pick its unit (feet or meters).",
         "Read the total loss in dB plus the per-100-foot figure."
@@ -7335,7 +7335,7 @@
       "inputs": [
         {
           "name": "Cable type",
-          "unit": "One of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900, LMR-1200",
+          "unit": "One of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900",
           "range": ""
         },
         {
@@ -7731,11 +7731,11 @@
           "range": "Defaults to 20 if left blank"
         }
       ],
-      "algorithm": "Thermal noise rises with both temperature and channel width; wider channels let in more noise. The tool computes the thermal noise floor from those two, then adds your receiver's noise figure to get the receiver noise floor. It also shows a quick rule-of-thumb value: minus 174 dBm per Hz (thermal noise at about 0 degrees C) plus 10 times the log of the bandwidth in Hz.",
+      "algorithm": "Thermal noise rises with both temperature and channel width; wider channels let in more noise. The tool computes the thermal noise floor from those two, then adds your receiver's noise figure to get the receiver noise floor. It also shows a quick rule-of-thumb value: minus 174 dBm per Hz plus 10 times the log of the bandwidth in Hz. The minus 174 is kT at the standard noise reference temperature of 290 K (about 17 degrees C, the T0 of ITU-R P.372), which works out to minus 173.98 and rounds to minus 174.",
       "example": "At 20 MHz, noise figure 7 dB, 20 degrees C: the thermal floor is about minus 100.9 dBm, the receiver floor about minus 93.9 dBm, and the rule-of-thumb value about minus 101.0 dBm.",
       "fieldNotes": [
         "This is the theoretical noise floor. Real receivers sit higher because of co-channel interference, adjacent-channel leakage, and ambient RF.",
-        "The minus 174 rule is a 0 degrees C approximation, so it differs slightly from the temperature-aware thermal value."
+        "The minus 174 rule is kT at 290 K (about 17 degrees C) rounded to a whole number, so it differs slightly from the temperature-aware thermal value at any other temperature. At 0 degrees C, for comparison, kT is about minus 174.24 dBm per Hz."
       ],
       "source": "Standard thermal-noise physics computed from the bandwidth, noise figure, and temperature you enter, on your device."
     },

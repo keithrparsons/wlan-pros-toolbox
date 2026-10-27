@@ -8,7 +8,7 @@
 //   bwHz     = bw_MHz × 1e6
 //   thermal  = 10·log10(k · T · bwHz) + 30      (dBm, k = 1.380649e-23 J/K)
 //   rxFloor  = thermal + nfDb
-//   rule     = -174 + 10·log10(bwHz)            (kTB at ~0°C, dBm/Hz form)
+//   rule     = -174 + 10·log10(bwHz)            (kT at T0 = 290 K, ITU-R P.372)
 //
 // Input conventions mirror the PWA exactly:
 //   Bandwidth — a select of 20 / 40 / 80 / 160 / 320 MHz (PWA noise-bw select).
@@ -86,7 +86,8 @@ class NoiseFloorScreen extends StatefulWidget {
   }
 
   /// Rule-of-thumb noise floor in dBm: -174 + 10·log10(bwHz).
-  /// The -174 dBm/Hz constant is kTB at ~0°C (PWA calcNoise).
+  /// The -174 dBm/Hz constant is kT at T0 = 290 K (ITU-R P.372), -173.98
+  /// rounded (PWA calcNoise). At 0°C kT is -174.24 dBm/Hz.
   static double ruleOfThumbDbm(double bwMhz) {
     final double bwHz = bwMhz * 1e6;
     return -174 + 10 * _log10(bwHz);

@@ -721,7 +721,7 @@ Estimates total coax attenuation for a run of a known cable type, length, and fr
 **Why it's here.** Cable loss is a direct subtraction in the transmit and receive chains. Pick a cable type and length and the tool tells you how much signal the feedline will eat.
 
 **How to use**
-1. Pick the cable type from the list.
+1. Pick the cable type from the list (five LMR types).
 2. Enter frequency and pick its unit (GHz or MHz).
 3. Enter run length and pick its unit (ft or m).
 4. Read total loss in dB plus the per-100 ft coefficient.
@@ -730,18 +730,20 @@ Estimates total coax attenuation for a run of a known cable type, length, and fr
 
 | Input | Unit | Range |
 |---|---|---|
-| Cable type | one of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900, LMR-1200, RG-58, RG-8/U, RG-213, RG-214 | - |
+| Cable type | one of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900 | - |
 | Frequency | GHz (default) or MHz | must be > 0 |
 | Length | ft (default) or m | must be > 0 |
 
-**How it works.** Each cable type carries a table of manufacturer-published loss figures (dB per 100 ft) at several reference frequencies. To find the loss at your frequency, the tool interpolates smoothly between the two nearest published points along a square-root-of-frequency curve, which matches how coax loss actually rises with frequency. Below the lowest published point it holds at that lowest value; above the highest point it extends the curve from the top two points. Total loss is then the per-100 ft figure scaled by your run length: total loss (dB) = per-100 ft loss × length in feet ÷ 100. Frequency in GHz is converted to MHz (× 1000) and length in meters to feet (× 3.28084) as needed. Results are rounded to two decimals. As an example anchor, LMR-400 at 2400 MHz is 3.9 dB per 100 ft.
+**How it works.** Times Microwave publishes an attenuation equation on every LMR datasheet: dB per 100 ft = k1 × √(F in MHz) + k2 × F in MHz, with k1 and k2 constants for each cable (LMR-100A 0.709140 / 0.001740, LMR-200 0.320900 / 0.000330, LMR-400 0.122290 / 0.000260, LMR-600 0.075550 / 0.000260, LMR-900 0.051770 / 0.000160; Times Microwave LMR-100A p.9, LMR-200, LMR-400 p.23, LMR-600 p.29, LMR-900 p.33). The tool evaluates that equation at your exact frequency, so nothing is interpolated between table rows. Total loss (dB) = per-100 ft loss × length in feet ÷ 100. Frequency in GHz is converted to MHz (× 1000) and length in meters to feet (× 3.28084) as needed. Results are rounded to two decimals. As an anchor, LMR-400 at 2400 MHz is 6.6 dB per 100 ft.
 
-**Example.** LMR-400, 2.4 GHz, 50 ft → per-100 ft at 2400 MHz = 3.9 dB; total = 3.9 × 50 / 100 = 1.95 dB.
+**Example.** LMR-400, 2.4 GHz, 50 ft → per-100 ft at 2400 MHz = 0.122290 × √2400 + 0.000260 × 2400 = 6.615 dB; total = 6.615 × 50 / 100 = 3.31 dB.
 
 **Field notes**
-- Values are manufacturer-typical at room temperature; real loss rises with temperature and aging, and connectors add loss not modeled here.
-- The square-root-of-frequency interpolation is a smooth fit between published spec points, not a measurement.
-- Extrapolation above the highest published frequency (e.g. above 5800 MHz for LMR cables) is a model estimate. Treat 6 GHz results with caution.
+- Values are manufacturer figures at the datasheet's stated conditions (VSWR 1.0, 25°C). Real loss rises with heat and age, and connectors add loss not modeled here.
+- The equation is Times Microwave's own, so it reproduces their published tables wherever the two overlap, and it stays exact at frequencies they never tabulated (2400 MHz among them).
+- There is no RG-58, RG-8, RG-213 or RG-214 here, on purpose. "RG" is not one cable: Belden 8259 and Belden 9201 are both stamped RG-58 and differ by 54 percent at 900 MHz, and no manufacturer publishes RG attenuation at Wi-Fi frequencies. For an RG run, read dB/100 ft off your actual cable's datasheet by part number.
+- LMR-1200 is deliberately omitted: Times stops tabulating it at 2500 MHz and the equation under-predicts its loss at Wi-Fi frequencies. The five cables offered are all tabulated to 5800 MHz.
+- Above 5800 MHz the tool says plainly that it is extrapolating. Treat a 6 GHz result as a lower bound and confirm against your cable's datasheet.
 
 ### Earth Curvature
 
@@ -847,9 +849,9 @@ Estimates rain attenuation on a microwave link using ITU-R P.838-3 (specific att
 | Path length | km (default) or mi | must be > 0 |
 | Polarization | Horizontal or Vertical | - |
 
-**How it works.** The two coefficients k and α come from the ITU-R P.838-3 published table (18 frequency points spanning 1–100 GHz, with separate horizontal and vertical values). For your exact frequency the tool interpolates k on a log-log basis and α on a log-linear basis, clamping at the table ends. Specific attenuation is then γ (dB/km) = k × (rain rate)^α. The effective path length shortens the geometric length to account for non-uniform rain cells: L_eff = L ÷ (1 + L/d0), where d0 = 35 × e^(−0.015 × rain rate). Total rain attenuation (dB) = γ × L_eff. Outputs are shown to two decimals for attenuation, four for γ, and two for L_eff.
+**How it works.** The two coefficients k and α come from ITU-R P.838-3 Table 5, all 116 published rows spanning 1 to 1000 GHz, with separate horizontal and vertical values. Between rows the tool interpolates k on a log-log basis and α on a log-linear basis, clamping at the table ends. Specific attenuation is then γ (dB/km) = k × (rain rate)^α. The effective path length shortens the geometric length to account for non-uniform rain cells: L_eff = L ÷ (1 + L/d0), where d0 = 35 × e^(−0.015 × rain rate). Total rain attenuation (dB) = γ × L_eff. Outputs are shown to two decimals for attenuation, four for γ, and two for L_eff.
 
-**Example.** 23 GHz, 42 mm/hr, 5 km, Horizontal → interpolating between the 20 and 25 GHz nodes gives k ≈ 0.1027, α ≈ 1.085; γ = 0.1027 × 42^1.085 = 5.7195 dB/km; d0 = 35 × e^(−0.63) = 18.65, L_eff = 5/(1 + 5/18.65) = 3.94 km; attenuation = 5.7195 × 3.94 = 22.55 dB.
+**Example.** 23 GHz, 42 mm/hr, 5 km, Horizontal → Table 5 has a 23 GHz row: k = 0.1286, α = 1.0214; γ = 0.1286 × 42^1.0214 = 5.8510 dB/km; d0 = 35 × e^(−0.63) = 18.64, L_eff = 5/(1 + 5/18.64) = 3.94 km; attenuation = 5.8510 × 3.9425 = 23.07 dB.
 
 **Field notes**
 - The model assumes the rain rate is uniform across the path; real cells are smaller, which the L_eff reduction partly accounts for.
@@ -910,13 +912,13 @@ Computes the thermal noise floor (kTB) for a channel, the receiver noise floor (
 | Noise figure | dB | must be ≥ 0 (default 7; invalid/negative blanks the outputs) |
 | Temperature | °C | defaults to 20 when blank |
 
-**How it works.** The thermal noise floor is the classic kTB relationship: thermal (dBm) = 10 × log10(k × T × bandwidth in Hz) + 30, where k is Boltzmann's constant (1.380649 × 10⁻²³ J/K), T is temperature in kelvin (°C + 273.15), and bandwidth converts from MHz to Hz (× 10⁶). The receiver noise floor adds the noise figure: rx floor = thermal + noise figure. The rule-of-thumb value uses the standard −174 dBm/Hz reference (kTB at roughly 0°C): rule = −174 + 10 × log10(bandwidth in Hz). Outputs are rounded to one decimal.
+**How it works.** The thermal noise floor is the classic kTB relationship: thermal (dBm) = 10 × log10(k × T × bandwidth in Hz) + 30, where k is Boltzmann's constant (1.380649 × 10⁻²³ J/K), T is temperature in kelvin (°C + 273.15), and bandwidth converts from MHz to Hz (× 10⁶). The receiver noise floor adds the noise figure: rx floor = thermal + noise figure. The rule-of-thumb value uses the standard −174 dBm/Hz reference: kT at the noise reference temperature T0 = 290 K (about 17°C, per ITU-R P.372), 10 × log10(1.380649e-23 × 290) + 30 = −173.98, rounded to −174. rule = −174 + 10 × log10(bandwidth in Hz). Outputs are rounded to one decimal.
 
 **Example.** 20 MHz, NF 7 dB, 20°C → thermal = 10 × log10(1.380649e-23 × 293.15 × 20e6) + 30 = −100.9 dBm; rx floor = −93.9 dBm; rule = −174 + 10 × log10(20e6) = −101.0 dBm.
 
 **Field notes**
 - This is the theoretical noise floor; real receivers see a higher effective floor from co-channel interference, adjacent-channel leakage, and ambient RF.
-- The −174 rule is a 0°C approximation and differs slightly from the temperature-aware thermal value.
+- The −174 rule is kT at 290 K (about 17°C) rounded to a whole number, so it differs slightly from the temperature-aware thermal value at any other temperature (at 0°C, kT is −174.24 dBm/Hz).
 
 ### PtP Link Check
 
