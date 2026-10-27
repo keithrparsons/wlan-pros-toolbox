@@ -145,7 +145,7 @@ Read BSS Load, element 11 of the beacon, off the access point you are connected 
 
 **Field notes**
 - An all-zero reading is a reading. An idle access point on a quiet channel really does advertise zeros, and they print as zeros, never as a blank or a dash.
-- The screen never collapses the not-available cases into one grey state, and the distinction is the point. "This access point does not advertise BSS Load" is a claim about somebody's network and is shown only when the beacon was walked end to end with every octet accounted for. A capture cut short, a device that exposed no information elements at all, an element this build refuses to decode, and a source that never said whether the capture was whole are all findings about our own read or about what we were told, and each says so under its own label.
+- The screen never collapses the not-available cases into one gray state, and the distinction is the point. "This access point does not advertise BSS Load" is a claim about somebody's network and is shown only when the beacon was walked end to end with every octet accounted for. A capture cut short, a device that exposed no information elements at all, an element this build refuses to decode, and a source that never said whether the capture was whole are all findings about our own read or about what we were told, and each says so under its own label.
 - The Cisco "QBSS Version 1, non CCA" variant rides the same element ID 11 with a one-octet admission-capacity field carrying different semantics. It is recognized and deliberately not decoded: the standard layout would produce a plausible wrong number. Do not add support for it without a live Cisco capture pinning what that octet means.
 - Channel Utilization is the access point's own sense of the medium over its own measurement window, by physical or virtual carrier sense. It is not a measurement this device made, so two access points on one channel can honestly report different numbers.
 - Station Count is an association count, not a traffic measure. It says nothing about how much air those stations use.
@@ -334,7 +334,7 @@ Picks a Wi-Fi network from a scan and associates to it, then reports what you ac
 - JOINING CHANGES THE NETWORK THIS DEVICE IS ON. That is the point of the tool, but it also means a join can move you to a different subnet, and anything depending on the old one is dropped. On a native join you are moving the machine you are standing at.
 - OPEN AND OWE NEED NO PASSWORD. OWE, which the Wi-Fi Alliance calls Enhanced Open, encrypts without authenticating, so there is nothing to type. A network advertising OWE transition mode is a marker that BOTH an open and an OWE BSS exist, not a security scheme of its own.
 - A FAILED JOIN USUALLY TELLS YOU WHICH KIND OF FAILURE IT WAS. A network that never appears is a different problem from one that appears and then refuses the passphrase, and the two are worth separating before you change anything.
-- 802.1X IS NOT SUPPORTED YET. Enterprise networks need a credential exchange this tool does not carry; it handles open, OWE, WPA2 Personal, and WPA3 Personal.
+- 802.1X IS NOT SUPPORTED. Enterprise networks need a credential exchange this tool does not carry; it handles open, OWE, WPA2 Personal, and WPA3 Personal.
 
 ### Link Info
 
@@ -460,12 +460,12 @@ Discover local-network neighbors: IP, and MAC where the platform exposes it.
 **How to use**
 1. Open and run; it derives the local subnet and sweeps it, attaching cached MACs where available.
 
-**Formula or method.** Active discovery: derive the local subnet as a /24 around the device's primary IPv4 (the shipped tool always sweeps a /24; it does not read the interface's real prefix), TCP-connect-probe each of the 254 hosts (curated LAN ports 80/443/22/445/139/53/8080, refused RST counts as up), list the responders, and on macOS/Windows read the system neighbour table to attach the real cached MAC (macOS via a Swift sysctl call, Windows via the Win32 IP Helper API GetIpNetTable in pure-Dart FFI). No subprocess (arp -a is sandbox-blocked, which is exactly why those native reads exist). (The underlying sweep library carries a safety cap that refuses any prefix larger than a /22, but the /24 this tool always requests never approaches it.)
+**Formula or method.** Active discovery: derive the local subnet as a /24 around the device's primary IPv4 (the shipped tool always sweeps a /24; it does not read the interface's real prefix), TCP-connect-probe each of the 254 hosts (curated LAN ports 80/443/22/445/139/53/8080, refused RST counts as up), list the responders, and on macOS/Windows read the system neighbor table to attach the real cached MAC (macOS via a Swift sysctl call, Windows via the Win32 IP Helper API GetIpNetTable in pure-Dart FFI). No subprocess (arp -a is sandbox-blocked, which is exactly why those native reads exist). (The underlying sweep library carries a safety cap that refuses any prefix larger than a /22, but the /24 this tool always requests never approaches it.)
 
 **Field notes**
-- Platform differences: macOS and Windows run the active sweep and attach a real MAC from the system neighbour table. Android runs the sweep without MACs, because the system does not let apps read that table. iOS is unavailable. Served from a WLAN Pi, the Pi reads its own neighbor table (/toolboxapi/neigh). Any other browser falls back to a download. The tool does not keep its own list of what each platform can do: it asks the reader that performs the read, so the app cannot describe a capability it does not have. The Windows read is implemented but not yet confirmed on real hardware; a read that fails is reported as a failed read, not as a platform limit.
+- Platform differences: macOS and Windows run the active sweep and attach a real MAC from the system neighbor table. Android runs the sweep without MACs, because the system does not let apps read that table. iOS is unavailable. Served from a WLAN Pi, the Pi reads its own neighbor table (/toolboxapi/neigh). Any other browser falls back to a download. The tool does not keep its own list of what each platform can do: it asks the reader that performs the read, so the app cannot describe a capability it does not have. The Windows read is implemented but not yet confirmed on real hardware; a read that fails is reported as a failed read, not as a platform limit.
 - A missing MAC is never an invented value, and it always names WHICH kind of missing it is. "Not exposed on this platform" means no reader here can read the table at all. "MAC read failed" means the read was attempted on this platform and did not work. "Not in the ARP cache" means the read succeeded and simply held no entry for that host. Collapsing those three into one claim is how the tool used to tell macOS users their platform could not do a read it was performing. Incomplete/all-zero ARP entries are skipped.
-- On macOS and Windows you get a responder list WITH MACs, read from the system neighbour table. iOS and Android are the ceiling: those sandboxes do not expose the table, so responders list without a hardware address. For richer enrichment (device type and vendor) see Network Discovery.
+- On macOS and Windows you get a responder list WITH MACs, read from the system neighbor table. iOS and Android are the ceiling: those sandboxes do not expose the table, so responders list without a hardware address. For richer enrichment (device type and vendor) see Network Discovery.
 
 ### Nearby AP Scan
 
@@ -565,8 +565,8 @@ ASN, holder, announced prefix, registry, and peer/upstream counts for an IP or A
 
 **Field notes**
 - Platform differences: built on JsonHttpClient (→ dart:io), so native-only; served from a WLAN Pi, the Pi runs the lookup (/toolboxapi/bgpasn); any other browser is gated to the download fallback (RIPEstat CORS unverified, so no maybe-broken web tool).
-- Three states: success, empty (API answered cleanly but resolved no ASN, e.g. a private/bogon IP not in the routing table), and failure. Peer/upstream counts are best-effort enrichment; a neighbours failure leaves them null ("Not available"), not zero.
-- Every field is nullable; a datum the API omits renders "Not available", never fabricated. Neighbour "type" mapping: left→upstream, right→downstream, unknown→peer.
+- Three states: success, empty (API answered cleanly but resolved no ASN, e.g. a private/bogon IP not in the routing table), and failure. Peer/upstream counts are best-effort enrichment; a neighbors failure leaves them null ("Not available"), not zero.
+- Every field is nullable; a datum the API omits renders "Not available", never fabricated. Neighbor "type" mapping: left→upstream, right→downstream, unknown→peer.
 
 ### Lookup (DNS)
 
@@ -1940,7 +1940,7 @@ A visual channel-bonding map showing, per band, how 20/40/80/160/320 MHz channel
 3. The 6 GHz 320 MHz row shows a primary set of three blocks (centers 31, 95, 159) and an overlapping alternative set (centers 63, 127, 191), each alternate marked as such. A primary and its alternate overlap, so only one of the pair is used at a time.
 
 **Field notes**
-- What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labelled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across the full US band, UNII-5 through UNII-8 (the 59 20 MHz primaries ch 1,5,9,…,233), with the PSC channels (5,21,37,…,229) marked.
+- What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labeled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across the full US band, UNII-5 through UNII-8 (the 59 20 MHz primaries ch 1,5,9,…,233), with the PSC channels (5,21,37,…,229) marked.
 - US-default. The full US 6 GHz plan (5925 to 7125 MHz) is drawn end to end. An earlier build truncated the map at ch 93, restored to the complete band per a beta report. 6 GHz needs no DFS; indoors it runs low-power (LPI) with no AFC, while standard-power use is AFC-coordinated.
 - Reference basis: the US (FCC) channel plan. 5 GHz DFS: No DFS = UNII-1 (36 to 48), UNII-3 (149 to 165), and UNII-4 (169 to 177); DFS = UNII-2A/2C. Colors are for readability; the meaning (DFS/PSC/mixed) is what matters.
 
@@ -3788,7 +3788,7 @@ A searchable, offline phrase translator for a Wi-Fi pro working on-site internat
 **Example.** Pick German, search "toilet", and the row shows English "Where is the toilet?" with German "Wo ist die Toilette?". Tap copy to put both on the clipboard.
 
 **Field notes**
-- TRANSLATIONS ARE DRAFT. The Spanish, French, Italian, and German wording is draft machine translation generated for the beta and has NOT yet been reviewed by a native or professional translator. A banner at the top of the screen says so, and the caveat is included when you copy the list. Verify any critical phrase locally before relying on it.
+- TRANSLATIONS ARE DRAFT. The Spanish, French, Italian, and German wording is draft machine translation and has NOT yet been reviewed by a native or professional translator. A banner at the top of the screen says so, and the caveat is included when you copy the list. Verify any critical phrase locally before relying on it.
 - Standard, simple wording was used throughout; no idioms were invented. Phrases are intentionally plain so they travel across dialects.
 - Fully offline. The phrase set is bundled in the app, so it works with no signal and no data plan.
 - Phrases are grouped by situation in a deliberate, curated order, not alphabetized.
@@ -5064,7 +5064,7 @@ Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet pr
 - The F.1336 omni is a planning envelope, not physics: at the dipole's 2.15 dBi it gives a 65.6 degree beamwidth, not 78.
 - Mounting turns the 3D view only; the 2D cuts stay in the antenna's own frame. An imported file whose horizontal cut stays within 3 dB is treated as an omni drawn for the ceiling, any other as drawn for a wall.
 - NSMA azimuth is read as counterclockwise seen from above. The source used does not state it; it matters only for a horizontal cut that is not symmetric left to right.
-- Floor coverage is a model: open floor, no racks, walls or people, a chosen path-loss exponent, and the powers and the client's -2 dBi antenna as illustrative inputs. Straight down, a dipole or collinear has a true null (held 60 dB under the peak here); the omni-by-gain envelope stops 30 dB under its peak, so within a few metres of the point under a high AP it cannot rank two omnis. A real antenna's null depth varies. A level under -95 dBm reads "below -95 dBm", with "(null)" in the pattern's null: a 20 MHz noise floor is about -94 dBm, so no client or AP reports less, and under a 9 m dipole the model's own figure (-114.2 dBm) is only its 60 dB floor. The exact figure is in the note under Readouts.
+- Floor coverage is a model: open floor, no racks, walls or people, a chosen path-loss exponent, and the powers and the client's -2 dBi antenna as illustrative inputs. Straight down, a dipole or collinear has a true null (held 60 dB under the peak here); the omni-by-gain envelope stops 30 dB under its peak, so within a few meters of the point under a high AP it cannot rank two omnis. A real antenna's null depth varies. A level under -95 dBm reads "below -95 dBm", with "(null)" in the pattern's null: a 20 MHz noise floor is about -94 dBm, so no client or AP reports less, and under a 9 m dipole the model's own figure (-114.2 dBm) is only its 60 dB floor. The exact figure is in the note under Readouts.
 - The 25 ft (7.6 m) line is vendor guidance, not a standard: an HPE Aruba Airheads Community thread (Warehouse high ceiling, 2018) quotes a vendor presentation to use downtilt omnis above 25 ft, and a Cisco Community thread (High Ceilings, 2013) has a Cisco employee putting an ordinary omni's limit at about 20 to 25 ft.
 - Open in Uplink vs Downlink carries the AP antenna's gain toward the client, but that tool's AP gain runs 0 to 8 dBi; a gain outside that range is carried as the nearest end and the screen says so.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
@@ -5114,7 +5114,7 @@ Draws one radio wave as its electric field along the direction of travel, in a 3
 
 **How to use**
 1. Pick a polarization. The readouts name it, say what the tip of the field traces (a line, a circle or an ellipse) and give the axial ratio.
-2. Turn on Show the H and V component waves to see the horizontal part (H) and the vertical part (V) that add up to the field. Each is labelled with its letter.
+2. Turn on Show the H and V component waves to see the horizontal part (H) and the vertical part (V) that add up to the field. Each is labeled with its letter.
 3. Open Adjust to set the two amplitudes and the phase difference yourself. In step (0 or 180 degrees) always gives a line; equal amplitudes 90 degrees apart give a circle; -90 degrees turns the other way.
 4. Drag the 3D view to turn it, pinch or scroll to zoom, and tap Reset view to go back. With a keyboard, focus the view and use the arrow keys and plus or minus. Pause stops the wave; with reduced motion on it opens frozen.
 5. On a computer or tablet, Present opens the 3D view full screen for a projector: Space plays or pauses, P or the Up arrow moves to the next polarization and Down to the previous, R returns to Vertical and the opening view, F switches full screen, ? lists the keys and Esc exits.
@@ -5234,7 +5234,7 @@ Draws an AP from above with one ring per MCS: inside a ring, a client has enough
 
 *Pairs with:* FSPL Simulator, Uplink vs Downlink (the other direction of the same rings), 6 GHz Power and PSD, the SSID Airtime and MCS Index tools. The "RF math and the link budget" and "From bits to rate" sequences.
 
-*Left out on purpose:* The sensitivities are conformance floors, the least a radio must manage; real radios do several dB better, so real rings are larger. The path-loss exponent is a chosen value, and walls, people and furniture make real rings uneven. The width is held fixed, where a real AP may send a narrower transmission to a far client. The beacon bar counts beacons only: no probe responses, contention or other APs. The beacon rate is the lowest basic rate, a common vendor choice; the standard asks only for one of the basic rates. Only the legacy rate set is modelled: no Basic HT-MCS, VHT or HE MCS sets.
+*Left out on purpose:* The sensitivities are conformance floors, the least a radio must manage; real radios do several dB better, so real rings are larger. The path-loss exponent is a chosen value, and walls, people and furniture make real rings uneven. The width is held fixed, where a real AP may send a narrower transmission to a far client. The beacon bar counts beacons only: no probe responses, contention or other APs. The beacon rate is the lowest basic rate, a common vendor choice; the standard asks only for one of the basic rates. Only the legacy rate set is modeled: no Basic HT-MCS, VHT or HE MCS sets.
 
 ### 6 GHz Power and PSD
 
@@ -7360,7 +7360,7 @@ Finds a device on a floor of 3 to 6 APs two ways and shows how far off each one 
 **Field notes**
 - The 1 to 2 m timing accuracy is from a vendor developer document, not a measurement in this tool. Real results depend on the devices and the building.
 - A signal-strength distance error is a factor, not a fixed number of meters: at n = 3 the same one sigma of 6 dB that stretches a 5 m reading to 7.9 m stretches a 20 m reading to 31.7 m.
-- When the direct path is blocked, the first signal to arrive at the device is a reflection that travelled farther, so timing reads long, never short.
+- When the direct path is blocked, the first signal to arrive at the device is a reflection that traveled farther, so timing reads long, never short.
 - This is a teaching model: the log-distance model, the shadowing, the power each AP radiates and the blocked-path distance are illustrative, and real location systems also face AP position errors, clock offsets and floors above and below.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
@@ -7748,7 +7748,7 @@ Plays every frame a client sends and receives to associate with a Wi-Fi network,
 - Why won't it associate? draws the security each pair actually negotiates. In 6 GHz it does not swap WPA2-Personal for WPA3 the way Play the association does: the network is simply not offered there.
 - Status 31 is rare in practice: a client that knows PMF reads the network's bits and never tries. Statuses 42, 43 and 46 (invalid cipher, invalid AKMP, cipher rejected by policy) need a client that ignores the AP's advertisement, so they are not drawn.
 - H2E only in 6 GHz is a Wi-Fi Alliance rule (WPA3 Specification v3.5 section 11.2); IEEE 802.11-2024 does not mention H2E there. H2E is a password method, not a key-management type.
-- Not modelled: WPA3-Personal compatibility mode (RSN overriding), Transition Disable, FT key management, PSK SHA-256 and SAE-PK. Real devices vary by model, driver and operating system version.
+- Not modeled: WPA3-Personal compatibility mode (RSN overriding), Transition Disable, FT key management, PSK SHA-256 and SAE-PK. Real devices vary by model, driver and operating system version.
 
 **Teaching it**
 

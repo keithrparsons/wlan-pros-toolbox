@@ -2114,7 +2114,7 @@
         "The F.1336 omni is a planning envelope, not physics: at the dipole's 2.15 dBi it gives a 65.6 degree beamwidth, not 78.",
         "Mounting turns the 3D view only; the 2D cuts stay in the antenna's own frame. An imported file whose horizontal cut stays within 3 dB is treated as an omni drawn for the ceiling, any other as drawn for a wall.",
         "NSMA azimuth is read as counterclockwise seen from above. The source used does not state it; it matters only for a horizontal cut that is not symmetric left to right.",
-        "Floor coverage is a model: open floor, no racks, walls or people, a chosen path-loss exponent, and the powers and the client's -2 dBi antenna as illustrative inputs. Straight down, a dipole or collinear has a true null (held 60 dB under the peak here); the omni-by-gain envelope stops 30 dB under its peak, so within a few metres of the point under a high AP it cannot rank two omnis. A real antenna's null depth varies. A level under -95 dBm reads \"below -95 dBm\", with \"(null)\" in the pattern's null: a 20 MHz noise floor is about -94 dBm, so no client or AP reports less, and under a 9 m dipole the model's own figure (-114.2 dBm) is only its 60 dB floor. The exact figure is in the note under Readouts.",
+        "Floor coverage is a model: open floor, no racks, walls or people, a chosen path-loss exponent, and the powers and the client's -2 dBi antenna as illustrative inputs. Straight down, a dipole or collinear has a true null (held 60 dB under the peak here); the omni-by-gain envelope stops 30 dB under its peak, so within a few meters of the point under a high AP it cannot rank two omnis. A real antenna's null depth varies. A level under -95 dBm reads \"below -95 dBm\", with \"(null)\" in the pattern's null: a 20 MHz noise floor is about -94 dBm, so no client or AP reports less, and under a 9 m dipole the model's own figure (-114.2 dBm) is only its 60 dB floor. The exact figure is in the note under Readouts.",
         "The 25 ft (7.6 m) line is vendor guidance, not a standard: an HPE Aruba Airheads Community thread (Warehouse high ceiling, 2018) quotes a vendor presentation to use downtilt omnis above 25 ft, and a Cisco Community thread (High Ceilings, 2013) has a Cisco employee putting an ordinary omni's limit at about 20 to 25 ft.",
         "Open in Uplink vs Downlink carries the AP antenna's gain toward the client, but that tool's AP gain runs 0 to 8 dBi; a gain outside that range is carried as the nearest end and the screen says so.",
         "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
@@ -2243,7 +2243,7 @@
       "whyHere": "Polarization is usually taught as a word and a number. Seeing the field makes it concrete: vertical and horizontal are the same wave turned 90 degrees, a slant is the same wave turned 45 degrees, and circular is two waves a quarter cycle apart whose sum never shrinks and turns once per wavelength. The component waves show that every polarization is a horizontal wave plus a vertical wave.",
       "howToUse": [
         "Pick a polarization. The readouts name it, say what the tip of the field traces (a line, a circle or an ellipse) and give the axial ratio.",
-        "Turn on Show the H and V component waves to see the horizontal part (H) and the vertical part (V) that add up to the field. Each is labelled with its letter.",
+        "Turn on Show the H and V component waves to see the horizontal part (H) and the vertical part (V) that add up to the field. Each is labeled with its letter.",
         "Open Adjust to set the two amplitudes and the phase difference yourself. In step (0 or 180 degrees) always gives a line; equal amplitudes 90 degrees apart give a circle; -90 degrees turns the other way.",
         "Drag the 3D view to turn it, pinch or scroll to zoom, and tap Reset view to go back. With a keyboard, focus the view and use the arrow keys and plus or minus. Pause stops the wave; with reduced motion on it opens frozen.",
         "On a computer or tablet, Present opens the 3D view full screen for a projector: Space plays or pauses, P or the Up arrow moves to the next polarization and Down to the previous, R returns to Vertical and the opening view, F switches full screen, ? lists the keys and Esc exits."
@@ -2719,7 +2719,7 @@
         "Why won't it associate? draws the security each pair actually negotiates. In 6 GHz it does not swap WPA2-Personal for WPA3 the way Play the association does: the network is simply not offered there.",
         "Status 31 is rare in practice: a client that knows PMF reads the network's bits and never tries. Statuses 42, 43 and 46 (invalid cipher, invalid AKMP, cipher rejected by policy) need a client that ignores the AP's advertisement, so they are not drawn.",
         "H2E only in 6 GHz is a Wi-Fi Alliance rule (WPA3 Specification v3.5 section 11.2); IEEE 802.11-2024 does not mention H2E there. H2E is a password method, not a key-management type.",
-        "Not modelled: WPA3-Personal compatibility mode (RSN overriding), Transition Disable, FT key management, PSK SHA-256 and SAE-PK. Real devices vary by model, driver and operating system version."
+        "Not modeled: WPA3-Personal compatibility mode (RSN overriding), Transition Disable, FT key management, PSK SHA-256 and SAE-PK. Real devices vary by model, driver and operating system version."
       ],
       "source": "IEEE 802.11 (scanning, 6 GHz scanning in 802.11-2024 26.17.2.3 with dot11MinPSCProbeDelay in Annex C, the Reduced Neighbor Report element in 9.4.2.169, Open System and SAE authentication, association and the RSN element, the 4-way handshake, PMF); RFC 2131 (DHCP); RFC 5227 (IPv4 Address Conflict Detection); RFC 4436 (Detecting Network Attachment in IPv4); RFC 8110 (OWE); Linux net/mac80211/scan.c (scan dwell); the 802.1X and EAP Ladder for the EAP exchange. Why won't it associate?: IEEE 802.11-2024 (RSN element 9.4.2.23, cipher suites Table 9-188, AKM suites Table 9-190, status codes Table 9-80, BSS membership selectors Table 9-131, RSNA policy selection 12.6.3 and Table 12-5, 6 GHz 12.12.2); IEEE 802.11be-2024 (12.12.9, 12.6.3.1); Wi-Fi Alliance WPA3 Specification v3.5 (sections 2 to 4, 11.2, 11.3). Computed on your device.",
       "teaching": [
@@ -5811,7 +5811,7 @@
       "fieldNotes": [
         "The 1 to 2 m timing accuracy is from a vendor developer document, not a measurement in this tool. Real results depend on the devices and the building.",
         "A signal-strength distance error is a factor, not a fixed number of meters: at n = 3 the same one sigma of 6 dB that stretches a 5 m reading to 7.9 m stretches a 20 m reading to 31.7 m.",
-        "When the direct path is blocked, the first signal to arrive at the device is a reflection that travelled farther, so timing reads long, never short.",
+        "When the direct path is blocked, the first signal to arrive at the device is a reflection that traveled farther, so timing reads long, never short.",
         "This is a teaching model: the log-distance model, the shadowing, the power each AP radiates and the blocked-path distance are illustrative, and real location systems also face AP position errors, clock offsets and floors above and below.",
         "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
@@ -6606,7 +6606,7 @@
             "Optional follow-up: back to 20 MHz, tap the 6 and 12 chips off (leaving 24 basic). The cell edge pulls in from 66.8 m to 36.2 m (119 ft) and four SSIDs' beacons drop from 2.19% to 0.61% of airtime. Now ask: \"A client sends at 12 Mbps. What rate does the ACK go at?\" Open the ACK table: 12, because no basic rate is at or below 12, so the mandatory rate answers."
           ],
           "pairsWith": "FSPL Simulator, Uplink vs Downlink (the other direction of the same rings), 6 GHz Power and PSD, the SSID Airtime and MCS Index tools. The \"RF math and the link budget\" and \"From bits to rate\" sequences.",
-          "leftOut": "The sensitivities are conformance floors, the least a radio must manage; real radios do several dB better, so real rings are larger. The path-loss exponent is a chosen value, and walls, people and furniture make real rings uneven. The width is held fixed, where a real AP may send a narrower transmission to a far client. The beacon bar counts beacons only: no probe responses, contention or other APs. The beacon rate is the lowest basic rate, a common vendor choice; the standard asks only for one of the basic rates. Only the legacy rate set is modelled: no Basic HT-MCS, VHT or HE MCS sets."
+          "leftOut": "The sensitivities are conformance floors, the least a radio must manage; real radios do several dB better, so real rings are larger. The path-loss exponent is a chosen value, and walls, people and furniture make real rings uneven. The width is held fixed, where a real AP may send a narrower transmission to a far client. The beacon bar counts beacons only: no probe responses, contention or other APs. The beacon rate is the lowest basic rate, a common vendor choice; the standard asks only for one of the basic rates. Only the legacy rate set is modeled: no Basic HT-MCS, VHT or HE MCS sets."
         }
       ]
     },
@@ -8347,8 +8347,7 @@
         "A request for 1 host gets a /32. That is a single host route with no room for a gateway, so ask for 2 if you meant a device and its router.",
         "A bad line is skipped by line number, not by rejecting the whole paste. Paste a messy list and fix the lines it names.",
         "If a network is typed with host bits set, for example 10.0.0.37/24, it is read as 10.0.0.0/24 and the screen tells you it did that rather than quietly answering a different question.",
-        "Fully offline: this is integer arithmetic on the device, and it works on every platform including the web build.",
-        "CATALOG NOTE: manual category is Networking Tools; catalog id is subnet-planner with route /tools/subnet-planner."
+        "Fully offline: this is integer arithmetic on the device, and it works on every platform including the web build."
       ],
       "source": "Calculated on the device; nothing is sent anywhere."
     },
@@ -9418,15 +9417,15 @@
         "Open it and run it. It works out your local network range, checks each address, and attaches the known hardware address wherever the platform makes one available."
       ],
       "inputs": [],
-      "algorithm": "It figures out your local network range (usually a /24, or the real one if different) and quickly checks each address by trying to open a connection on a handful of common ports (80, 443, 22, 445, 139, 53, 8080). A device counts as present when it ANSWERS, whether it accepts the connection or actively refuses it. An address that stays silent, times out, or is unreachable is not listed. On macOS and Windows it also reads the system's own neighbour table to attach the real hardware (MAC) address the system has already learned: macOS through a native system call, Windows through the Windows IP Helper API. Neither shells out to a command line. As a safety limit, it refuses to scan anything larger than about 1,000 addresses.",
+      "algorithm": "It figures out your local network range (usually a /24, or the real one if different) and quickly checks each address by trying to open a connection on a handful of common ports (80, 443, 22, 445, 139, 53, 8080). A device counts as present when it ANSWERS, whether it accepts the connection or actively refuses it. An address that stays silent, times out, or is unreachable is not listed. On macOS and Windows it also reads the system's own neighbor table to attach the real hardware (MAC) address the system has already learned: macOS through a native system call, Windows through the Windows IP Helper API. Neither shells out to a command line. As a safety limit, it refuses to scan anything larger than about 1,000 addresses.",
       "example": null,
       "fieldNotes": [
-        "What each platform can do: macOS and Windows give you the device list plus the real hardware address, read from the system's own neighbour table. Android gives you the device list without hardware addresses, because it does not let apps read that table. iOS does not run the sweep at all and says so on screen. When the Toolbox is served from a WLAN Pi, the Pi reads its own neighbor table. In a browser anywhere else it offers a download fallback.",
+        "What each platform can do: macOS and Windows give you the device list plus the real hardware address, read from the system's own neighbor table. Android gives you the device list without hardware addresses, because it does not let apps read that table. iOS does not run the sweep at all and says so on screen. When the Toolbox is served from a WLAN Pi, the Pi reads its own neighbor table. In a browser anywhere else it offers a download fallback.",
         "A missing MAC always tells you WHICH kind of missing it is, and never a guessed value. \"Not exposed on this platform\" means this platform has no way to read the table at all. \"MAC read failed\" means the read was tried here and did not work. \"Not in the ARP cache\" means the read worked and simply had no entry for that device. Empty or all-zero entries are skipped.",
         "Only addresses that answer are listed. A silent address is left out rather than guessed at, so the list is what replied, not what might be there.",
-        "Hardware addresses come from the system's neighbour table on macOS and Windows. The Windows path is implemented but has not yet been confirmed on real hardware; if it does not work, the tool reports a failed read rather than a platform limit. For richer detail, including device-type and vendor, use Network Discovery."
+        "Hardware addresses come from the system's neighbor table on macOS and Windows. The Windows path is implemented but has not yet been confirmed on real hardware; if it does not work, the tool reports a failed read rather than a platform limit. For richer detail, including device-type and vendor, use Network Discovery."
       ],
-      "source": "It quietly checks each address on your local network and, on macOS and Windows, reads the system's learned neighbour-address table to fill in the MAC."
+      "source": "It quietly checks each address on your local network and, on macOS and Windows, reads the system's learned neighbor-address table to fill in the MAC."
     },
     "bgp-asn": {
       "name": "Lookup (BGP/ASN)",
@@ -9503,8 +9502,7 @@
         "A randomized phone MAC correctly comes back as \"no vendor\", which is the right answer, not a miss. The built-in registry lists the date it was captured; refresh it to pick up newer assignments.",
         "The bits card renders for every valid address, including the ones the vendor card has to decline. For those, the bits are the answer.",
         "When the U/L bit is set, the screen also shows the address with that bit cleared. If the address was derived from real hardware, such as a BSSID off a radio base MAC, those first three bytes are the radio's OUI and you can look them up. If it is a randomized client address, they mean nothing, so treat the cleared form as a lead and not a fact.",
-        "There is no EUI-64 for a group or broadcast address, and the screen says so rather than showing a derivation. An interface identifier identifies one interface, and a group address is not one.",
-        "CATALOG NOTE: manual category is Networking Tools; catalog id is mac-oui-lookup with route /tools/mac-oui."
+        "There is no EUI-64 for a group or broadcast address, and the screen says so rather than showing a derivation. An interface identifier identifies one interface, and a group address is not one."
       ],
       "source": "It matches the address against a built-in copy of the official IEEE vendor registry, entirely offline."
     },
@@ -10144,8 +10142,7 @@
         "A KB is 1000 bytes and a KiB is 1024. Your operating system probably says GB and means GiB, which is why a \"1 GB\" download can take about 7 percent longer than you expected.",
         "There is no efficiency slider, on purpose. A default of 85 percent would be a made-up number dressed up as help. The answer is the time at exactly the rate you entered. If you want a realistic number, enter a throughput you actually measured rather than the number on the label.",
         "Real transfers run slower than this: protocol overhead, disk speed, and everyone else on the link all take a share.",
-        "Fully offline: one division on the device.",
-        "CATALOG NOTE: manual category is Calculators & Tools; catalog id is transfer-time with route /tools/transfer-time."
+        "Fully offline: one division on the device."
       ],
       "source": "Calculated on the device; nothing is sent anywhere."
     },
@@ -10491,7 +10488,7 @@
       "algorithm": null,
       "example": "A C13 connector (female, on the cord) mates with a C14 inlet (male, on the back of a PC or PDU). A C15 cord fits a C14 inlet, but a C13 cord will not fit a C16 inlet because the C15/C16 keying notch blocks it.",
       "fieldNotes": [
-        "What it shows: the IEC 60320 appliance-coupler table (pair, current, max temperature, nickname, use) and the IEC 60309 industrial-connector table (color, voltage band, use), with keying notes. A connector-face diagram is planned for a later update; the tables work fully without it.",
+        "What it shows: the IEC 60320 appliance-coupler table (pair, current, max temperature, nickname, use) and the IEC 60309 industrial-connector table (color, voltage band, use), with keying notes. The coupler cards and the IEC 60309 card show connector-face drawings alongside the tables.",
         "The \"kettle cord\" nickname properly belongs to C15/C16 (120 degC hot-condition, keyed by a notch), NOT C13/C14 (70 degC cold-condition \"PC cord\").",
         "IEC 60309 red spans 380-480V (not a single \"415V\"): it covers 400V European and 480V US three-phase. Both the color AND the earth-pin clock hour must match to mate.",
         "Based on the IEC 60320 and IEC 60309-2 standards."
@@ -10512,7 +10509,7 @@
       "algorithm": null,
       "example": "L21-30P decodes to L (twist-lock) + 21 (three-phase wye 120/208V, 4-pole 5-wire) + 30 (30A) + P (plug). L21-30R is its receptacle. The leading number is a configuration code, so do no arithmetic on it.",
       "fieldNotes": [
-        "What it shows: the designation decoder with a worked example, plus device groups (125V straight-blade and locking, and 208/240/250V) listing type, voltage, phase, wiring, and amps. A face-diagram plate is planned for a later update; the tables work fully without it.",
+        "What it shows: the designation decoder with a worked example, plus device groups (125V straight-blade and locking, and 208/240/250V) listing type, voltage, phase, wiring, and amps. The device cards show connector-face drawings alongside the tables.",
         "The leading number is a voltage/pole/phase CLASS code, not a literal voltage: 21 = three-phase wye 120/208V, 4-pole 5-wire. Never read it as a voltage.",
         "The 14-series is single-phase SPLIT (the 4th pin is neutral), NOT three-phase; only the L21-series is three-phase wye. P = plug (male), R = receptacle (female).",
         "Based on the NEMA configuration and naming references."
@@ -10534,7 +10531,7 @@
       "algorithm": null,
       "example": "A laptop charger rated 100-240V works on both a US Type A/B 120V outlet and a UK Type G 230V outlet with only a mechanical plug adapter; a 120V-only appliance needs a voltage converter, not just an adapter, on a 230V supply.",
       "fieldNotes": [
-        "What it shows: the IEC World Plugs Type A through M table (type, standard, voltage class, current, countries) and the CEE 7 European family breakout. A face diagram is planned for a later update; the tables work fully without it.",
+        "What it shows: the IEC World Plugs Type A through M table (type, standard, voltage class, current, countries) and the CEE 7 European family breakout. There are no per-plug face drawings; the tables carry the detail.",
         "Voltage classes are nominal: 120V in North America and Japan, 230V across most of the rest of the world. Confirm frequency (50 vs 60 Hz) for motor-driven and timing-sensitive gear.",
         "Argentine Type I (IRAM 2073) has line and neutral reversed relative to the Australian Type I; the CEE 7/7 plug is a hybrid designed to fit both French (E) and Schuko (F) sockets.",
         "Based on the IEC World Plugs letter system and the national standards behind it."
@@ -10990,7 +10987,7 @@
       "algorithm": null,
       "example": "Pick German, search \"toilet\", and the row shows English \"Where is the toilet?\" with German \"Wo ist die Toilette?\". Tap copy to put both on the clipboard.",
       "fieldNotes": [
-        "TRANSLATIONS ARE DRAFT. The Spanish, French, Italian, and German wording is draft machine translation generated for the beta and has NOT yet been reviewed by a native or professional translator. A banner at the top of the screen says so, and the caveat is included when you copy the list. Verify any critical phrase locally before relying on it.",
+        "TRANSLATIONS ARE DRAFT. The Spanish, French, Italian, and German wording is draft machine translation and has NOT yet been reviewed by a native or professional translator. A banner at the top of the screen says so, and the caveat is included when you copy the list. Verify any critical phrase locally before relying on it.",
         "Standard, simple wording was used throughout; no idioms were invented. Phrases are intentionally plain so they travel across dialects.",
         "Fully offline. The phrase set is bundled in the app, so it works with no signal and no data plan.",
         "Phrases are grouped by situation in a deliberate, curated order, not alphabetized."
@@ -12345,7 +12342,7 @@
         "JOINING CHANGES THE NETWORK THIS DEVICE IS ON. That is the point of the tool, but it also means a join can move you to a different subnet, and anything depending on the old one is dropped. On a native join you are moving the machine you are standing at.",
         "OPEN AND OWE NEED NO PASSWORD. OWE, which the Wi-Fi Alliance calls Enhanced Open, encrypts without authenticating, so there is nothing to type. A network advertising OWE transition mode is a marker that BOTH an open and an OWE BSS exist, not a security scheme of its own.",
         "A FAILED JOIN USUALLY TELLS YOU WHICH KIND OF FAILURE IT WAS. A network that never appears is a different problem from one that appears and then refuses the passphrase, and the two are worth separating before you change anything.",
-        "802.1X IS NOT SUPPORTED YET. Enterprise networks need a credential exchange this tool does not carry; it handles open, OWE, WPA2 Personal, and WPA3 Personal."
+        "802.1X IS NOT SUPPORTED. Enterprise networks need a credential exchange this tool does not carry; it handles open, OWE, WPA2 Personal, and WPA3 Personal."
       ],
       "source": "Associates using the operating system's own Wi-Fi interface on macOS and Windows, or the WLAN Pi's radio through the Pi's local API when one is attached."
     },
