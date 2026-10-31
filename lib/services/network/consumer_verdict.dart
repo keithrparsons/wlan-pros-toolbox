@@ -227,6 +227,13 @@ class AxisStatusThresholds {
     if (rateMbps >= ThroughputBands.downloadGoodMbps) return AxisStatus.moderate;
     return AxisStatus.weak;
   }
+
+  /// Whether two same-tier rates are close enough for a "both sides are X"
+  /// sentence: the faster at most twice the slower (Keith, 30 OCT 2026: "Within
+  /// 2x only"). Strong has no ceiling, so 660 vs 150 Mbps shares a tier while
+  /// the internet is plainly the slow part.
+  static bool closeEnoughForSameTier(double a, double b) =>
+      a <= 2 * b && b <= 2 * a;
 }
 
 /// Which vetted self-help list the screen surfaces for an outcome. Drives the

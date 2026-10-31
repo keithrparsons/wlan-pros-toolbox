@@ -1089,6 +1089,36 @@ void main() {
   );
 
   testWidgets(
+    'SAME TIER BUT MORE THAN 2x APART: the outcome wording stays, not '
+    '"slightly ahead" (Keith 30 OCT: within 2x only)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            // Tx 1200 → usable 660 (Strong). internet download 150 (Strong).
+            // Same tier, but Wi-Fi is 4.4x the internet: the internet is the
+            // slow part, and the screen must say so.
+            macAdapter: _TxLinkMacAdapter(1200),
+            qualityClient: MockQualityClient(
+              scriptedResult: _internetAt(down: 150, up: 100),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      expect(find.textContaining('Both sides are strong'), findsNothing);
+      expect(find.textContaining('Both your Wi-Fi and your internet are'),
+          findsNothing);
+      expect(find.textContaining('a little more headroom'), findsNothing);
+      expect(find.text('Your internet is the slow part.'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'SAME-TIER: the VERDICT LINE and the reading line drop the "weak link" / '
     '"boost the Wi-Fi" wording and read by margin (Wi-Fi ahead, both Moderate)',
     (tester) async {

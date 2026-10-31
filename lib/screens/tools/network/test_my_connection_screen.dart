@@ -3125,6 +3125,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final double? usable = _engine?.usableWifiMbps;
     final double? internet = _engine?.internetMbps;
     if (usable == null || internet == null || internet < 0.5) return null;
+    if (!AxisStatusThresholds.closeEnoughForSameTier(usable, internet)) {
+      return null;
+    }
 
     final String tierWord = _lowerTierWord(tier);
     final double deltaPct = 100 * (usable - internet) / internet;
@@ -3242,6 +3245,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final double? usable = _engine?.usableWifiMbps;
     final double? internet = _engine?.internetMbps;
     if (usable == null || internet == null || internet < 0.5) return null;
+    if (!AxisStatusThresholds.closeEnoughForSameTier(usable, internet)) {
+      return null;
+    }
 
     final String tierWord = _lowerTierWord(tier);
     final double deltaPct = 100 * (usable - internet) / internet;
@@ -4603,6 +4609,9 @@ class _ComparisonCard extends StatelessWidget {
     // guard someone forgot to update. (That is precisely how `notMeasured` slipped
     // past the other two.)
     if (wifiTier != internetTier || !wifiTier.isRealTier) return null;
+    if (!AxisStatusThresholds.closeEnoughForSameTier(usable, internet)) {
+      return null;
+    }
 
     final double deltaPct = 100 * (usable - internet) / internet;
     if (deltaPct.abs() <= 10) {
