@@ -87,6 +87,21 @@ A typical public update is `./scripts/ship_ios.sh` to upload the binary, then `f
 
 There is no committed macOS fastlane config; macOS ships via `scripts/ship_macos.sh`.
 
+### Shadow builds (check a release without shipping it)
+
+`scripts/shadow_build.sh <commit>` rebuilds the web app (`--base-href /app/`), the WLAN Pi web bundle (`--base-href /`) and the Android app bundle from one commit in a separate worktree, then compares them with the released artifacts:
+
+```bash
+scripts/shadow_build.sh <commit> \
+  --ref-web <read-only clone of the site repo>/app \
+  --ref-pi https://github.com/keithrparsons/wlan-pros-toolbox/releases/download/wlanpi-web-<N>/wlanpi-toolbox-web-bundle.tar.gz
+```
+
+- It never uploads, deploys or publishes anything, and it refuses to run if any release key or store credential file is present (`android/key.properties`, the Play service account JSON, `ios/fastlane/.env`, `ios/ExportOptions.plist`, `~/.wpt-keys`, `~/.appstoreconnect`, or any `.jks`, `.keystore`, `.p8`, `.p12`, `.pfx` or `.mobileprovision` file).
+- The Android bundle is debug signed by design; the script stops if it is signed any other way. Set `BUNDLETOOL_JAR` to read its versionCode and permissions.
+- `scripts/shadow_webdiff.py` does the web comparison. A random service worker version in `flutter_bootstrap.js`, `.last_build_id`, `_redirects` (added at deploy) and `BUNDLE-INFO.txt` are expected differences; anything else (a missing or extra file, a different `main.dart.js`, base href or `version.json`) is reported as real and the script exits 1.
+- iOS, macOS and Windows cannot be built on Linux, so they are not covered.
+
 ### Architecture
 
 See `ARCHITECTURE.md` for the data-driven catalog and router pattern, the `net_quality` engine, platform integration (CoreWLAN, the iOS Shortcuts bridge, the macOS sandbox), the help and copy patterns, theming, and testing.
