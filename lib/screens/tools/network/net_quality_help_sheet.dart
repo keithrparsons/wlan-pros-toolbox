@@ -108,19 +108,24 @@ class NetQualityHelpSheet extends StatelessWidget {
           'uses one. Treat the RPM here as a reliable direction, not a '
           'lab-grade figure.',
     ),
+    // Stream count, window and warm-up are the ThroughputProbe defaults
+    // (packages/net_quality/lib/src/probes/throughput_probe.dart:
+    // downloadStreamCount = 5, maxDuration = 15 s, warmUp = 3 s). Upload uses
+    // the same 15 s maxDuration and a 10 MB payload (uploadBytes).
     _Metric(
       name: 'Download',
       whatItIs:
           'How fast you can pull data down, in megabits per second (Mbps). '
           'Higher is better.',
       howWeMeasure:
-          'We run two real downloads at the same time from two different public '
-          'speed providers and add their results together, because a single '
-          'stream can undercount a fast connection. Pulling in parallel and '
-          'summing measures your true total download capacity. We use several '
-          'independent providers (Cloudflare, with OVH and Cachefly as backups) '
-          'so one provider having a bad moment does not ruin the result. It all '
-          'happens inside the same short window (about 10 seconds); running the '
+          'We run five real downloads at the same time, each from a different '
+          'independent public server, and add their results together, because a '
+          'single stream can undercount a fast connection. Pulling in parallel '
+          'and summing measures your true total download capacity. The first '
+          'few seconds, while the connection ramps up, are left out, and a '
+          'server that comes back far slower than the rest is dropped, so one '
+          'server having a bad moment does not drag the result down. It all '
+          'happens inside the same window (about 15 seconds); running the '
           'streams in parallel does not make it slower. It is a real transfer, '
           'not an estimate.',
     ),
@@ -132,7 +137,7 @@ class NetQualityHelpSheet extends StatelessWidget {
           'sharing files.',
       howWeMeasure:
           'We send data up to Cloudflare\'s speed servers in a single stream '
-          'for up to about 10 seconds, then divide the amount actually sent by '
+          'for up to about 15 seconds, then divide the amount actually sent by '
           'the time it took. That is up to roughly 10 MB on a fast connection '
           'and less on a slower one; either way we measure what actually went '
           'out, not an estimate.',

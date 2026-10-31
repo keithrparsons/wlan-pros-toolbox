@@ -214,7 +214,7 @@ class _AboutCard extends StatelessWidget {
           Text(
             'The TLS messages follow the TLS 1.2 shape drawn in the EAP-TLS '
             'and EAP-TTLS standards. TLS 1.3 and session resumption change '
-            'the count and are not modelled. Servers and clients differ in '
+            'the count and are not modeled. Servers and clients differ in '
             'how many fragments a certificate needs, so that is a setting.',
             style: body,
           ),

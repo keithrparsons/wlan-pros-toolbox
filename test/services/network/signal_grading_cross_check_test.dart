@@ -95,6 +95,29 @@ void main() {
       );
     });
 
+    test('-67 dBm is Good only and -68 dBm is Fair, on both surfaces', () {
+      // Keith, 2026-10-27: -67 belongs to Good alone. Engine and printed
+      // table must both put -67 in Good and -68 in Fair.
+      expect(WifiGrading.gradeRssi(-67), QualityGrade.good);
+      expect(_referenceScreenGrade(-67), QualityGrade.good);
+      expect(WifiGrading.gradeRssi(-68), QualityGrade.fair);
+      expect(_referenceScreenGrade(-68), QualityGrade.fair);
+    });
+
+    test('no reading falls inside two printed ranges', () {
+      // Reading the table top to bottom hides an overlap, so check every
+      // band: each dBm from -30 to -100 must sit in exactly one range.
+      final List<String> overlaps = <String>[];
+      for (int dbm = -30; dbm >= -100; dbm--) {
+        final List<String> hits = <String>[
+          for (final SignalBand b in SignalThresholdsScreen.kSignalBands)
+            if (_rangeContains(b.range, dbm)) b.label,
+        ];
+        if (hits.length != 1) overlaps.add('$dbm dBm: ${hits.join(', ')}');
+      }
+      expect(overlaps, isEmpty, reason: overlaps.join('\n'));
+    });
+
     test('the -73/-74 dBm regression: both surfaces now say Poor', () {
       // The 1.7.1 headline bug: the engine fired R-10 "Poor / no plan will
       // help" while the reference table called -73/-74 "Fair / usable". Pin it
@@ -130,7 +153,7 @@ void main() {
 
   group('RSSI boundary grades — hand-derived from Keith\'s confirmed bands', () {
     // Expected values typed from Keith's bands (Excellent > -60, Good -60..-67,
-    // Fair -67..-72, Poor -73 or weaker), NOT read back from WifiGradingBands.
+    // Fair -68..-72, Poor -73 or weaker), NOT read back from WifiGradingBands.
     test('Excellent: rssi > -60 (so -59 in, -60 out)', () {
       expect(WifiGrading.gradeRssi(-30), QualityGrade.excellent);
       expect(WifiGrading.gradeRssi(-59), QualityGrade.excellent);

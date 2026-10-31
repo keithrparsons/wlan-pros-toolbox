@@ -2114,7 +2114,7 @@
         "The F.1336 omni is a planning envelope, not physics: at the dipole's 2.15 dBi it gives a 65.6 degree beamwidth, not 78.",
         "Mounting turns the 3D view only; the 2D cuts stay in the antenna's own frame. An imported file whose horizontal cut stays within 3 dB is treated as an omni drawn for the ceiling, any other as drawn for a wall.",
         "NSMA azimuth is read as counterclockwise seen from above. The source used does not state it; it matters only for a horizontal cut that is not symmetric left to right.",
-        "Floor coverage is a model: open floor, no racks, walls or people, a chosen path-loss exponent, and the powers and the client's -2 dBi antenna as illustrative inputs. Straight down, a dipole or collinear has a true null (held 60 dB under the peak here); the omni-by-gain envelope stops 30 dB under its peak, so within a few metres of the point under a high AP it cannot rank two omnis. A real antenna's null depth varies. A level under -95 dBm reads \"below -95 dBm\", with \"(null)\" in the pattern's null: a 20 MHz noise floor is about -94 dBm, so no client or AP reports less, and under a 9 m dipole the model's own figure (-114.2 dBm) is only its 60 dB floor. The exact figure is in the note under Readouts.",
+        "Floor coverage is a model: open floor, no racks, walls or people, a chosen path-loss exponent, and the powers and the client's -2 dBi antenna as illustrative inputs. Straight down, a dipole or collinear has a true null (held 60 dB under the peak here); the omni-by-gain envelope stops 30 dB under its peak, so within a few meters of the point under a high AP it cannot rank two omnis. A real antenna's null depth varies. A level under -95 dBm reads \"below -95 dBm\", with \"(null)\" in the pattern's null: a 20 MHz noise floor is about -94 dBm, so no client or AP reports less, and under a 9 m dipole the model's own figure (-114.2 dBm) is only its 60 dB floor. The exact figure is in the note under Readouts.",
         "The 25 ft (7.6 m) line is vendor guidance, not a standard: an HPE Aruba Airheads Community thread (Warehouse high ceiling, 2018) quotes a vendor presentation to use downtilt omnis above 25 ft, and a Cisco Community thread (High Ceilings, 2013) has a Cisco employee putting an ordinary omni's limit at about 20 to 25 ft.",
         "Open in Uplink vs Downlink carries the AP antenna's gain toward the client, but that tool's AP gain runs 0 to 8 dBi; a gain outside that range is carried as the nearest end and the screen says so.",
         "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
@@ -2243,7 +2243,7 @@
       "whyHere": "Polarization is usually taught as a word and a number. Seeing the field makes it concrete: vertical and horizontal are the same wave turned 90 degrees, a slant is the same wave turned 45 degrees, and circular is two waves a quarter cycle apart whose sum never shrinks and turns once per wavelength. The component waves show that every polarization is a horizontal wave plus a vertical wave.",
       "howToUse": [
         "Pick a polarization. The readouts name it, say what the tip of the field traces (a line, a circle or an ellipse) and give the axial ratio.",
-        "Turn on Show the H and V component waves to see the horizontal part (H) and the vertical part (V) that add up to the field. Each is labelled with its letter.",
+        "Turn on Show the H and V component waves to see the horizontal part (H) and the vertical part (V) that add up to the field. Each is labeled with its letter.",
         "Open Adjust to set the two amplitudes and the phase difference yourself. In step (0 or 180 degrees) always gives a line; equal amplitudes 90 degrees apart give a circle; -90 degrees turns the other way.",
         "Drag the 3D view to turn it, pinch or scroll to zoom, and tap Reset view to go back. With a keyboard, focus the view and use the arrow keys and plus or minus. Pause stops the wave; with reduced motion on it opens frozen.",
         "On a computer or tablet, Present opens the 3D view full screen for a projector: Space plays or pauses, P or the Up arrow moves to the next polarization and Down to the previous, R returns to Vertical and the opening view, F switches full screen, ? lists the keys and Esc exits."
@@ -2719,7 +2719,7 @@
         "Why won't it associate? draws the security each pair actually negotiates. In 6 GHz it does not swap WPA2-Personal for WPA3 the way Play the association does: the network is simply not offered there.",
         "Status 31 is rare in practice: a client that knows PMF reads the network's bits and never tries. Statuses 42, 43 and 46 (invalid cipher, invalid AKMP, cipher rejected by policy) need a client that ignores the AP's advertisement, so they are not drawn.",
         "H2E only in 6 GHz is a Wi-Fi Alliance rule (WPA3 Specification v3.5 section 11.2); IEEE 802.11-2024 does not mention H2E there. H2E is a password method, not a key-management type.",
-        "Not modelled: WPA3-Personal compatibility mode (RSN overriding), Transition Disable, FT key management, PSK SHA-256 and SAE-PK. Real devices vary by model, driver and operating system version."
+        "Not modeled: WPA3-Personal compatibility mode (RSN overriding), Transition Disable, FT key management, PSK SHA-256 and SAE-PK. Real devices vary by model, driver and operating system version."
       ],
       "source": "IEEE 802.11 (scanning, 6 GHz scanning in 802.11-2024 26.17.2.3 with dot11MinPSCProbeDelay in Annex C, the Reduced Neighbor Report element in 9.4.2.169, Open System and SAE authentication, association and the RSN element, the 4-way handshake, PMF); RFC 2131 (DHCP); RFC 5227 (IPv4 Address Conflict Detection); RFC 4436 (Detecting Network Attachment in IPv4); RFC 8110 (OWE); Linux net/mac80211/scan.c (scan dwell); the 802.1X and EAP Ladder for the EAP exchange. Why won't it associate?: IEEE 802.11-2024 (RSN element 9.4.2.23, cipher suites Table 9-188, AKM suites Table 9-190, status codes Table 9-80, BSS membership selectors Table 9-131, RSNA policy selection 12.6.3 and Table 12-5, 6 GHz 12.12.2); IEEE 802.11be-2024 (12.12.9, 12.6.3.1); Wi-Fi Alliance WPA3 Specification v3.5 (sections 2 to 4, 11.2, 11.3). Computed on your device.",
       "teaching": [
@@ -5811,7 +5811,7 @@
       "fieldNotes": [
         "The 1 to 2 m timing accuracy is from a vendor developer document, not a measurement in this tool. Real results depend on the devices and the building.",
         "A signal-strength distance error is a factor, not a fixed number of meters: at n = 3 the same one sigma of 6 dB that stretches a 5 m reading to 7.9 m stretches a 20 m reading to 31.7 m.",
-        "When the direct path is blocked, the first signal to arrive at the device is a reflection that travelled farther, so timing reads long, never short.",
+        "When the direct path is blocked, the first signal to arrive at the device is a reflection that traveled farther, so timing reads long, never short.",
         "This is a teaching model: the log-distance model, the shadowing, the power each AP radiates and the blocked-path distance are illustrative, and real location systems also face AP position errors, clock offsets and floors above and below.",
         "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
@@ -6606,7 +6606,7 @@
             "Optional follow-up: back to 20 MHz, tap the 6 and 12 chips off (leaving 24 basic). The cell edge pulls in from 66.8 m to 36.2 m (119 ft) and four SSIDs' beacons drop from 2.19% to 0.61% of airtime. Now ask: \"A client sends at 12 Mbps. What rate does the ACK go at?\" Open the ACK table: 12, because no basic rate is at or below 12, so the mandatory rate answers."
           ],
           "pairsWith": "FSPL Simulator, Uplink vs Downlink (the other direction of the same rings), 6 GHz Power and PSD, the SSID Airtime and MCS Index tools. The \"RF math and the link budget\" and \"From bits to rate\" sequences.",
-          "leftOut": "The sensitivities are conformance floors, the least a radio must manage; real radios do several dB better, so real rings are larger. The path-loss exponent is a chosen value, and walls, people and furniture make real rings uneven. The width is held fixed, where a real AP may send a narrower transmission to a far client. The beacon bar counts beacons only: no probe responses, contention or other APs. The beacon rate is the lowest basic rate, a common vendor choice; the standard asks only for one of the basic rates. Only the legacy rate set is modelled: no Basic HT-MCS, VHT or HE MCS sets."
+          "leftOut": "The sensitivities are conformance floors, the least a radio must manage; real radios do several dB better, so real rings are larger. The path-loss exponent is a chosen value, and walls, people and furniture make real rings uneven. The width is held fixed, where a real AP may send a narrower transmission to a far client. The beacon bar counts beacons only: no probe responses, contention or other APs. The beacon rate is the lowest basic rate, a common vendor choice; the standard asks only for one of the basic rates. Only the legacy rate set is modeled: no Basic HT-MCS, VHT or HE MCS sets."
         }
       ]
     },
@@ -7327,7 +7327,7 @@
       "purpose": "Estimates the total signal loss for a run of coax of a known type, length, and frequency, plus the loss per 100 feet at that frequency.",
       "whyHere": "Cable loss comes straight off both your transmit and receive signal. Pick a cable type and length, and the tool tells you how much signal the feedline will eat.",
       "howToUse": [
-        "Pick the cable type from the list (six LMR types).",
+        "Pick the cable type from the list (five LMR types).",
         "Enter the frequency and pick its unit (GHz or MHz).",
         "Enter the run length and pick its unit (feet or meters).",
         "Read the total loss in dB plus the per-100-foot figure."
@@ -7335,7 +7335,7 @@
       "inputs": [
         {
           "name": "Cable type",
-          "unit": "One of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900, LMR-1200",
+          "unit": "One of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900",
           "range": ""
         },
         {
@@ -7743,11 +7743,11 @@
           "range": "Defaults to 20 if left blank"
         }
       ],
-      "algorithm": "Thermal noise rises with both temperature and channel width; wider channels let in more noise. The tool computes the thermal noise floor from those two, then adds your receiver's noise figure to get the receiver noise floor. It also shows a quick rule-of-thumb value: minus 174 dBm per Hz (thermal noise at about 0 degrees C) plus 10 times the log of the bandwidth in Hz.",
+      "algorithm": "Thermal noise rises with both temperature and channel width; wider channels let in more noise. The tool computes the thermal noise floor from those two, then adds your receiver's noise figure to get the receiver noise floor. It also shows a quick rule-of-thumb value: minus 174 dBm per Hz plus 10 times the log of the bandwidth in Hz. The minus 174 is kT at the standard noise reference temperature of 290 K (about 17 degrees C, the T0 of ITU-R P.372), which works out to minus 173.98 and rounds to minus 174.",
       "example": "At 20 MHz, noise figure 7 dB, 20 degrees C: the thermal floor is about minus 100.9 dBm, the receiver floor about minus 93.9 dBm, and the rule-of-thumb value about minus 101.0 dBm.",
       "fieldNotes": [
         "This is the theoretical noise floor. Real receivers sit higher because of co-channel interference, adjacent-channel leakage, and ambient RF.",
-        "The minus 174 rule is a 0 degrees C approximation, so it differs slightly from the temperature-aware thermal value."
+        "The minus 174 rule is kT at 290 K (about 17 degrees C) rounded to a whole number, so it differs slightly from the temperature-aware thermal value at any other temperature. At 0 degrees C, for comparison, kT is about minus 174.24 dBm per Hz."
       ],
       "source": "Standard thermal-noise physics computed from the bandwidth, noise figure, and temperature you enter, on your device."
     },
@@ -8359,8 +8359,7 @@
         "A request for 1 host gets a /32. That is a single host route with no room for a gateway, so ask for 2 if you meant a device and its router.",
         "A bad line is skipped by line number, not by rejecting the whole paste. Paste a messy list and fix the lines it names.",
         "If a network is typed with host bits set, for example 10.0.0.37/24, it is read as 10.0.0.0/24 and the screen tells you it did that rather than quietly answering a different question.",
-        "Fully offline: this is integer arithmetic on the device, and it works on every platform including the web build.",
-        "CATALOG NOTE: manual category is Networking Tools; catalog id is subnet-planner with route /tools/subnet-planner."
+        "Fully offline: this is integer arithmetic on the device, and it works on every platform including the web build."
       ],
       "source": "Calculated on the device; nothing is sent anywhere."
     },
@@ -8509,7 +8508,7 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: three blocks. RSSI quality scale: Excellent (> -60 dBm) / Good (-60 to -67) / Fair (-67 to -72) / Poor (-73 or weaker). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with a minimum RSSI, minimum SNR, and a note. SNR to MCS (80 MHz, 1 spatial stream): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
+        "What it shows: three blocks. RSSI quality scale: Excellent (> -60 dBm) / Good (-60 to -67) / Fair (-68 to -72) / Poor (-73 or weaker). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with a minimum RSSI, minimum SNR, and a note. SNR to MCS (80 MHz, 1 spatial stream): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
         "These are recommended design targets, not an industry standard. IEEE 802.11 does not define \"good\" or \"poor\" signal levels, and appropriate thresholds vary by site and by customer requirement.",
         "Values vary by client hardware, environment, and AP vendor; treat them as field-planning guidelines, not guarantees.",
         "The SNR-to-MCS rates are indicative (80 MHz, single stream); the MCS 10 and 11 rates are noted as 802.11ax."
@@ -8962,19 +8961,20 @@
       "name": "Test My Connection",
       "category": "Test Network",
       "purpose": "Answers the everyday question \"is the slowdown my Wi-Fi or my internet?\" in plain English, and tells you what to say to support.",
-      "whyHere": "The consumer-friendly front door. It uses the same measurements and the same verdict logic as the pro Wi-Fi vs Internet tool, dressed up for a non-technical user. Reach for it when you want a one-tap answer plus vetted self-help steps, not engineer-grade numbers.",
+      "whyHere": "The consumer-friendly front door, reached from the \"Check My Connection\" button on the home screen. Reach for it when you want a one-tap answer plus vetted self-help steps; Network Quality and Wi-Fi Information go deeper when you want engineer-grade numbers.",
       "howToUse": [
-        "Open the tool and tap Run.",
+        "Tap \"Check My Connection\" on the home screen. On Wi-Fi the check starts on its own. If the app can't confirm you're on Wi-Fi, it stops before spending any data and says what the speed test would cost; the button then reads \"Check My Connection (uses data)\" or \"Check My Connection (may use data)\", and tapping it is how you choose to run the speed test.",
         "On iOS, the Wi-Fi signal details (RSSI, channel, rate, PHY) come from the companion Shortcut, and running the test fires it AUTOMATICALLY. You don't have to tap anything to capture the Wi-Fi RF. The details then appear both on screen (the live \"Wi-Fi signal\" graphs) and in the copied report. If the automatic capture can't reach the Shortcut (not installed, or the launch was cancelled), the \"Your Wi-Fi link\" card offers a manual \"Capture Wi-Fi details\" button instead of a grid of \"Unavailable,\" so you know it's a capture step, not a broken tool. The security type and BSSID still fill in on their own without the Shortcut.",
         "On macOS, granting Location only affects whether the network name and BSSID show (macOS 14 and later hide those two fields until you allow Location); the verdict itself is based on link rate and never needs it. To save you a trip into System Settings, running the test brings up the native \"Allow Location\" prompt the FIRST time the permission hasn't been set (at most once per screen open, never on every run). If Location isn't granted, the \"Your Wi-Fi link\" card shows a short inline hint where the network name would sit, \"Wi-Fi network name hidden. Location access needed,\" with a one-tap action: \"Allow Location\" while the prompt can still appear, or \"Open settings\" (a direct link to the macOS Location Services pane) once it's been denied. After you grant it, the network name and BSSID fill in; until then the copied report labels them \"Unavailable (grant Location access to show the network name)\" rather than a bare \"Unavailable.\"",
+        "On Android, the network name and BSSID appear once Location is allowed, the same grant Wi-Fi Information asks for; signal and rate don't need it. On Windows there is nothing to grant.",
         "Read the two status chips (Wi-Fi / Internet) and the headline.",
         "The whole test takes up to about a minute (three back-to-back measurement windows of up to about 15 seconds each: download, upload, then a loaded-responsiveness check). A short \"This usually takes about half a minute\" note shows under the loader.",
-        "Use the \"Run again\" action at the top right to re-run the whole Wi-Fi and internet test.",
-        "Tap \"Copy these details\" for a thorough, help-desk-ready report. It opens with a \"WLAN Pros Toolbox: Connection Report\" header plus the test date and time, then clearly labeled sections: Wi-Fi (SSID, BSSID, RSSI, noise, SNR, Tx/Rx rate, channel, width, band, PHY, security), Internet (download, upload, latency, jitter, loss, responsiveness), DNS (a real resolution-time measurement), Network (local IP, subnet mask, default gateway, plus DHCP server / DNS server(s) / VLAN marked honestly unavailable), ISP (public IP, ISP/org, ASN, when reachable), cloud apps reachability, and the verdict. Unavailable fields say so; the ISP and cloud-apps sections are left out cleanly when you're offline.",
+        "Use the \"Run again\" button on its own row just below the verdict sentence to re-run the whole Wi-Fi and internet test.",
+        "Tap \"Copy these details\" for a thorough, help-desk-ready report. It opens with a \"WLAN Pros Toolbox: Connection Report\" header plus the test date and time, then clearly labeled sections: Wi-Fi (SSID, BSSID, RSSI, noise, SNR, Tx/Rx rate, channel, width, band, PHY, security), Internet (download, upload, latency, jitter, loss, responsiveness), DNS (a real resolution-time measurement), Network (local IP, subnet mask, default gateway, plus DHCP server and DNS server(s) where the platform exposes them, and VLAN, which no device can see), ISP (public IP, ISP/org, ASN, when reachable), cloud apps reachability, and the verdict. Unavailable fields say so; the ISP and cloud-apps sections are left out cleanly when you're offline.",
         "Scroll to the bottom for the \"Cloud apps reachable?\" panel. It checks whether your device can reach recognizable services (Facebook, Instagram, TikTok, YouTube, Netflix, Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub, and a Cloudflare DNS anchor) and times each connection. Its \"Re-check cloud apps\" button re-runs ONLY this panel, not the whole test."
       ],
       "inputs": [],
-      "algorithm": "It runs two things in one pass and feeds both into the shared verdict logic: a read of your current Wi-Fi link (from macOS directly, or from the companion Shortcut on iOS), and a full network-quality run against a diverse set of neutral public servers. It turns the network-quality grades into a simple internet-health call: internet is rated GOOD only when download, upload, latency, and loss all grade good or excellent; otherwise it's marginal. The five engineer-grade verdicts are collapsed into four everyday outcomes, plus a two-part chip status where Wi-Fi and internet each read Strong, Moderate, Weak, or Couldn't check (Not connected when there is no Wi-Fi link). Strong is 100 Mbps and up, Moderate is 25 to under 100 Mbps, and Weak is under 25 Mbps. Usable Wi-Fi is graded on the same download scale as the internet download. The outcomes are: \"Looks like your Wi-Fi\"; \"Mostly your Wi-Fi\"; \"Looks like your Internet\"; \"Both look fine\"; \"Couldn't check everything\" (internet measured, Wi-Fi not); and \"Couldn't complete the check\" (neither measured).",
+      "algorithm": "It runs two things in one pass and feeds both into the shared verdict logic: a read of your current Wi-Fi link (read natively on macOS, Android, and Windows, or from the companion Shortcut on iOS), and a full network-quality run against a diverse set of neutral public servers. It turns the network-quality grades into a simple internet-health call: internet is rated GOOD only when download, upload, latency, and loss all grade good or excellent; otherwise it's marginal. The five engineer-grade verdicts are collapsed into four everyday outcomes, plus a two-part chip status where Wi-Fi and internet each read Strong, Moderate, Weak, or Couldn't check (Not connected when there is no Wi-Fi link). Strong is 100 Mbps and up, Moderate is 25 to under 100 Mbps, and Weak is under 25 Mbps. Usable Wi-Fi is graded on the same download scale as the internet download. The outcomes are: \"Looks like your Wi-Fi\"; \"Mostly your Wi-Fi\"; \"Looks like your Internet\"; \"Both look fine\"; \"Couldn't check everything\" (internet measured, Wi-Fi not); and \"Couldn't complete the check\" (neither measured).",
       "example": null,
       "topNotes": [
         "The internet number is a real-world download measurement. The app pulls from several independent public servers at once, drops any that come back throttled or far below the pack, and adds up the rest. That makes it an honest figure for your everyday path to the internet, and it can read lower than a one-number tool that hits only the single nearest cache. Upload is measured and shown on its own. (reference: How the Toolbox Measures Throughput)",
@@ -8983,19 +8983,19 @@
       ],
       "fieldNotes": [
         "What's on screen is what's copied: the live \"Wi-Fi signal\" graphs, the technical Wi-Fi sub-card, and the \"Copy these details\" report all read one unified Wi-Fi source, the single link read taken when the test finishes, combined with the live sampler's latest reading (the same stream the graphs draw from). On iOS the one-shot read can arrive before the companion Shortcut's stream delivers, so without this the copy could list RSSI, channel, or rate as \"Unavailable\" while the graphs showed live signal. The merge only adds: the security and BSSID info is never lost, and the live stream only fills gaps the one-shot read lacked, so the copy can only ever gain a real reported field, never a made-up one.",
-        "Platform differences: macOS reads the link natively (Tx rate, RSSI, SNR, but no Rx; the Rx row reads \"Unavailable (not exposed on macOS),\" a known platform limit, not a glitch). iOS reads the signal details via the Shortcut (Tx and Rx, fired automatically by a run) and the security and BSSID natively. If the link can't be read (wired, or iOS without a Shortcut capture), it falls back to the honest \"couldn't check\" path; it does not guess a side.",
+        "Platform differences: macOS reads the link natively (Tx rate, RSSI, SNR, but no Rx; the Rx row reads \"Unavailable (not exposed on macOS),\" a known platform limit, not a glitch). iOS reads the signal details via the Shortcut (Tx and Rx, fired automatically by a run) and the security and BSSID natively. Android and Windows read the link natively, as Wi-Fi Information does, without a noise floor or SNR. When the Toolbox is served from a WLAN Pi, the check runs on the Pi. If the link can't be read (wired, or iOS without a Shortcut capture), it falls back to the honest \"couldn't check\" path; it does not guess a side.",
         "Honest unknown values: a channel of 0 is the \"no/unknown channel\" placeholder some systems return; it's never a real Wi-Fi channel, so it shows as \"Unavailable\" rather than \"0.\" Any unknown, zero, or empty Wi-Fi field shows an honest \"Unavailable,\" never a misleading 0 or blank.",
         "The headline is a hedge by design (\"Looks like...,\" not \"your Wi-Fi is broken\"). The two chips teach the idea that Wi-Fi and internet are two separate things. \"Both look fine\" is the most useful real-world answer; it points you at the specific app or site instead of the connection.",
-        "The verdict wording is deliberately plain and non-diagnostic for a layperson. The underlying numbers and bands are the same as the Wi-Fi vs Internet tool; if you want the numbers, use that tool.",
+        "The verdict wording is deliberately plain and non-diagnostic for a layperson. The chips use the same download grading bands as Network Quality; for the full graded breakdown, use Network Quality.",
         "How it picks a side: it compares how much internet speed you're actually getting against how much your Wi-Fi link could realistically carry. When the internet measures fine on its own, it says both look fine; otherwise it leans toward Wi-Fi or internet depending on which one has the headroom to spare.",
         "\"Make sure you're on Wi-Fi and try again\" is the honest answer when nothing measured, never a fake zero.",
-        "The cloud apps panel times a connection to each service on port 443 (sandboxed iOS and macOS apps can't send raw pings). A green check means the service answered and shows how long that connection took; it is NOT a measure of in-app call or stream quality. An unreachable service shows the word \"unreachable\" with its own distinct icon, never color alone. The list is a mix both the public and a WLAN pro recognize: social and consumer services (Facebook, Instagram, TikTok, YouTube, Netflix) plus pro and infrastructure services (Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub) and a Cloudflare DNS liveness anchor.",
+        "The cloud apps panel times a connection to each service on port 443 (a connection time works on every platform, where a raw ping does not). A green check means the service answered and shows how long that connection took; it is NOT a measure of in-app call or stream quality. An unreachable service shows the word \"unreachable\" with its own distinct icon, never color alone. The list is a mix both the public and a WLAN pro recognize: social and consumer services (Facebook, Instagram, TikTok, YouTube, Netflix) plus pro and infrastructure services (Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub) and a Cloudflare DNS liveness anchor.",
         "The copied report and ISP info: \"Copy these details\" produces a sectioned report (header and date/time, then Wi-Fi / Internet / DNS / Network / ISP / cloud apps / verdict). The ISP section comes from a keyless lookup of your device's public internet address, giving the public IP, ISP or org name, and ASN. It runs alongside the measurement, never holds up the verdict, and fails gracefully: offline or a failed lookup simply leaves the ISP section out rather than inventing an address.",
         "The test isn't a fixed length. It runs a quick under-a-second latency burst, then a roughly 15-second download window, an up-to-15-second upload window, and a roughly 15-second loaded-responsiveness check, so roughly 30 to 45 seconds end to end, near the low end on a fast link and the high end on a slow or stalled endpoint.",
         "DNS resolution time: the report and the on-screen Network card carry a REAL DNS resolution-time measurement, timing a lookup of a stable host (cloudflare.com, then google.com, then apple.com) through your device's own resolver. It's a native in-app measurement, so it's safe inside the sandboxed macOS App Store build and works on iOS. It's labeled \"DNS resolution time\" so it's never confused with anything the network-quality measurement produces (that measurement does not test DNS). A failed lookup marks DNS \"Not available,\" never a made-up time.",
-        "Network detail fields, what is and isn't obtainable: local IP, subnet mask, and default gateway are read natively and work on both platforms. DHCP server and DNS server(s) are NOT available to a sandboxed app (reading them needs system-level access the macOS sandbox blocks and iOS doesn't provide), so both show \"Not available on this device.\" A VLAN (802.1Q) tag is stripped by the switch or access point before the frame reaches the device's OS, so no app on the device can see it; it shows \"Not visible to endpoint devices.\" None of these are ever guessed."
+        "Network detail fields, what is and isn't obtainable: local IP, subnet mask, and default gateway are read natively. On Android the DHCP server and DNS server(s) are read too, and show \"Not reported for this network\" when there is nothing to read (no lease, or no active link). On iOS, macOS, and Windows those two are not available to the app (on macOS and iOS reading them needs system-level access the app doesn't have), so both show \"Not available on this device.\" A VLAN (802.1Q) tag is stripped by the switch or access point before the frame reaches the device's OS, so no app on the device can see it; it shows \"Not visible to endpoint devices.\" None of these are ever guessed."
       ],
-      "source": "The tool reads your current Wi-Fi link and runs a live network-quality test, then applies the same verdict logic as the pro Wi-Fi vs Internet tool."
+      "source": "The tool reads your current Wi-Fi link and runs a live network-quality test, then turns both into a plain-English verdict."
     },
     "analyze-results": {
       "name": "Analyze Results",
@@ -9025,20 +9025,20 @@
       "whyHere": "When you want to characterize how a connection behaves, not just \"how many Mbps\". Reach for it to see whether the internet path is healthy across several measures at once, the way a full network-quality check would.",
       "howToUse": [
         "Open the tool. A live latency trend starts sampling right away (every 30 seconds) while the screen is open.",
-        "Tap \"Run test\" for the full one-shot measurement. Download, upload, and responsiveness only run on a full test.",
+        "Tap \"Run test\" for the full one-shot measurement. Download, upload, and responsiveness only run on a full test. When the app can't confirm you're on Wi-Fi, the button reads \"Run test (uses data)\" or \"Run test (may use data)\" so you know before you tap.",
         "Read the six graded rows and the popular-sites reachability table."
       ],
       "inputs": [],
-      "algorithm": "The app measures everything itself. Latency, jitter, and loss come from timing 10 back-to-back connection attempts to a well-known public host on port 443 (it times connections rather than classic ping, because the desktop sandbox blocks that). Jitter is the average variation between one sample and the next; loss is the share of attempts that failed. If every attempt fails, latency and jitter honestly read \"Unavailable\" while loss is a real 100%. Download runs several streams at once (five by default), each against a different independent public server or CDN from a diverse pool, over a shared window of about 20 seconds. The first few seconds of TCP slow-start ramp are discarded, so the figure is sustained steady-state throughput, not the ramp. Each server's own rate is measured, any server that comes back below roughly half the median is dropped as a throttled outlier, and the survivors' rates are summed into the aggregate download, so one slow server cannot drag the number down; if every stream fails it says so rather than showing a fake 0. Upload is an honest single stream (only one public destination is a verified large-upload sink), and an empty or failed transfer reads as a failure, not 0. Responsiveness is a simplified estimate of how the connection holds up while busy: it measures round-trip time during a download and converts it to a responsiveness-per-minute figure (this is a lightweight take inspired by the industry method, not the full standard). Reachability is a quick connection test to 14 well-known cloud hosts a mix of everyday and professional users recognize (Facebook, Instagram, TikTok, YouTube, Netflix, Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub, and a DNS anchor). Grade bands: Latency ms Excellent under 20, Good under 50, Fair under 100, Poor 100 or more (grounded in the ITU-T G.114 guidance). Jitter ms under 5 / under 15 / under 30. Loss % 0 / under 1 / under 2.5. Responsiveness 1000+ / 500+ / 100+. Download Mbps 100+ / 25+ / 5+ (a rule of thumb). Upload Mbps 20+ / 5+ / 1+ (a rule of thumb).",
+      "algorithm": "The app measures everything itself. Latency, jitter, and loss come from timing 10 back-to-back connection attempts to a well-known public host on port 443 (it times connections rather than classic ping, because the desktop sandbox blocks that). Jitter is the average variation between one sample and the next; loss is the share of attempts that failed. If every attempt fails, latency and jitter honestly read \"Unavailable\" while loss is a real 100%. Download runs several streams at once (five by default), each against a different independent public server or CDN from a diverse pool, over a shared window of about 15 seconds. The first few seconds of TCP slow-start ramp are discarded, so the figure is sustained steady-state throughput, not the ramp. Each server's own rate is measured, any server that comes back below roughly half the median is dropped as a throttled outlier, and the survivors' rates are summed into the aggregate download, so one slow server cannot drag the number down; if every stream fails it says so rather than showing a fake 0. Upload is an honest single stream (only one public destination is a verified large-upload sink), and an empty or failed transfer reads as a failure, not 0. Responsiveness is a simplified estimate of how the connection holds up while busy: it measures round-trip time during a download and converts it to a responsiveness-per-minute figure (this is a lightweight take inspired by the industry method, not the full standard). Reachability is a quick connection test to 14 well-known cloud hosts a mix of everyday and professional users recognize (Facebook, Instagram, TikTok, YouTube, Netflix, Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub, and a DNS anchor). Grade bands: Latency ms Excellent under 20, Good under 50, Fair under 100, Poor 100 or more (grounded in the ITU-T G.114 guidance). Jitter ms under 5 / under 15 / under 30. Loss % 0 / under 1 / under 2.5. Responsiveness 1000+ / 500+ / 100+. Download Mbps 100+ / 25+ / 5+ (a rule of thumb). Upload Mbps 20+ / 5+ / 1+ (a rule of thumb).",
       "example": null,
       "topNotes": [
         "Why your speed test may read differently: no single number is \"the\" speed of a connection. When the Toolbox shows an internet throughput figure, it is real throughput to neutral public destinations, measured over a fixed window and reported honestly. If another test on the same connection reads higher, that is the method talking: a different server, more streams, a longer ramp-up. If the Toolbox can't get a clean read, it tells you it couldn't rather than inventing a number. (see: How the Toolbox Measures Throughput)"
       ],
       "fieldNotes": [
-        "Platform differences: runs on macOS, Windows, Android, and iOS, and is coming to the WLAN Pi. On the web version it points you to download the app instead.",
+        "Platform differences: runs on macOS, Windows, Android, and iOS. When the Toolbox is served from a WLAN Pi, the test runs on the Pi: download and upload are the Pi's own uplink to the internet, the reachability rows check the Pi's connection hops, and a separate row times the Wi-Fi hop between this device and the Pi. In a browser anywhere else it points you to download the app instead.",
         "Read each grade on its own: a connection can be Excellent on latency and Poor on upload at the same time, which is exactly the point. The download and upload Mbps grades are \"good enough for a household\" rules of thumb, not standards. Responsiveness is directional only.",
         "Latency times a full connection handshake to a real host, so it's a faithful stand-in for ping and reads slightly higher.",
-        "The on-screen footnote says it plainly: these are this app's own measurements, not any other service's score. Download adds two streams together, so it reflects your link's total capacity rather than a single flow. A failed measurement reads \"Unavailable\" with a note, never 0."
+        "The on-screen footnote says it plainly: these are this app's own measurements, not any other service's score. Download adds five streams together, so it reflects your link's total capacity rather than a single flow. A failed measurement reads \"Unavailable\" with a note, never 0."
       ],
       "source": "The app measures everything itself against neutral public servers; nothing is outsourced to another service."
     },
@@ -9048,7 +9048,7 @@
       "purpose": "Shows the live details of your connection to the access point: SSID, BSSID, RSSI, noise, SNR, Tx/Rx rate, channel, width, band, and 802.11 standard.",
       "whyHere": "The \"what is my radio actually doing right now\" read. Reach for it to confirm band, channel, and width, check signal and SNR against your design targets, or sanity-check the rate the client negotiated.",
       "howToUse": [
-        "macOS: open the tool and it takes a snapshot. Tap Refresh to re-read. SSID and BSSID are hidden behind macOS Location Services; tap Grant (or open Location settings) to reveal them. The radio metrics don't need Location.",
+        "macOS: open the tool and it reads the link, then keeps re-reading it every two seconds while the screen is open. Tap Refresh for an immediate re-read. SSID and BSSID are hidden behind macOS Location Services; tap Grant Location (or open Location settings) to reveal them. The radio metrics don't need Location.",
         "iOS: this is live streaming only. Install the combined \"WLAN Pros Live\" companion Shortcut once (via the iCloud link), then tap Start. The Shortcut loops, reading the connected access point each cycle and handing the details back to the app; Stop freezes the last values. There is no one-tap snapshot on iOS.",
         "Android: open the tool and it takes a snapshot. Tap Refresh to re-read. Android hides the network name (SSID and BSSID), the channel width, and the security type until you allow Location; tap Grant Location, or open Settings if you denied it before. Signal, rate, and channel work without it.",
         "Windows: open the tool and it takes a snapshot. Tap Refresh to re-read. Windows shows the network name without a Location permission, so there is nothing to grant.",
@@ -9094,16 +9094,17 @@
       "whyHere": "A roam is when your device switches access points while staying on the same network. Watching the live Wi-Fi signal lets you see a roam happen, but nothing records it. Reach for this when you want a timestamped list of roams from a walk-around, for example to see where a device clings to a far access point or hops too often.",
       "howToUse": [
         "A \"Current connection\" card sits at the top of the screen, so you see your live link (network, access point, band and standard, channel and width, signal, SNR, Tx rate) the instant you open the tool, before any roam happens. It reads the same live link the roam watch does and refreshes with it; a field the platform doesn't report is left out rather than guessed.",
-        "macOS: recording starts automatically and keeps reading the Wi-Fi link while the screen is open. Walk your space; each roam is logged as it happens.",
+        "macOS, Android, and Windows: recording starts automatically and keeps reading the Wi-Fi link while the screen is open. Walk your space; each roam is logged as it happens. On macOS the access point's identity needs Location access, and the screen asks for it or links to the setting. On Android it needs the Location permission Wi-Fi Information asks for.",
         "iOS: install the \"WLAN Pros Live\" companion Shortcut (the same one Wi-Fi Information uses), tap Start, then walk with the screen open. Because firing the Shortcut switches to the Shortcuts app, it waits for your deliberate Start tap rather than starting on its own.",
+        "In a browser, including one served from a WLAN Pi, the tool points you to download the app.",
         "Read the list newest-first: time, network, the from-and-to access points, and the signal (RSSI/SNR) read at the roam.",
         "Tap Copy results in the top bar to put the whole session on the clipboard as plain text (a header plus one line per roam), so you can paste it into Notes or a report instead of screenshotting. The button stays disabled until at least one roam is recorded."
       ],
       "inputs": [],
-      "algorithm": "The tool watches the connected access point and records a roam only when the access point's radio address changes while the network name stays the same. A missing signal simply pauses the chain without inventing a roam; the first access point it sees is just the starting point (no roam); a repeat of the same access point is ignored; and moving to a different network is a network switch, not a roam, so it's excluded. On macOS it checks on every read, so a roam registers even if the signal is identical before and after. On iOS it checks each new reading from the Shortcut and clears when you Stop and Start again.",
+      "algorithm": "The tool watches the connected access point and records a roam only when the access point's radio address changes while the network name stays the same. A missing signal simply pauses the chain without inventing a roam; the first access point it sees is just the starting point (no roam); a repeat of the same access point is ignored; and moving to a different network is a network switch, not a roam, so it's excluded. On macOS, Android, and Windows it checks on every read, so a roam registers even if the signal is identical before and after. On iOS it checks each new reading from the Shortcut and clears when you Stop and Start again.",
       "example": null,
       "fieldNotes": [
-        "iOS records only while the app is open and in front. There's no way for any iOS app to log roams with the app closed or the phone in a pocket, the same ceiling Wi-Fi Check runs into. macOS records continuously while the screen is open.",
+        "iOS records only while the app is open and in front. There's no way for any iOS app to log roams with the app closed or the phone in a pocket, the same ceiling Wi-Fi Check runs into. macOS, Android, and Windows record continuously while the screen is open.",
         "A roam between two radios inside the SAME physical access point (for example 2.4 GHz to 5 GHz) is still counted and logged. That's correct: it's a real roam.",
         "The signal shown is the reading at the moment the new access point first appeared, not an average. If the platform didn't report the signal for that sample, it honestly prints \"Signal unavailable\" rather than a fake value.",
         "On iOS, stopping and starting clears the session log so a new walk doesn't inherit the last walk's roams."
@@ -9117,7 +9118,7 @@
       "whyHere": "These are the access point's own numbers about itself, which is a different question from what your client radio is doing. Reach for it when you want the AP's view of the channel next to your own, or when you are deciding whether a cell is carrying more clients than its coverage suggests. The element is optional, so plenty of access points never send it, and knowing that is itself a finding.",
       "howToUse": [
         "macOS: open the tool and it takes a snapshot. Tap Read again to re-read. macOS will not hand beacon information elements to an app without Location access, so if the screen says it got no information elements, grant Location and read again.",
-        "Every other platform: the screen opens and says this device gave it no information elements. That is true and it is deliberate. No beacon information elements reach this app on iOS, and the connected-AP information-element channel is wired for macOS only today.",
+        "Every other native platform: the screen opens and says this device gave it no information elements. That is true and it is deliberate. No beacon information elements reach this app on iOS, and the connected-AP information-element channel is wired for macOS only. In a browser, including one served from a WLAN Pi, the tool points you to download the app.",
         "When there is no reading, read the small label above the sentence first. It says whether the reason is about this access point, about this read, or about what we were told. Those are three different findings and the label is the fastest way to tell which one you are looking at.",
         "Tap Copy results in the top bar to put the reading on the clipboard as plain text. The copied text carries the same label the screen shows, so a pasted result cannot lose the distinction."
       ],
@@ -9136,7 +9137,7 @@
     "interface-info": {
       "name": "Interface Information",
       "category": "Networking Tools",
-      "purpose": "Shows your device's own network state: each interface's IPv4/IPv6 addresses, the interface name and its likely type, plus gateway, DNS, Wi-Fi SSID/BSSID, and your device's primary IP wherever the platform exposes them.",
+      "purpose": "Shows your device's own network state: each interface's IPv4/IPv6 addresses, the interface name and its likely type, plus gateway, subnet mask, Wi-Fi SSID/BSSID, and your device's primary IP wherever the platform exposes them.",
       "whyHere": "The \"what's my IP, gateway, and link\" foundation. Reach for it first when you need your device's own address (say, before a ping or a sweep) or to confirm which interface is active.",
       "howToUse": [
         "Open the tool; it takes a snapshot. Any field a platform can't provide reads \"Not available on this platform\"."
@@ -9145,9 +9146,9 @@
       "algorithm": "The address and interface list comes from the operating system, and Wi-Fi link details the OS list doesn't include (SSID, BSSID, gateway, subnet mask, and the Wi-Fi IP addresses) are read separately. Each of those reads is guarded on its own, so one blocked read (for example SSID) never blanks the whole screen. The interface type (Wi-Fi, Ethernet, Cellular, Loopback, VPN, or Other) is a careful guess based on the interface name; on a Mac, for instance, the first port is guessed as Wi-Fi and later ones as Ethernet. The primary IPv4 prefers the Wi-Fi link IP, otherwise the first real (non-loopback) IPv4.",
       "example": null,
       "fieldNotes": [
-        "Platform differences: SSID, BSSID, and gateway depend on the platform and its permission state. iOS needs the Wi-Fi entitlement plus Location for SSID/BSSID; macOS and Android vary. The web version is turned off. SSID is cleaned of wrapping quotes and the \"<unknown ssid>\" placeholder.",
+        "Platform differences: SSID, BSSID, and gateway depend on the platform and its permission state. On iOS the SSID and BSSID come from the WLAN Pros Live companion Shortcut's latest reading; macOS needs Location for the network name; Android and Windows vary. In a browser the tool is turned off, except when the Toolbox is served from a WLAN Pi, where it shows the Pi's own interfaces. SSID is cleaned of wrapping quotes and the \"<unknown ssid>\" placeholder.",
         "The interface type is a name-based guess; on a Mac the port split is heuristic, so on unusual hardware trust the addresses over the label.",
-        "Empty fields read as an honest \"not available\", never 0 or blank. Whether gateway and DNS show up depends on the platform and its permissions."
+        "Empty fields read as an honest \"not available\", never 0 or blank. Whether the gateway shows up depends on the platform and its permissions. This tool does not read your device's configured DNS servers."
       ],
       "source": "Reads the device's own interface and address list from the operating system, plus Wi-Fi link details where available."
     },
@@ -9168,7 +9169,7 @@
         "The cellular IP relies on matching the usual iOS cellular interface name, since Apple doesn't guarantee those names are stable. \"No cellular interface\" is the normal, honest result on a Wi-Fi-only iPhone, in airplane mode, or on a Mac (which has no cellular).",
         "Total memory is shown in binary units (an 8 GiB device reads \"8 GB\") to match how RAM is actually sized, while keeping the familiar GB/MB label.",
         "Uptime is seconds since boot, shown as something like \"3d 4h 12m\", and always shows at least minutes (a just-booted device reads \"0m\").",
-        "Empty fields read as an honest \"not available\", never 0 or blank. On Android, the model is shown but total RAM isn't available, so it reads unavailable."
+        "Empty fields read as an honest \"not available\", never 0 or blank. On Android, the model is shown but total RAM isn't available, so it reads unavailable. On Windows, the Model line shows the Windows edition (for example Windows 11 Pro), because Windows does not report a hardware model name, and total RAM is shown. Uptime is read on iOS and macOS; on Android and Windows it reads unavailable."
       ],
       "source": "Reads the device's model, memory, uptime, and cellular address straight from the system."
     },
@@ -9187,10 +9188,10 @@
       "algorithm": "Lookups ride secure DNS over HTTPS rather than the old plain DNS port. That's the deliberate choice: plain DNS is often blocked (and gated on iOS), while DNS over HTTPS travels on the same secure web port that works almost everywhere. In All records mode it asks for each record type at once and groups the answers in a readable order; if one type fails, that becomes a small note for that section while everything else still shows. A reverse lookup rewrites the IP into its reverse-lookup name before querying. SPF isn't a separate query: it reads the TXT records and picks out the SPF policy line (per RFC 7208). Three resolvers are selectable: Cloudflare, Google, and Quad9 (9.9.9.9), all over HTTPS with no key needed, and all returning the same record shape. Quad9 is a security resolver that refuses known-malicious domains, so a blocked name comes back as an honest empty result on Quad9, not an error. Every query lands in one of three clearly separated states: success, empty (resolved fine, but no records of that type), or failure.",
       "example": null,
       "fieldNotes": [
-        "Records resolve against a public resolver (Cloudflare, Google, or Quad9), not the resolver your device is configured to use, which is usually what a pro wants: authoritative and uncached. Your device's configured DNS servers are shown by Interface Information instead.",
+        "Records resolve against a public resolver (Cloudflare, Google, or Quad9), not the resolver your device is configured to use, which is usually what a pro wants: authoritative and uncached.",
         "Quad9 (9.9.9.9) blocks domains on its threat-intelligence lists, so an empty result on Quad9 for a name that resolves on Cloudflare or Google means the domain is flagged as malicious, a fast malware check rather than a lookup failure. Use Cloudflare or Google when you want an unfiltered answer.",
         "SRV and CAA records are parsed into readable fields; anything it can't parse is shown raw. Empty isn't an error: a name with no MX record simply returns the empty state.",
-        "Platform differences: identical on iOS, Android, macOS, and Windows. Turned off on the web version, in keeping with the native-only product decision.",
+        "Platform differences: identical on iOS, Android, macOS, and Windows. When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it is turned off.",
         "A full delegation trace (walking from the root down to the authoritative servers) isn't built. DNS over HTTPS only reaches resolvers that hand back the final answer, so a true iterative trace would need lower-level plumbing that's heavier and less reliable in the field than this tool is meant to be."
       ],
       "source": "Resolves names over secure DNS over HTTPS against your choice of Cloudflare, Google, or Quad9."
@@ -9207,7 +9208,7 @@
       "algorithm": "For each port, the tool tries to open a connection with an 800ms default timeout. Open means the connection completed. Closed means the host actively refused it, which tells you the host is reachable and simply has nothing listening on that port. Filtered means nothing came back at all before the timeout: the request was silently dropped, or the host isn't there. That's the same open/closed/filtered result a full connect scan gives. Connections run in a capped pool (up to 64 at a time) and stream in as they finish. The common-ports preset is 44 ports a network pro actually checks (from 20 up to 27017, each labeled with its service, for example 443 as HTTPS and 3389 as RDP).",
       "example": null,
       "fieldNotes": [
-        "Platform differences: works the same on every native platform (no special permission beyond ordinary network access). Turned off on the web version.",
+        "Platform differences: works the same on every native platform (no special permission beyond ordinary network access). When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it is turned off.",
         "\"Filtered\" means the request went unanswered (likely a firewall); it does not mean the port is closed. A custom range is de-duplicated and kept within the valid 1 to 65535 range.",
         "\"Closed\" is a positive signal: it means the host ANSWERED and refused. A host that isn't there reads as all-filtered, never all-closed. If every port comes back filtered, suspect the host is down or firewalled wholesale rather than idle. The copied report spells this legend out.",
         "This is a TCP connect scan, not a stealth scan; it completes each connection and then tears it down."
@@ -9226,7 +9227,7 @@
       "algorithm": "Each \"ping\" times how long it takes to open a connection to the host on the chosen port (443 by default). Either a completed connection OR an active refusal counts as a successful round trip for timing (exactly how tcping treats it, because the host answered either way). A timeout, an unreachable host, or a failed name lookup counts as loss, and no round-trip time is recorded for it. Probes are spaced by your chosen interval minus the time the last probe took, so the cadence stays steady even under high latency.",
       "example": null,
       "fieldNotes": [
-        "Platform differences: identical on every native platform. Turned off on the web version. The screen labels the metric \"TCP RTT\" and shows the target port, so it's never mistaken for classic ICMP ping.",
+        "Platform differences: identical on every native platform. When the Toolbox is served from a WLAN Pi, the Pi runs the ping as a real ICMP echo and the screen labels it that way. In a browser anywhere else it is turned off. The screen labels the metric \"TCP RTT\" and shows the target port, so it's never mistaken for classic ICMP ping.",
         "The round-trip time is the connection time to a port, slightly higher than classic ping, and it depends on that port answering. Even a \"refused\" target gives you a valid timing number, because the host answered.",
         "A host that never answers is reported as loss with no round-trip time. The tool never invents an RTT for a packet it did not get back.",
         "This is not classic ICMP echo (see Ping (ICMP) for the real-ICMP path on mobile). If a host blocks the probe port, it reads as loss even if the host is up on another port; try a different probe port.",
@@ -9249,7 +9250,7 @@
       "example": null,
       "fieldNotes": [
         "This is a TCP round-trip probe, not an ICMP echo. The reading is labeled \"TCP RTT\" and the probe port is shown, so you can't mistake it for ICMP. For true ICMP, see Ping (ICMP) on mobile.",
-        "It runs on every native platform, including the Mac desktop where true ICMP can't run. It's turned off on the web version, which shows a prompt to download the app.",
+        "It runs on every native platform, including the Mac desktop where true ICMP can't run. When the Toolbox is served from a WLAN Pi, the Pi runs a bounded ICMP ping series and the screen labels it that way. In a browser anywhere else it's turned off and shows a prompt to download the app.",
         "Dropped probes are always shown, never hidden. A lost sample is a red dot on the axis and counts toward the loss percentage, so a flaky path reads honestly instead of as a smooth line.",
         "The chart keeps a fixed number of recent samples so a long run stays light on memory, and the copy export notes how many of the total samples are shown.",
         "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen."
@@ -9259,20 +9260,20 @@
     "icmp-ping": {
       "name": "Ping (ICMP)",
       "category": "Networking Tools",
-      "purpose": "True ICMP echo round-trip on mobile: live round-trip time, minimum/average/maximum, and packet loss.",
+      "purpose": "True ICMP echo round-trip on iPhone and Android, and on a WLAN Pi: live round-trip time, minimum/average/maximum, and packet loss.",
       "whyHere": "For when you specifically want a genuine ICMP echo, the classic ping, on platforms that really support it.",
       "howToUse": [
-        "Enter a host and run it (mobile only). It streams replies with running stats, in the same layout as the TCP Ping tool."
+        "Enter a host and run it on iOS or Android. It streams replies with running stats, in the same layout as the TCP Ping tool. When the Toolbox is served from a WLAN Pi, the Pi sends the echoes (up to 20) and shows the summary when the run finishes."
       ],
       "inputs": [],
       "algorithm": "It sends a real ICMP echo request and waits for the echo reply, using the phone's own ping capability. The result is genuine ICMP timing, always labeled \"ICMP echo\" and never a TCP probe dressed up as one.",
       "example": null,
       "fieldNotes": [
-        "Where it works, honestly: iOS and Android both do real ICMP echo. On macOS and Windows the only way to run ICMP is the system ping program, which the Mac App Sandbox blocks, so it gives an honest \"not available in the sandboxed desktop build\" and points you at TCP Ping instead. Coming soon to the WLAN Pi platform. The web version has no way to do this and offers the download instead.",
+        "Where it works, honestly: iOS and Android both do real ICMP echo. On macOS the only way to run ICMP is the system ping program, which the Mac App Sandbox blocks, so the screen says so and points you at TCP Ping instead. ICMP ping is not part of the Windows build; the Windows screen says that plainly and points you at TCP Ping too. When the Toolbox is served from a WLAN Pi, the Pi runs the echo. In a browser anywhere else there is no way to do this, so it offers the download instead.",
         "Where it's available, this is genuine ICMP timing and loss, the real thing, not a TCP stand-in.",
-        "Device-pending note: the iOS ICMP path is verified with a stand-in during testing but can't be fully confirmed without a real device, so the live round-trip is the piece still pending device verification. On desktop, use TCP Ping."
+        "On macOS and Windows, use TCP Ping for reachability and round-trip time; it works there and labels itself as TCP."
       ],
-      "source": "It sends genuine ICMP echo requests using the phone's built-in ping capability."
+      "source": "It sends genuine ICMP echo requests using the phone's built-in ping capability, or the WLAN Pi's when the Toolbox is served from one."
     },
     "ping-sweep": {
       "name": "Ping Sweep",
@@ -9286,7 +9287,7 @@
       "algorithm": "For each address it tries to open a TCP connection to a common port (443 by default; it can also try 80, 22, and 53, and a host counts as responsive the instant any of them answers). A host is listed when it ANSWERS: either the connection completes, or the host actively refuses it (a refusal is a reply, and proves something is there). Silence is not an answer, so a host that times out, is unreachable, or is simply not there is NOT listed and is NOT counted as live. It works through a batch of hosts at a time (32 in flight by default) to stay fast. It's capped at 254 hosts (a /24); anything larger is rejected with a clear \"that's N hosts, the cap is M\" message rather than being silently cut short.",
       "example": null,
       "fieldNotes": [
-        "It works the same on every native platform and is turned off on the web version.",
+        "It works the same on every native platform. When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it is turned off.",
         "A host is reported as \"responded,\" not \"up.\" A host that stays silent on the probed ports may still be alive but only answering ICMP, or behind a firewall. The tool never claims ICMP-style liveness.",
         "A refused connection still counts as responded, and that is deliberate: the host answered, it just isn't listening on that port. That is how tcping behaves too. The list and the copied report say which it was (\"handshake\" or \"refused\"), so a middlebox refusing on behalf of a whole range can't be mistaken for a range full of live servers.",
         "This finds hosts that answer TCP on the probed ports. For richer detail (name, services, device type, vendor), use Network Discovery. A /31 or /32 includes every address; larger blocks leave out the network and broadcast addresses."
@@ -9299,40 +9300,40 @@
       "purpose": "Find the live hosts on your local network and add detail to each: name, services, a best guess at device type, and, where it's exposed, the MAC address and vendor.",
       "whyHere": "A Fing-style LAN scan. Reach for it when you want a real inventory rather than a bare ping sweep: what each host is, not just that it answered.",
       "howToUse": [
-        "Open it and run. It works out your local network range, scans it for live hosts, looks up their names, browses for advertised services, and (on macOS) reads the address table for MAC and vendor."
+        "Open it and run. It works out your local network range, scans it for live hosts, looks up their names, browses for advertised services, and (on macOS and Windows) reads the address table for MAC and vendor. When the Toolbox is served from a WLAN Pi, the Pi scans its own subnet and returns the hosts it finds."
       ],
       "inputs": [],
-      "algorithm": "It works in four passes. First it figures out your local /24 range. Second it scans that range across a curated set of common ports, a batch at a time, streaming progress as it goes. Third it does a reverse name lookup on each host it finds (blank when the host has no name registered). Fourth it browses for advertised network services (the same technology behind AirPlay and printer discovery) across a curated service list. On macOS it then reads the system address table to attach a MAC address and vendor. Finally it makes a best guess at each device's type from its open ports and advertised services. The type rules go most-specific first: printing ports or a print service means Printer; a streaming-video service means Camera or NVR; a certain Apple service on port 62078 means an iOS device; file sharing on 445 means a Windows or SMB machine; music-speaker services mean Speaker; a casting service means a media streamer; AirPlay-family services mean an Apple device; then weaker hints, web ports mean a web server and port 22 means an SSH host; any advertised service otherwise means an mDNS device; and everything else is Unknown. The vendor comes from matching the MAC address prefix against the full built-in IEEE vendor registry, which stays honest: blank for randomized or local addresses, the raw prefix when the vendor isn't listed, and the named vendor otherwise.",
+      "algorithm": "It works in four passes. First it figures out your local /24 range. Second it scans that range across a curated set of common ports, a batch at a time, streaming progress as it goes. Third it does a reverse name lookup on each host it finds (blank when the host has no name registered). Fourth it browses for advertised network services (the same technology behind AirPlay and printer discovery) across a curated service list. On macOS and Windows it then reads the system address table to attach a MAC address and vendor. Finally it makes a best guess at each device's type from its open ports and advertised services. The type rules go most-specific first: printing ports or a print service means Printer; a streaming-video service means Camera or NVR; a certain Apple service on port 62078 means an iOS device; file sharing on 445 means a Windows or SMB machine; music-speaker services mean Speaker; a casting service means a media streamer; AirPlay-family services mean an Apple device; then weaker hints, web ports mean a web server and port 22 means an SSH host; any advertised service otherwise means an mDNS device; and everything else is Unknown. The vendor comes from matching the MAC address prefix against the full built-in IEEE vendor registry, which stays honest: blank for randomized or local addresses, the raw prefix when the vendor isn't listed, and the named vendor otherwise.",
       "example": null,
       "fieldNotes": [
-        "The platform differences are the heart of it. MAC address and vendor are macOS only, because reading the address table isn't allowed on iOS or Android, so those stay blank there. Service browsing works on iOS and macOS through Apple's built-in discovery; it deliberately avoids methods that iOS quietly drops or that carry a license incompatible with the app, and on Android and other platforms the service pass simply comes back empty. The core host scan is cross-platform; only the service and MAC enrichment are platform-specific.",
+        "The platform differences are the heart of it. MAC address and vendor come from macOS and Windows, which let the app read the system's address table; iOS and Android don't allow that, so those stay blank there. Service browsing works on iOS and macOS through Apple's built-in discovery; it deliberately avoids methods that iOS quietly drops or that carry a license incompatible with the app, and on Android and other platforms the service pass simply comes back empty. The core host scan is cross-platform; only the service and MAC enrichment are platform-specific.",
         "Device type is a best guess from ports and advertised services, not a lookup in a hardware database, so Unknown is a normal, honest outcome. There's deliberately no \"access point\" guess, because the only reliable way to spot an access point is the vendor from its MAC address, which mobile can't read.",
         "Any single pass can fail without stopping the run; a failed service browse just means no service detail, and nothing is invented to fill the gap. On mobile, expect no MAC or vendor, and access points to show up as SSH, Web, or Unknown, a known limit of the platform."
       ],
-      "source": "It scans the local network for live hosts, then looks up names, advertised services, device type, and (on macOS) MAC and vendor."
+      "source": "It scans the local network for live hosts, then looks up names, advertised services, device type, and (on macOS and Windows) MAC and vendor."
     },
     "traceroute": {
       "name": "Traceroute (System)",
       "category": "Networking Tools",
-      "purpose": "Maps the path to a host hop by hop, using the computer's built-in traceroute (desktop).",
+      "purpose": "Maps the path to a host hop by hop, using the computer's built-in traceroute (macOS and Windows), or the WLAN Pi's when the Toolbox is served from one.",
       "whyHere": "The genuine traceroute, where it can actually run. Reach for it on a Mac or PC to see the routed path and where latency or loss creeps in.",
       "howToUse": [
-        "Desktop only. Enter a host and run it; hops fill in live as they come back. You can cancel partway through."
+        "macOS and Windows, or a WLAN Pi. Enter a host and run it. On a computer, hops fill in live as they come back and you can cancel partway through. On a WLAN Pi, the Pi runs the trace and shows the full hop list when it finishes."
       ],
       "inputs": [],
       "algorithm": "It runs the computer's own traceroute program and reads each hop as it appears: the hop number, the responding router's name and IP, the round-trip times for each probe, and any timeouts shown as three asterisks. A real traceroute has to read a specific kind of reply from each router along the way, which needs privileged access the built-in program has, so this tool refuses to fake hops from ordinary TCP timing.",
       "example": null,
       "fieldNotes": [
-        "Where it works, honestly: on macOS and Windows it runs the built-in traceroute. Under the Mac App Sandbox (the App Store build) launching that program is blocked, so the tool quietly tests whether it can run and adapts: a Developer-ID Mac build and Windows run it fine, while the sandboxed build shows a clear \"traceroute unavailable\" message rather than hanging or pretending. On iOS and Android, running an external program isn't allowed, so it says \"Traceroute runs on desktop, use Ping here.\" Coming soon to the WLAN Pi platform. The web version never reaches this tool.",
+        "Where it works, honestly: on macOS and Windows it runs the built-in traceroute. Under the Mac App Sandbox (the App Store build) launching that program is blocked, so the tool quietly tests whether it can run and adapts: a Developer-ID Mac build and Windows run it fine, while the sandboxed build shows a clear \"traceroute unavailable\" message rather than hanging or pretending. On iOS and Android, running an external program isn't allowed, so the screen says \"Traceroute runs on desktop\" and points you at Ping. On Android, Traceroute (Mobile) maps the path instead. When the Toolbox is served from a WLAN Pi, the Pi runs the trace. In a browser anywhere else the tool points you to download the app.",
         "Each hop shows its number, the responding router (name and IP), and up to three round-trip times. Three asterisks mean a hop that didn't answer, which is common and not necessarily a problem. Reaching the target is reported as \"complete.\"",
         "On a sandboxed Mac App Store build this tool honestly reports itself unavailable. For a path check on mobile, see Traceroute (Mobile), and note its iOS limitation."
       ],
-      "source": "It runs the computer's built-in traceroute and reads each hop as it comes back."
+      "source": "It runs the computer's built-in traceroute (or the WLAN Pi's) and reads each hop as it comes back."
     },
     "mobile-traceroute": {
       "name": "Traceroute (Mobile)",
       "category": "Networking Tools",
-      "purpose": "Maps the path to a host hop by hop using an ICMP TTL-walk, Android only (not supported on iOS).",
+      "purpose": "Maps the path to a host hop by hop using an ICMP TTL-walk, on Android and on a WLAN Pi (not supported on iOS).",
       "whyHere": "Brings traceroute to mobile where the platform genuinely supports it, built on the same ICMP foundation as Ping (ICMP).",
       "howToUse": [
         "Android: enter a host and run it. Hops fill in one at a time as it steadily increases how far each probe travels, revealing the router that answers at each step."
@@ -9341,11 +9342,11 @@
       "algorithm": "It sends ICMP echoes that are allowed to travel one hop, then two, then three, and so on. Each router that stops a probe short reports back and names that hop, and when the target itself replies, the walk ends.",
       "example": null,
       "fieldNotes": [
-        "The platform picture, honestly: on Android it works, because the system ping lets each probe travel a set distance and prints the router that answers each step. On iOS it isn't feasible and is honestly marked unavailable. iOS can send echoes, but its receive path only accepts the plain echo reply and never reads the \"hop exceeded\" message a traceroute needs to name each router, so a short-travel probe just times out with no hop. Rather than fake hops, iOS shows an honest \"not on this device.\" On desktop, the system traceroute is the path to use; this mobile version reports itself as desktop-sandboxed there.",
+        "The platform picture, honestly: on Android it works, because the system ping lets each probe travel a set distance and prints the router that answers each step. On iOS it isn't feasible and is honestly marked unavailable. iOS can send echoes, but its receive path only accepts the plain echo reply and never reads the \"hop exceeded\" message a traceroute needs to name each router, so a short-travel probe just times out with no hop. Rather than fake hops, iOS shows an honest \"not on this device.\" On macOS and Windows, the system Traceroute is the path to use, and this screen points you to it. When the Toolbox is served from a WLAN Pi, the Pi runs the walk and shows the final hop list.",
         "Where it works (Android), hops show the same hop-number, IP, round-trip-time, and asterisk-timeout shape as the desktop traceroute.",
-        "The iOS limit is a real platform ceiling and is the reason this tool is Android-only. Device-pending note: the Android path is still pending verification on a real device."
+        "The iOS limit is a real platform ceiling and is the reason this tool doesn't run on iPhone. Device-pending note: the Android path is still pending verification on a real device."
       ],
-      "source": "On Android it sends ICMP echoes that travel one hop farther each time, naming the router that answers at each step."
+      "source": "On Android (or on a WLAN Pi) it sends ICMP echoes that travel one hop farther each time, naming the router that answers at each step."
     },
     "ssl-inspect": {
       "name": "Inspector (SSL/TLS)",
@@ -9359,7 +9360,7 @@
       "algorithm": "It deliberately accepts any certificate the server presents, so an expired, self-signed, or wrong-name certificate is still captured and shown to you rather than rejected. It then reads the certificate dates and tells you whether it's currently valid, expired, or not yet valid, along with the days left until it expires. Between two ways of reading the certificate it recovers the full picture: the PEM and DER forms, the subject and issuer, the valid-from and valid-to dates, the covered names, the serial number, the signature and public-key algorithms, the key size in bits, and both the SHA-1 and SHA-256 fingerprints. A bad certificate counts as a successful inspection, not a failure.",
       "example": null,
       "fieldNotes": [
-        "It works the same on every native platform and is turned off on the web version.",
+        "It works the same on every native platform. When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it is turned off.",
         "Validity is shown with an icon and text, not color alone. Two honest limits are stated on screen rather than papered over. First, the ALPN result is not the TLS version or cipher, and because the platform only exposes ALPN, the negotiated version and cipher are reported as \"not exposed by the platform\" instead of being invented. Second, this shows the leaf certificate only, not the intermediate and root certificates it was checked against.",
         "Connection problems (name lookup, refused, timeout) are failures; an invalid certificate is not. Don't read the ALPN line as the TLS version; the tool keeps them separate on purpose."
       ],
@@ -9377,7 +9378,7 @@
       "algorithm": "It follows the redirect chain itself, recording one step for every response until it hits a non-redirect status or the 10-redirect limit. If a HEAD request comes back as 405 (method not allowed) and you didn't specifically ask for GET, it quietly retries that step with GET and notes the switch. Relative Location values are resolved to full URLs per the HTTP standard.",
       "example": null,
       "fieldNotes": [
-        "Platform note: on iOS, cleartext http:// is blocked by App Transport Security, and the app deliberately doesn't add a blanket exception, since that would weaken every request. So an http:// target fails on iOS and the tool shows a specific message (\"On iOS, cleartext HTTP is blocked by ATS, try the https:// URL\") rather than a generic failure. Otherwise it's the same on native and turned off on the web version.",
+        "Platform note: on iOS, cleartext http:// is blocked by App Transport Security, and the app deliberately doesn't add a blanket exception, since that would weaken every request. So an http:// target fails on iOS and the tool shows a specific message (\"On iOS, cleartext HTTP is blocked by ATS, try the https:// URL\") rather than a generic failure. Otherwise it's the same on every native platform. When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it is turned off.",
         "The step chain reads top (the first request) to bottom (the final response). It flags when HEAD fell back to GET and when the redirect limit was hit. Header names are shown in title case and sorted.",
         "Response bodies are read and thrown away; this inspects headers, it doesn't fetch pages. On iOS, use the https:// URL."
       ],
@@ -9395,7 +9396,7 @@
       "algorithm": "It queries WHOIS directly over the network on port 43. It follows the usual two-step chain: it asks the master directory who's in charge of the target, reads the referral to the authoritative registry, queries that registry, and follows one further step to the registrar's own WHOIS server when that returns a fuller record. The highlights (registrar, created, updated, and expiry dates, status, and name servers) are pulled from the free-form record wherever they're reliably present; anything missing is left out rather than guessed.",
       "example": null,
       "fieldNotes": [
-        "It works the same on every native platform and is turned off on the web version.",
+        "It works the same on every native platform. When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it is turned off.",
         "There are three outcomes: success (the raw record plus highlights), empty (the server answered but the domain is unregistered or returned a \"No match\" notice), and failure (a connection problem, timeout, or bad input). The servers it consulted are listed so the path is clear.",
         "WHOIS output varies by registry and is free-form, so the highlights are a best effort. The raw record is the source of truth."
       ],
@@ -9413,7 +9414,7 @@
       "algorithm": "It builds the standard 102-byte magic packet (six 0xFF bytes followed by the target's 6-byte MAC address repeated 16 times) and sends it as a UDP broadcast. It first tidies the MAC into standard form, and rejects an invalid MAC, a bad broadcast address, or an out-of-range port with a clear message.",
       "example": null,
       "fieldNotes": [
-        "It works on every native platform and is turned off on the web version.",
+        "It works on every native platform. When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it is turned off.",
         "Success means the packet was sent; it makes no claim that the device woke. Wake-on-LAN gets no acknowledgment, a switch may not carry the broadcast across subnets, and the target may have Wake-on-LAN turned off. The tool shows the bytes sent and the packet in hex.",
         "If the system reports 0 bytes sent, try a directed broadcast (for example 192.168.1.255) instead of 255.255.255.255. \"Sent\" is not the same as \"woke\"; check the host separately."
       ],
@@ -9428,15 +9429,15 @@
         "Open it and run it. It works out your local network range, checks each address, and attaches the known hardware address wherever the platform makes one available."
       ],
       "inputs": [],
-      "algorithm": "It figures out your local network range (usually a /24, or the real one if different) and quickly checks each address by trying to open a connection on a handful of common ports (80, 443, 22, 445, 139, 53, 8080). A device counts as present when it ANSWERS, whether it accepts the connection or actively refuses it. An address that stays silent, times out, or is unreachable is not listed. On macOS and Windows it also reads the system's own neighbour table to attach the real hardware (MAC) address the system has already learned: macOS through a native system call, Windows through the Windows IP Helper API. Neither shells out to a command line. As a safety limit, it refuses to scan anything larger than about 1,000 addresses.",
+      "algorithm": "It figures out your local network range (usually a /24, or the real one if different) and quickly checks each address by trying to open a connection on a handful of common ports (80, 443, 22, 445, 139, 53, 8080). A device counts as present when it ANSWERS, whether it accepts the connection or actively refuses it. An address that stays silent, times out, or is unreachable is not listed. On macOS and Windows it also reads the system's own neighbor table to attach the real hardware (MAC) address the system has already learned: macOS through a native system call, Windows through the Windows IP Helper API. Neither shells out to a command line. As a safety limit, it refuses to scan anything larger than about 1,000 addresses.",
       "example": null,
       "fieldNotes": [
-        "What each platform can do: macOS and Windows give you the device list plus the real hardware address, read from the system's own neighbour table. iOS and Android give you the device list without hardware addresses, because those systems do not let apps read that table. On web it offers a download fallback.",
+        "What each platform can do: macOS and Windows give you the device list plus the real hardware address, read from the system's own neighbor table. Android gives you the device list without hardware addresses, because it does not let apps read that table. iOS does not run the sweep at all and says so on screen. When the Toolbox is served from a WLAN Pi, the Pi reads its own neighbor table. In a browser anywhere else it offers a download fallback.",
         "A missing MAC always tells you WHICH kind of missing it is, and never a guessed value. \"Not exposed on this platform\" means this platform has no way to read the table at all. \"MAC read failed\" means the read was tried here and did not work. \"Not in the ARP cache\" means the read worked and simply had no entry for that device. Empty or all-zero entries are skipped.",
         "Only addresses that answer are listed. A silent address is left out rather than guessed at, so the list is what replied, not what might be there.",
-        "Hardware addresses come from the system's neighbour table on macOS and Windows. The Windows path is implemented but has not yet been confirmed on real hardware; if it does not work, the tool reports a failed read rather than a platform limit. For richer detail, including device-type and vendor, use Network Discovery."
+        "Hardware addresses come from the system's neighbor table on macOS and Windows. The Windows path is implemented but has not yet been confirmed on real hardware; if it does not work, the tool reports a failed read rather than a platform limit. For richer detail, including device-type and vendor, use Network Discovery."
       ],
-      "source": "It quietly checks each address on your local network and, on macOS and Windows, reads the system's learned neighbour-address table to fill in the MAC."
+      "source": "It quietly checks each address on your local network and, on macOS and Windows, reads the system's learned neighbor-address table to fill in the MAC."
     },
     "bgp-asn": {
       "name": "Lookup (BGP/ASN)",
@@ -9450,7 +9451,7 @@
       "algorithm": "It looks the answer up through RIPEstat, a free public data service run by RIPE NCC (one of the internet's regional registries). For an IP address it finds the announced block and the network it belongs to, then the operator's name, type, registry, and announced prefixes. For a network number it finds that operator's details and its neighbors, sorted into upstream, peer, and downstream counts. It works out whether you entered an address or a network number before it looks anything up.",
       "example": null,
       "fieldNotes": [
-        "Platform note: this one runs on the native apps only. On web it offers a download fallback instead.",
+        "Platform note: this one runs on the native apps. When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it offers a download fallback instead.",
         "Three outcomes: a clean result; an empty result (the service answered but the address is not in the global routing table, for example a private or reserved IP); or a failure. Peer and upstream counts are best-effort extras, so if that part cannot be fetched they show \"Not available\" rather than zero.",
         "Any detail the service leaves out shows as \"Not available\", never invented. Neighbor roles map as: upstream, downstream, or peer."
       ],
@@ -9465,14 +9466,14 @@
         "Enter an IP address or hostname, or leave it blank to locate your own public IP, then look it up. You get a copyable \"latitude,longitude\" pair and an OpenStreetMap link."
       ],
       "inputs": [],
-      "algorithm": "It looks the answer up through ipwho.is, a free public geolocation service that returns location, provider, timezone, and network number in one response. Leaving the box blank locates your own public IP; otherwise it locates the address you enter. It does a quick sanity check on your input before spending a lookup, and if the service reports a problem it tells you plainly whether to check your input or wait out a rate limit, rather than treating the reply as valid.",
+      "algorithm": "It looks the answer up through ipinfo.io, a free public geolocation service that needs no key, and if that lookup fails or comes back without coordinates it asks get.geojs.io instead. Leaving the box blank locates your own public IP; otherwise it locates the address you enter. It does a quick sanity check on your input before spending a lookup, and if the service reports a problem it tells you plainly whether to check your input or wait out a rate limit, rather than treating the reply as valid.",
       "example": null,
       "fieldNotes": [
-        "Platform note: this one runs on the native apps only. On web it offers a download fallback instead.",
-        "Coordinates appear as selectable text plus a copyable pair and a link out to a map (there is no embedded map yet). Any missing detail shows as \"Not available\".",
+        "Platform note: this one runs on the native apps. When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it offers a download fallback instead.",
+        "Coordinates appear as selectable text plus a copyable pair and a link out to a map (there is no embedded map). Any missing detail shows as \"Not available\".",
         "Accuracy is only as good as the data provider's, which is looser for mobile and carrier-shared (CGNAT) addresses. If you hit a rate limit, it says so plainly (\"wait a minute and try again\")."
       ],
-      "source": "It looks the location up through ipwho.is, a free public IP-geolocation service."
+      "source": "It looks the location up through ipinfo.io, a free public IP-geolocation service, and falls back to get.geojs.io automatically if that fails."
     },
     "my-current-location": {
       "name": "Current Location",
@@ -9513,8 +9514,7 @@
         "A randomized phone MAC correctly comes back as \"no vendor\", which is the right answer, not a miss. The built-in registry lists the date it was captured; refresh it to pick up newer assignments.",
         "The bits card renders for every valid address, including the ones the vendor card has to decline. For those, the bits are the answer.",
         "When the U/L bit is set, the screen also shows the address with that bit cleared. If the address was derived from real hardware, such as a BSSID off a radio base MAC, those first three bytes are the radio's OUI and you can look them up. If it is a randomized client address, they mean nothing, so treat the cleared form as a lead and not a fact.",
-        "There is no EUI-64 for a group or broadcast address, and the screen says so rather than showing a derivation. An interface identifier identifies one interface, and a group address is not one.",
-        "CATALOG NOTE: manual category is Networking Tools; catalog id is mac-oui-lookup with route /tools/mac-oui."
+        "There is no EUI-64 for a group or broadcast address, and the screen says so rather than showing a derivation. An interface identifier identifies one interface, and a group address is not one."
       ],
       "source": "It matches the address against a built-in copy of the official IEEE vendor registry, entirely offline."
     },
@@ -9530,7 +9530,7 @@
       "algorithm": "It uses ordinary TCP and UDP connections, not low-level raw packets, so it runs cleanly on every platform. Over TCP it connects, sends your message, and reads the reply until the other end closes or goes quiet for the timeout, with a hard overall cap so a chatty stream can't run forever. Over UDP it sends one message and waits up to the timeout for a reply, and getting no reply is treated as a normal outcome rather than an error, because UDP offers no delivery guarantee. Problems are reported precisely: name-lookup failure, connection refused, unreachable, timeout, or invalid input.",
       "example": null,
       "fieldNotes": [
-        "This works the same on every native platform. It is turned off on web.",
+        "This works the same on every native platform. When the Toolbox is served from a WLAN Pi, the Pi runs it from its own network. In a browser anywhere else it is turned off.",
         "A UDP \"no reply\" is honest and expected for many services; it does not mean failure. The message box only rejects your input if a hex escape is written incorrectly, which is worth flagging as a typo.",
         "Binary replies still display, using a placeholder character for bytes that aren't readable text, rather than failing. This is a single send-and-receive, not an ongoing session."
       ],
@@ -10154,8 +10154,7 @@
         "A KB is 1000 bytes and a KiB is 1024. Your operating system probably says GB and means GiB, which is why a \"1 GB\" download can take about 7 percent longer than you expected.",
         "There is no efficiency slider, on purpose. A default of 85 percent would be a made-up number dressed up as help. The answer is the time at exactly the rate you entered. If you want a realistic number, enter a throughput you actually measured rather than the number on the label.",
         "Real transfers run slower than this: protocol overhead, disk speed, and everyone else on the link all take a share.",
-        "Fully offline: one division on the device.",
-        "CATALOG NOTE: manual category is Calculators & Tools; catalog id is transfer-time with route /tools/transfer-time."
+        "Fully offline: one division on the device."
       ],
       "source": "Calculated on the device; nothing is sent anywhere."
     },
@@ -10501,7 +10500,7 @@
       "algorithm": null,
       "example": "A C13 connector (female, on the cord) mates with a C14 inlet (male, on the back of a PC or PDU). A C15 cord fits a C14 inlet, but a C13 cord will not fit a C16 inlet because the C15/C16 keying notch blocks it.",
       "fieldNotes": [
-        "What it shows: the IEC 60320 appliance-coupler table (pair, current, max temperature, nickname, use) and the IEC 60309 industrial-connector table (color, voltage band, use), with keying notes. A connector-face diagram is planned for a later update; the tables work fully without it.",
+        "What it shows: the IEC 60320 appliance-coupler table (pair, current, max temperature, nickname, use) and the IEC 60309 industrial-connector table (color, voltage band, use), with keying notes. The coupler cards and the IEC 60309 card show connector-face drawings alongside the tables.",
         "The \"kettle cord\" nickname properly belongs to C15/C16 (120 degC hot-condition, keyed by a notch), NOT C13/C14 (70 degC cold-condition \"PC cord\").",
         "IEC 60309 red spans 380-480V (not a single \"415V\"): it covers 400V European and 480V US three-phase. Both the color AND the earth-pin clock hour must match to mate.",
         "Based on the IEC 60320 and IEC 60309-2 standards."
@@ -10522,7 +10521,7 @@
       "algorithm": null,
       "example": "L21-30P decodes to L (twist-lock) + 21 (three-phase wye 120/208V, 4-pole 5-wire) + 30 (30A) + P (plug). L21-30R is its receptacle. The leading number is a configuration code, so do no arithmetic on it.",
       "fieldNotes": [
-        "What it shows: the designation decoder with a worked example, plus device groups (125V straight-blade and locking, and 208/240/250V) listing type, voltage, phase, wiring, and amps. A face-diagram plate is planned for a later update; the tables work fully without it.",
+        "What it shows: the designation decoder with a worked example, plus device groups (125V straight-blade and locking, and 208/240/250V) listing type, voltage, phase, wiring, and amps. The device cards show connector-face drawings alongside the tables.",
         "The leading number is a voltage/pole/phase CLASS code, not a literal voltage: 21 = three-phase wye 120/208V, 4-pole 5-wire. Never read it as a voltage.",
         "The 14-series is single-phase SPLIT (the 4th pin is neutral), NOT three-phase; only the L21-series is three-phase wye. P = plug (male), R = receptacle (female).",
         "Based on the NEMA configuration and naming references."
@@ -10544,7 +10543,7 @@
       "algorithm": null,
       "example": "A laptop charger rated 100-240V works on both a US Type A/B 120V outlet and a UK Type G 230V outlet with only a mechanical plug adapter; a 120V-only appliance needs a voltage converter, not just an adapter, on a 230V supply.",
       "fieldNotes": [
-        "What it shows: the IEC World Plugs Type A through M table (type, standard, voltage class, current, countries) and the CEE 7 European family breakout. A face diagram is planned for a later update; the tables work fully without it.",
+        "What it shows: the IEC World Plugs Type A through M table (type, standard, voltage class, current, countries) and the CEE 7 European family breakout. There are no per-plug face drawings; the tables carry the detail.",
         "Voltage classes are nominal: 120V in North America and Japan, 230V across most of the rest of the world. Confirm frequency (50 vs 60 Hz) for motor-driven and timing-sensitive gear.",
         "Argentine Type I (IRAM 2073) has line and neutral reversed relative to the Australian Type I; the CEE 7/7 plug is a hybrid designed to fit both French (E) and Schuko (F) sockets.",
         "Based on the IEC World Plugs letter system and the national standards behind it."
@@ -10967,7 +10966,7 @@
     "nearby-ap-scan": {
       "name": "Nearby AP Scan",
       "category": "Networking Tools",
-      "purpose": "Lists the Wi-Fi access points a scan can see around you (SSID, BSSID, channel, band, and signal) and draws a simple channel-occupancy bar per band so you can read how crowded each channel is at a glance. Runs on Android, macOS, and Windows.",
+      "purpose": "Lists the Wi-Fi access points a scan can see around you (SSID, BSSID, channel, band, and signal) and draws a simple channel-occupancy bar per band so you can read how crowded each channel is at a glance. Runs on Android, macOS, and Windows, and on a WLAN Pi's own radio when the Toolbox is served from one.",
       "whyHere": "A fast read of who else is on the air. When you are picking a channel or chasing co-channel interference, seeing the nearby BSSIDs and where they sit across 2.4, 5, and 6 GHz tells you which channels are busy and which are clear, without carrying a separate analyzer.",
       "howToUse": [
         "Tap Scan to run a Wi-Fi scan. Results list each visible access point with its SSID, BSSID, channel, band, and signal (RSSI).",
@@ -10978,12 +10977,12 @@
       "algorithm": null,
       "example": "On a busy 2.4 GHz band the occupancy bars cluster on channels 1, 6, and 11; an access point sitting on channel 3 overlaps both 1 and 6, which the bars make visible at a glance.",
       "fieldNotes": [
-        "RUNS ON ANDROID, macOS, AND WINDOWS. iOS is the one that blocks nearby-AP scanning at the operating-system level, so the tool is left out of the catalog there. This note said macOS blocked it too, and said Windows was capable but not wired; both were true when it was written and neither is true now.",
+        "RUNS ON ANDROID, macOS, AND WINDOWS, and on a WLAN Pi. iOS blocks nearby-AP scanning at the operating-system level, so the tool is left out of the catalog there. On a Pi with more than one scan-capable radio, a picker lets you choose which radio scans.",
         "Clean fields only. The Android scan exposes SSID, BSSID, channel, band, and RSSI for a scanned (non-connected) network. It does not expose a per-network noise floor, SNR, or data rate, so those columns do not exist here and are never shown.",
         "Android throttles Wi-Fi scans. Foreground apps get a limited number of scans per window; when throttled, a re-scan returns the last cached results and the screen notes it rather than faking a fresh scan.",
-        "Location permission and Wi-Fi must both be on for the scan to return results; the screen shows an honest Wi-Fi-off or Location-needed card when either is missing."
+        "On Android and macOS, Location permission and Wi-Fi must both be on for the scan to return results; the screen shows an honest Wi-Fi-off or Location-needed card when either is missing. Windows does not gate the scan on Location."
       ],
-      "source": "Reads the nearby-network list the Android system returns from a Wi-Fi scan."
+      "source": "Reads the nearby-network list the operating system returns from a Wi-Fi scan (Android, macOS, or Windows), or the WLAN Pi's own scan when the Toolbox is served from one."
     },
     "emergency-phrases": {
       "name": "Emergency Phrases",
@@ -11000,7 +10999,7 @@
       "algorithm": null,
       "example": "Pick German, search \"toilet\", and the row shows English \"Where is the toilet?\" with German \"Wo ist die Toilette?\". Tap copy to put both on the clipboard.",
       "fieldNotes": [
-        "TRANSLATIONS ARE DRAFT. The Spanish, French, Italian, and German wording is draft machine translation generated for the beta and has NOT yet been reviewed by a native or professional translator. A banner at the top of the screen says so, and the caveat is included when you copy the list. Verify any critical phrase locally before relying on it.",
+        "TRANSLATIONS ARE DRAFT. The Spanish, French, Italian, and German wording is draft machine translation and has NOT yet been reviewed by a native or professional translator. A banner at the top of the screen says so, and the caveat is included when you copy the list. Verify any critical phrase locally before relying on it.",
         "Standard, simple wording was used throughout; no idioms were invented. Phrases are intentionally plain so they travel across dialects.",
         "Fully offline. The phrase set is bundled in the app, so it works with no signal and no data plan.",
         "Phrases are grouped by situation in a deliberate, curated order, not alphabetized."
@@ -12355,7 +12354,7 @@
         "JOINING CHANGES THE NETWORK THIS DEVICE IS ON. That is the point of the tool, but it also means a join can move you to a different subnet, and anything depending on the old one is dropped. On a native join you are moving the machine you are standing at.",
         "OPEN AND OWE NEED NO PASSWORD. OWE, which the Wi-Fi Alliance calls Enhanced Open, encrypts without authenticating, so there is nothing to type. A network advertising OWE transition mode is a marker that BOTH an open and an OWE BSS exist, not a security scheme of its own.",
         "A FAILED JOIN USUALLY TELLS YOU WHICH KIND OF FAILURE IT WAS. A network that never appears is a different problem from one that appears and then refuses the passphrase, and the two are worth separating before you change anything.",
-        "802.1X IS NOT SUPPORTED YET. Enterprise networks need a credential exchange this tool does not carry; it handles open, OWE, WPA2 Personal, and WPA3 Personal."
+        "802.1X IS NOT SUPPORTED. Enterprise networks need a credential exchange this tool does not carry; it handles open, OWE, WPA2 Personal, and WPA3 Personal."
       ],
       "source": "Associates using the operating system's own Wi-Fi interface on macOS and Windows, or the WLAN Pi's radio through the Pi's local API when one is attached."
     },
@@ -12433,6 +12432,7 @@
       "fieldNotes": [
         "Not reported is a real answer and is shown as one. Some drivers, some virtual interfaces and some platforms do not expose speed or duplex at all, and printing a zero there would be a fabricated number.",
         "On a sandboxed Mac App Store build the routing table cannot be read by shelling out, so the default-route badge may be absent. The direct-download build has no such limit.",
+        "The full link table comes from macOS and from a WLAN Pi, which reports its own links. On Windows, iOS, and Android the screen says this platform does not report a full link table here, and a browser not served from a Pi says it cannot see network interfaces.",
         "A speed figure here is what the link negotiated, which is a ceiling rather than a measurement of throughput. Use Test My Connection for that."
       ],
       "source": "Values are read from the operating system's interface and routing tables on each platform."
