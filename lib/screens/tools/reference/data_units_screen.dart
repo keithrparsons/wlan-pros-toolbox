@@ -38,7 +38,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
@@ -304,18 +304,18 @@ class DataUnitsScreen extends StatelessWidget {
   }
 
   Widget _ladderCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'SI decimal vs IEC binary ladders',
       footnote: ladderFootnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('SI', width: 56),
-          _HeaderCell('Power', width: 60),
-          _HeaderCell('SI bytes', width: 200),
-          _HeaderCell('IEC', width: 56),
-          _HeaderCell('Power', width: 60),
-          _HeaderCell('IEC bytes', width: 220),
-          _HeaderCell('Diverge', width: 72),
+          ReferenceHeaderCell('SI', width: 56),
+          ReferenceHeaderCell('Power', width: 60),
+          ReferenceHeaderCell('SI bytes', width: 200),
+          ReferenceHeaderCell('IEC', width: 56),
+          ReferenceHeaderCell('Power', width: 60),
+          ReferenceHeaderCell('IEC bytes', width: 220),
+          ReferenceHeaderCell('Diverge', width: 72),
         ],
       ),
       rows: ladder.map((UnitLadderRow r) {
@@ -401,14 +401,14 @@ class DataUnitsScreen extends StatelessWidget {
   }
 
   Widget _bitByteCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'Bit vs byte (b vs B)',
       footnote: bitByteFootnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Symbol', width: 72),
-          _HeaderCell('Unit', width: 140),
-          _HeaderCell('Equals', width: 160),
+          ReferenceHeaderCell('Symbol', width: 72),
+          ReferenceHeaderCell('Unit', width: 140),
+          ReferenceHeaderCell('Equals', width: 160),
         ],
       ),
       rows: bitByte.map((BitByteRow b) {
@@ -469,91 +469,6 @@ class _IntroText extends StatelessWidget {
     return Text(
       text,
       style: t.labelMedium?.copyWith(color: colors.textSecondary),
-    );
-  }
-}
-
-/// Card surface wrapping a wide table - verbatim from the poe_reference idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
-
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
-      ),
     );
   }
 }

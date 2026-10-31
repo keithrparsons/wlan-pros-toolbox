@@ -29,6 +29,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../data/tool_catalog.dart';
+import '../favorites/my_tools_controller.dart';
+import '../favorites/my_tools_section.dart';
 import '../router/app_router.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
@@ -144,6 +146,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
+                  // 1-MT. My Tools (Keith, 2026-10-03): the user's own top
+                  //     ten, DIRECTLY under the hero. MyToolsSection renders
+                  //     nothing while the list is empty, and this sliver then
+                  //     adds no padding either, so a user with no favorites
+                  //     sees the home screen exactly as before.
+                  if (MyToolsScope.maybeOf(context)?.isNotEmpty ?? false)
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        edge,
+                        0,
+                        edge,
+                        AppSpacing.md,
+                      ),
+                      sliver: const SliverToBoxAdapter(
+                        child: CenteredContent(child: MyToolsSection()),
+                      ),
+                    ),
                   // 1a. Search trigger — MOVED UP FROM THE BOTTOM (Keith,
                   //     2026-09-13). It sat below the hero, the book, the guide
                   //     and all five category tiles, which put it off the bottom

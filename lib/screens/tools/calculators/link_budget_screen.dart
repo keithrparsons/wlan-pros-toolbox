@@ -16,6 +16,16 @@
 //   same so a half-filled form never shows a misleading partial number.
 // - TX power in W/mW <= 0 → log10 undefined; treated as invalid → blank output.
 //
+// Path loss. FSPL is calculated from frequency (MHz) and distance (m or ft,
+// following the app-wide UnitSystem) with FsplScreen.fsplDb, the same function
+// the FSPL tool uses, after FsplScreen.freqToGHz / distToKm. A value typed into
+// the FSPL field is a manual override: it wins, and the screen says so under
+// the field and in the result. Leave it blank to calculate.
+//
+// EIRP = TX power (dBm) + TX antenna gain − TX cable loss, from
+// EirpScreen.eirpDbm, the EIRP tool's function. It needs only the three
+// transmitter fields.
+//
 // Margin health follows the PWA thresholds (>=10 healthy, >=0 marginal,
 // <0 negative). The live margin is tinted with the GL-003 §8.13 semantic status
 // palette: statusSuccess (>= 10 dB), statusWarning (0–10 dB), statusDanger
@@ -35,13 +45,18 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../widgets/unit_system_switch.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
+import 'eirp_screen.dart';
+import 'fspl_screen.dart';
 
 /// TX power input units, mirroring the PWA lb-tx-unit select.
 enum TxPowerUnit { dbm, w, mw }
@@ -93,6 +108,38 @@ class LinkBudgetScreen extends StatefulWidget {
     return receivedDbm - rxSensitivity;
   }
 
+  /// FSPL in dB from frequency in MHz and distance in metres, through the FSPL
+  /// tool's own functions. Null when either input is not above 0.
+  static double? fsplFromInputs({
+    required double freqMhz,
+    required double distanceMetres,
+  }) {
+    if (!(freqMhz > 0) || !(distanceMetres > 0)) return null;
+    final double loss = FsplScreen.fsplDb(
+      FsplScreen.freqToGHz(freqMhz, FreqUnit.mhz),
+      FsplScreen.distToKm(distanceMetres, DistUnit.m),
+    );
+    return loss.isFinite ? loss : null;
+  }
+
+  /// The path loss the budget uses: a manual value wins over the calculated
+  /// one. Null when neither is available.
+  static double? effectivePathLoss({double? manual, double? calculated}) =>
+      manual ?? calculated;
+
+  /// EIRP in dBm from normalized TX power, TX antenna gain and TX cable loss,
+  /// through the EIRP tool's function. Null when not finite.
+  static double? eirpDbm({
+    required double txPowerDbm,
+    required double txGain,
+    required double txLoss,
+  }) => EirpScreen.eirpDbm(
+    power: txPowerDbm,
+    unit: EirpPowerUnit.dBm,
+    lossDb: txLoss,
+    gainDbi: txGain,
+  );
+
   /// Margin health, matching the PWA thresholds (>=10 / >=0 / <0).
   static MarginHealth marginHealth(double marginDb) {
     if (marginDb >= 10) return MarginHealth.healthy;
@@ -104,8 +151,16 @@ class LinkBudgetScreen extends StatefulWidget {
   State<LinkBudgetScreen> createState() => _LinkBudgetScreenState();
 }
 
-class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
+class _LinkBudgetScreenState extends State<LinkBudgetScreen>
+    with UnitSystemFollower<LinkBudgetScreen> {
   final TextEditingController _txPowerCtrl = TextEditingController();
+  final TextEditingController _freqCtrl = TextEditingController();
+  final TextEditingController _distCtrl = TextEditingController();
+  final FocusNode _freqFocus = FocusNode();
+  final FocusNode _distFocus = FocusNode();
+
+  /// The app-wide length units, for the distance field.
+  UnitSystem _units = UnitSystem.metric;
   final TextEditingController _txGainCtrl = TextEditingController();
   final TextEditingController _txLossCtrl = TextEditingController();
   final TextEditingController _pathLossCtrl = TextEditingController();
@@ -128,6 +183,34 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   // Computed outputs, or null when required input is empty / invalid.
   double? _receivedDbm;
   double? _marginDb;
+  double? _eirpDbm; // needs only the transmitter fields
+  double? _fsplCalculated; // from frequency and distance, when both are valid
+  bool _fsplManual = false; // a value is typed in the FSPL field
+
+  LengthFormat get _length => LengthFormat(_units);
+
+  /// Follow the app-wide unit switch. A typed distance keeps its physical
+  /// length: the number is converted into the new unit, so the FSPL does not
+  /// jump when the units flip.
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    if (system == _units) return;
+    final double? shown = tryParseFlexibleDouble(_distCtrl.text);
+    final double? metres = shown == null ? null : _length.distToMetres(shown);
+    _units = system;
+    if (metres != null) {
+      final double v = _length.distValue(metres);
+      _distCtrl.text = _trimNumber(v);
+    }
+    _recompute();
+  }
+
+  /// Up to two decimals, no trailing zeros, for a converted distance.
+  static String _trimNumber(double v) {
+    String t = v.toStringAsFixed(2);
+    if (t.contains('.')) t = t.replaceFirst(RegExp(r'\.?0+$'), '');
+    return t;
+  }
 
   // Gains, sensitivity, and TX power (dBm) can be negative, so these fields
   // accept a leading minus. Losses are non-negative in the PWA (min="0") but we
@@ -141,6 +224,10 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   @override
   void dispose() {
     _txPowerCtrl.dispose();
+    _freqCtrl.dispose();
+    _distCtrl.dispose();
+    _freqFocus.dispose();
+    _distFocus.dispose();
     _txGainCtrl.dispose();
     _txLossCtrl.dispose();
     _pathLossCtrl.dispose();
@@ -165,7 +252,36 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
     final double? txPower = tryParseFlexibleDouble(_txPowerCtrl.text);
     final double? txGain = tryParseFlexibleDouble(_txGainCtrl.text);
     final double? txLoss = tryParseFlexibleDouble(_txLossCtrl.text);
-    final double? pathLoss = tryParseFlexibleDouble(_pathLossCtrl.text);
+    final double? manualFspl = tryParseFlexibleDouble(_pathLossCtrl.text);
+    final double? freq = tryParseFlexibleDouble(_freqCtrl.text);
+    final double? dist = tryParseFlexibleDouble(_distCtrl.text);
+    final double? calcFspl = (freq == null || dist == null)
+        ? null
+        : LinkBudgetScreen.fsplFromInputs(
+            freqMhz: freq,
+            distanceMetres: _length.distToMetres(dist),
+          );
+    final double? pathLoss = LinkBudgetScreen.effectivePathLoss(
+      manual: manualFspl,
+      calculated: calcFspl,
+    );
+    _fsplCalculated = calcFspl;
+    _fsplManual = manualFspl != null;
+    // EIRP needs only the transmitter, so it shows as soon as those are in.
+    final double? txDbmForEirp = txPower == null
+        ? null
+        : LinkBudgetScreen.txPowerToDbm(txPower, _txPowerUnit);
+    _eirpDbm =
+        (txDbmForEirp == null ||
+            !txDbmForEirp.isFinite ||
+            txGain == null ||
+            txLoss == null)
+        ? null
+        : LinkBudgetScreen.eirpDbm(
+            txPowerDbm: txDbmForEirp,
+            txGain: txGain,
+            txLoss: txLoss,
+          );
     final double? rxLoss = tryParseFlexibleDouble(_rxLossCtrl.text);
     final double? rxGain = tryParseFlexibleDouble(_rxGainCtrl.text);
     final double? rxSens = tryParseFlexibleDouble(_rxSensCtrl.text);
@@ -283,13 +399,45 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
       MarginHealth.negative => 'Negative: link does not close',
     };
 
-    return (StringBuffer()
-          ..writeln('Link Budget')
-          ..writeln('Received signal: ${_format(rx)} dBm')
-          ..writeln('Link margin: ${_format(margin)} dB')
-          ..writeln('Verdict: $verdict'))
-        .toString()
-        .trimRight();
+    final StringBuffer b = StringBuffer()..writeln('Link Budget');
+    final double? freq = tryParseFlexibleDouble(_freqCtrl.text);
+    final double? dist = tryParseFlexibleDouble(_distCtrl.text);
+    if (freq != null) b.writeln('Frequency: ${_trimNumber(freq)} MHz');
+    if (dist != null) {
+      b.writeln('Distance: ${_trimNumber(dist)} ${_length.distUnit}');
+    }
+    b
+      ..writeln('Free space path loss: ${_fsplText()}')
+      ..writeln('EIRP: ${_eirpText()}')
+      ..writeln('Received signal: ${_format(rx)} dBm')
+      ..writeln('Link margin: ${_format(margin)} dB')
+      ..writeln('Verdict: $verdict');
+    return b.toString().trimRight();
+  }
+
+  /// "94.0 dB (calculated)" / "120.0 dB (manual)" / "—".
+  String _fsplText() {
+    final double? manual = tryParseFlexibleDouble(_pathLossCtrl.text);
+    if (manual != null) return '${_format(manual)} dB (manual)';
+    if (_fsplCalculated != null) {
+      return '${_format(_fsplCalculated)} dB (calculated)';
+    }
+    return '—';
+  }
+
+  /// "36.0 dBm (4.0 W)" or "—". Watts as the EIRP tool shows them: W with two
+  /// decimals from 1 W up, else mW with one decimal.
+  String _eirpText() {
+    final double? e = _eirpDbm;
+    if (e == null) return '—';
+    return '${_format(e)} dBm (${_powerText(e)})';
+  }
+
+  static String _powerText(double dbm) {
+    final double w = EirpScreen.eirpWatts(dbm);
+    return w >= 1
+        ? '${w.toStringAsFixed(2)} W'
+        : '${(w * 1000).toStringAsFixed(1)} mW';
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────
@@ -308,7 +456,12 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
         // required field is finite; copies the received signal, the link
         // margin, and the margin VERDICT WORD (healthy/marginal/negative) so the
         // §8.13 status hue is never the only carrier of the verdict.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // The app-wide metric / imperial switch comes first, as in every tool
+        // that takes a length (here, the distance for FSPL).
+        actions: <Widget>[
+          const UnitSystemSwitch(),
+          AppCopyAction(textBuilder: _buildCopyText),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -415,14 +568,55 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
           const SizedBox(height: AppSpacing.md),
           _sectionTitle(text, 'Path'),
           const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _field(
+                  label: 'Frequency',
+                  unitHint: 'MHz',
+                  controller: _freqCtrl,
+                  focusNode: _freqFocus,
+                  hintText: '5500',
+                  monoStyle: mono.outputLarge,
+                  signed: false,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _field(
+                  label: 'Distance',
+                  unitHint: _length.distUnit,
+                  controller: _distCtrl,
+                  focusNode: _distFocus,
+                  hintText: _length.isMetric ? '1000' : '3280',
+                  monoStyle: mono.outputLarge,
+                  signed: false,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
           _field(
             label: 'Free Space Path Loss',
             unitHint: 'dB',
             controller: _pathLossCtrl,
             focusNode: _pathLossFocus,
-            hintText: '120',
+            hintText: _fsplCalculated == null
+                ? 'from frequency and distance'
+                : _format(_fsplCalculated),
             monoStyle: mono.outputLarge,
             signed: false,
+            helper: _fsplManual
+                ? 'Manual value: it overrides frequency and distance. Clear '
+                      'it to calculate.'
+                : _fsplCalculated == null
+                ? 'Calculated from frequency and distance, or type a value to '
+                      'override.'
+                : 'Calculated from frequency and distance. Type a value to '
+                      'override.',
+            helperColor: _fsplManual ? context.colors.statusWarning : null,
+            text: text,
           ),
           const SizedBox(height: AppSpacing.sm),
           _field(
@@ -496,6 +690,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
     required TextStyle monoStyle,
     required bool signed,
     String? helper,
+    Color? helperColor,
     TextTheme? text,
   }) {
     final AppColorScheme colors = context.colors;
@@ -530,7 +725,9 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
         const SizedBox(height: AppSpacing.xs),
         Text(
           helper,
-          style: text?.labelSmall?.copyWith(color: colors.textTertiary),
+          style: text?.labelSmall?.copyWith(
+            color: helperColor ?? colors.textTertiary,
+          ),
         ),
       ],
     );
@@ -574,6 +771,37 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _resultRow(
+            text: text,
+            mono: mono,
+            label: 'EIRP',
+            value: _format(_eirpDbm),
+            unit: _eirpDbm == null ? 'dBm' : 'dBm  (${_powerText(_eirpDbm!)})',
+            valueColor: _eirpDbm == null
+                ? colors.textTertiary
+                : colors.textPrimary,
+            blank: _eirpDbm == null,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _resultRow(
+            text: text,
+            mono: mono,
+            label: _fsplManual
+                ? 'Free space path loss (manual)'
+                : 'Free space path loss (calculated)',
+            value: _format(
+              LinkBudgetScreen.effectivePathLoss(
+                manual: tryParseFlexibleDouble(_pathLossCtrl.text),
+                calculated: _fsplCalculated,
+              ),
+            ),
+            unit: 'dB',
+            valueColor: colors.textPrimary,
+            blank: !_fsplManual && _fsplCalculated == null,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Divider(height: 1, color: colors.border),
+          const SizedBox(height: AppSpacing.sm),
           _resultRow(
             text: text,
             mono: mono,
@@ -687,9 +915,19 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
             'Margin = RX − Sensitivity',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
+          SelectableText(
+            'FSPL = 20·log10(f GHz) + 20·log10(d km) + 92.45',
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+          ),
+          SelectableText(
+            'EIRP = Tx + Gtx − Ltx',
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'All terms in dB except Tx (dBm or W/mW) and Sensitivity (dBm). '
+            'All terms in dB except Tx (dBm or W/mW), EIRP and Sensitivity '
+            '(dBm). FSPL is calculated from frequency and distance unless you '
+            'type a value, which overrides it. '
             'A positive margin means the link closes; aim for 10 dB or more.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),

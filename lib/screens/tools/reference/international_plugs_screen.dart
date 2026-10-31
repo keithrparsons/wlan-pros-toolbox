@@ -53,6 +53,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../labeled_field.dart';
 import 'large_face_card.dart';
@@ -473,7 +474,9 @@ class _InternationalPlugsScreenState extends State<InternationalPlugsScreen> {
                   // reusable LargeFaceCard pattern). Every face degrades to
                   // nothing when its SVG is not yet bundled, so each card reads as
                   // title + specs alone until Charta's faces land.
-                  _SectionHeading(label: 'IEC World Plugs letter system'),
+                  ReferenceSectionHeading(
+                    label: 'IEC World Plugs letter system',
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   ..._faceCards(isDesktop),
                   Text(
@@ -560,10 +563,10 @@ class _InternationalPlugsScreenState extends State<InternationalPlugsScreen> {
       title: 'CEE 7 European family',
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Designation', width: 96),
-          _HeaderCell('Type', width: 56),
-          _HeaderCell('Current', width: 72),
-          _HeaderCell('Note', width: 300),
+          ReferenceHeaderCell('Designation', width: 96),
+          ReferenceHeaderCell('Type', width: 56),
+          ReferenceHeaderCell('Current', width: 72),
+          ReferenceHeaderCell('Note', width: 300),
         ],
       ),
       rows: InternationalPlugsScreen.cee7Family.map((Cee7Member m) {
@@ -810,29 +813,6 @@ class _ResultMessageCard extends StatelessWidget {
   }
 }
 
-/// A section heading inside the International Power Plugs reference. Title-styled,
-/// secondary ink, matching the register the IEC page uses for its section labels
-/// — standing on the page background above a stack of [LargeFaceCard]s.
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Text(
-      label,
-      style: text.titleSmall?.copyWith(
-        color: colors.textSecondary,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.4,
-      ),
-    );
-  }
-}
-
 /// The Type I safety warning, rendered as a prominent callout using the
 /// §8.13/§8.20.4 status-warning idiom the wpa/poe pages use: a surface1 card
 /// with a 1px [StatusTone.warning] border (resolved at render via
@@ -954,30 +934,6 @@ class _TableCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

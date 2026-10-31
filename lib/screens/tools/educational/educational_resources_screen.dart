@@ -20,6 +20,8 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../data/tool_catalog.dart';
+import '../../../favorites/my_tools_actions.dart';
+import '../../../favorites/my_tools_item.dart';
 import '../../../services/educational/educational_resources_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -106,6 +108,12 @@ class _EducationalResourcesScreenState
       );
       final EducationalResourcesService svc =
           EducationalResourcesService.fromJson(raw);
+      // My Tools resolves saved resources from this same list. If its own
+      // read before startup failed, fill it now so a resource added here
+      // shows on the home screen.
+      if (!MyToolsResources.instance.isLoaded) {
+        MyToolsResources.instance.use(svc.all);
+      }
       if (!mounted) return;
       setState(() => _service = svc);
     } on Object catch (e) {
@@ -493,6 +501,10 @@ class _ResourceRowState extends State<_ResourceRow> {
 
   @override
   Widget build(BuildContext context) {
+    final MyToolsRowHooks myTools = MyToolsRowHooks.of(
+      context,
+      MyToolsItem.resource(widget.resource),
+    );
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final EducationalResource r = widget.resource;
@@ -511,62 +523,69 @@ class _ResourceRowState extends State<_ResourceRow> {
       container: true,
       button: true,
       excludeSemantics: true,
-      label:
-          '${r.title}. ${r.summary} '
-          '${r.cost.label}. ${r.level.label}.',
-      child: Material(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _open,
-          onFocusChange: (bool f) {
-            if (f != _focused) setState(() => _focused = f);
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              border: rowBorder,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.rowPadding,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        r.title,
-                        style: text.bodyLarge?.copyWith(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w600,
+      label: myTools.label(
+        '${r.title}. ${r.summary} '
+        '${r.cost.label}. ${r.level.label}.',
+      ),
+      customSemanticsActions: myTools.semanticsActions,
+      child: CallbackShortcuts(
+        bindings: myTools.shortcuts,
+        child: Material(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: _open,
+            onLongPress: myTools.onLongPress,
+            onSecondaryTapUp: myTools.onSecondaryTapUp,
+            onFocusChange: (bool f) {
+              if (f != _focused) setState(() => _focused = f);
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                border: rowBorder,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.rowPadding,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          r.title,
+                          style: text.bodyLarge?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        r.summary,
-                        style: text.labelMedium?.copyWith(
-                          color: colors.textTertiary,
+                        const SizedBox(height: 2),
+                        Text(
+                          r.summary,
+                          style: text.labelMedium?.copyWith(
+                            color: colors.textTertiary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      ResourceMetaBadges(cost: r.cost, level: r.level),
-                    ],
+                        const SizedBox(height: AppSpacing.xs),
+                        ResourceMetaBadges(cost: r.cost, level: r.level),
+                      ],
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSpacing.xs),
-                  child: Icon(
-                    Icons.chevron_right,
-                    color: colors.textTertiary,
-                    size: 20,
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.xs),
+                    child: Icon(
+                      Icons.chevron_right,
+                      color: colors.textTertiary,
+                      size: 20,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -597,6 +616,10 @@ class _ReferenceCardRowState extends State<_ReferenceCardRow> {
 
   @override
   Widget build(BuildContext context) {
+    final MyToolsRowHooks myTools = MyToolsRowHooks.of(
+      context,
+      MyToolsItem.tool(widget.card),
+    );
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final ToolEntry card = widget.card;
@@ -615,66 +638,72 @@ class _ReferenceCardRowState extends State<_ReferenceCardRow> {
       container: true,
       button: true,
       excludeSemantics: true,
-      label: '${card.title}. ${card.description}.',
-      child: Material(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _open,
-          onFocusChange: (bool f) {
-            if (f != _focused) setState(() => _focused = f);
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              border: rowBorder,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.rowPadding,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.sm),
-                  child: Icon(
-                    Icons.picture_as_pdf_outlined,
-                    color: colors.textTertiary,
-                    size: 20,
+      label: myTools.label('${card.title}. ${card.description}.'),
+      customSemanticsActions: myTools.semanticsActions,
+      child: CallbackShortcuts(
+        bindings: myTools.shortcuts,
+        child: Material(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: _open,
+            onLongPress: myTools.onLongPress,
+            onSecondaryTapUp: myTools.onSecondaryTapUp,
+            onFocusChange: (bool f) {
+              if (f != _focused) setState(() => _focused = f);
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                border: rowBorder,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.rowPadding,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.sm),
+                    child: Icon(
+                      Icons.picture_as_pdf_outlined,
+                      color: colors.textTertiary,
+                      size: 20,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        card.title,
-                        style: text.bodyLarge?.copyWith(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          card.title,
+                          style: text.bodyLarge?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        card.description,
-                        style: text.labelMedium?.copyWith(
-                          color: colors.textTertiary,
+                        const SizedBox(height: 2),
+                        Text(
+                          card.description,
+                          style: text.labelMedium?.copyWith(
+                            color: colors.textTertiary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSpacing.xs),
-                  child: Icon(
-                    Icons.chevron_right,
-                    color: colors.textTertiary,
-                    size: 20,
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.xs),
+                    child: Icon(
+                      Icons.chevron_right,
+                      color: colors.textTertiary,
+                      size: 20,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -712,6 +741,10 @@ class _FieldManualRowState extends State<_FieldManualRow> {
 
   @override
   Widget build(BuildContext context) {
+    final MyToolsRowHooks myTools = MyToolsRowHooks.of(
+      context,
+      MyToolsItem.fieldManual,
+    );
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
@@ -729,69 +762,76 @@ class _FieldManualRowState extends State<_FieldManualRow> {
       container: true,
       button: true,
       excludeSemantics: true,
-      label:
-          'Field Manual. The in-depth technical manual for professionals, '
-          'covering every tool. Opens the manual.',
-      child: Material(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _open,
-          onFocusChange: (bool f) {
-            if (f != _focused) setState(() => _focused = f);
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              border: rowBorder,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.rowPadding,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.sm),
-                  child: Icon(
-                    Icons.menu_book_outlined,
-                    color: colors.textAccent,
-                    size: 24,
+      label: myTools.label(
+        'Field Manual. The in-depth technical manual for professionals, '
+        'covering every tool. Opens the manual.',
+      ),
+      customSemanticsActions: myTools.semanticsActions,
+      child: CallbackShortcuts(
+        bindings: myTools.shortcuts,
+        child: Material(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: _open,
+            onLongPress: myTools.onLongPress,
+            onSecondaryTapUp: myTools.onSecondaryTapUp,
+            onFocusChange: (bool f) {
+              if (f != _focused) setState(() => _focused = f);
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                border: rowBorder,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.rowPadding,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.sm),
+                    child: Icon(
+                      Icons.menu_book_outlined,
+                      color: colors.textAccent,
+                      size: 24,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'Field Manual',
-                        style: text.bodyLarge?.copyWith(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Field Manual',
+                          style: text.bodyLarge?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'The in-depth technical manual for professionals. '
-                        'every tool, what it measures, and how to read it.',
-                        style: text.labelMedium?.copyWith(
-                          color: colors.textTertiary,
+                        const SizedBox(height: 2),
+                        Text(
+                          'The in-depth technical manual for professionals. '
+                          'every tool, what it measures, and how to read it.',
+                          style: text.labelMedium?.copyWith(
+                            color: colors.textTertiary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSpacing.xs),
-                  child: Icon(
-                    Icons.chevron_right,
-                    color: colors.textTertiary,
-                    size: 20,
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.xs),
+                    child: Icon(
+                      Icons.chevron_right,
+                      color: colors.textTertiary,
+                      size: 20,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -60,6 +60,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
@@ -428,7 +429,7 @@ class CableBendRadiusScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
 
                   // ---- Section (a) — minimum bend radius -------------------
-                  _SectionHeading(label: 'Minimum bend radius'),
+                  ReferenceSectionHeading(label: 'Minimum bend radius'),
                   const SizedBox(height: AppSpacing.sm),
                   // The arc-vs-kink concept graphic leads the bend section — the
                   // single most useful visual on the page. Degrades to nothing
@@ -461,7 +462,7 @@ class CableBendRadiusScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
 
                   // ---- Section (b) — maximum pull tension ------------------
-                  _SectionHeading(label: 'Maximum pull tension'),
+                  ReferenceSectionHeading(label: 'Maximum pull tension'),
                   const SizedBox(height: AppSpacing.sm),
                   // The pull-tension gauge concept graphic sits in its own
                   // section. Degrades to nothing when its SVG is not yet bundled.
@@ -486,7 +487,7 @@ class CableBendRadiusScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
 
                   // ---- Section (c) — related install limits ----------------
-                  _SectionHeading(label: 'Related install limits'),
+                  ReferenceSectionHeading(label: 'Related install limits'),
                   const SizedBox(height: AppSpacing.sm),
                   _LimitCard(
                     heading: 'Termination, ties, pathways',
@@ -505,28 +506,6 @@ class CableBendRadiusScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-/// A section heading standing on the page background above a stack of cards.
-/// Mirrors the IEC reference `_SectionHeading` register.
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Text(
-      label,
-      style: text.titleSmall?.copyWith(
-        color: colors.textSecondary,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.4,
-      ),
     );
   }
 }

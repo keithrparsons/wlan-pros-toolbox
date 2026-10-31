@@ -38,7 +38,7 @@
 // Pattern: mirrors poe_reference_screen exactly — Scaffold + AppBar
 // (toolbarHeight 64) with AppCopyAction, SafeArea(top: false), LayoutBuilder
 // isDesktop @720, ConstrainedBox to calculatorMaxWidth, SingleChildScrollView,
-// ConceptGraphicBand header, _TableCard (HorizontalScrollTable + IntrinsicWidth +
+// ConceptGraphicBand header, ReferenceTableCard (HorizontalScrollTable + IntrinsicWidth +
 // fixed-width cells, the overflow-safe idiom), ReferenceRowSemantics per row,
 // ToolHelpFooter. The §8.6.2 concept graphic resolves via the convention-based
 // ToolAssets resolver under the explicit id `eap-8021x-flow` (asset name differs
@@ -52,9 +52,9 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
@@ -304,17 +304,17 @@ class EapTypesScreen extends StatelessWidget {
   }
 
   Widget _matrixCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'EAP method matrix',
       footnote: footnote,
       header: const Row(
         children: [
-          _HeaderCell('Method', width: 132),
-          _HeaderCell('Credential', width: 200),
-          _HeaderCell('Server cert', width: 96),
-          _HeaderCell('Client cert', width: 132),
-          _HeaderCell('Mutual', width: 56),
-          _HeaderCell('Typical use / notes', width: 320),
+          ReferenceHeaderCell('Method', width: 132),
+          ReferenceHeaderCell('Credential', width: 200),
+          ReferenceHeaderCell('Server cert', width: 96),
+          ReferenceHeaderCell('Client cert', width: 132),
+          ReferenceHeaderCell('Mutual', width: 56),
+          ReferenceHeaderCell('Typical use / notes', width: 320),
         ],
       ),
       rows: methods.map((EapMethod m) {
@@ -465,100 +465,6 @@ class _ServerCertCaution extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Card surface wrapping a wide table: title (full-width, wraps) over a
-/// horizontally-scrolling IntrinsicWidth grid (header + rows share one width so
-/// columns align), with an optional full-width footnote beneath. Matches the
-/// poe_reference_screen / wifi_channels_screen overflow-safe idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
-
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          // The grid sizes to its intrinsic content width and scrolls
-          // horizontally when that exceeds the card. Children of a horizontal
-          // SingleChildScrollView get unbounded width, so IntrinsicWidth lets
-          // each Row shrink-wrap its fixed-width cells while sharing one common
-          // width — columns align, nothing overflows. Title + footnote stay
-          // full-width and wrap.
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
         ),
       ),
     );

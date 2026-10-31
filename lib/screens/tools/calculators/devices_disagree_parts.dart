@@ -17,6 +17,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/wifi_lab_client_palette.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import 'calc_parts.dart';
 
 /// Which palette slot each device uses. Four hues spread around the family
 /// and kept away from its green, so no device trace is mistaken for the
@@ -53,52 +54,9 @@ class DdCard extends StatelessWidget {
   }
 }
 
-class DdSectionLabel extends StatelessWidget {
-  const DdSectionLabel(this.label, {super.key});
-  final String label;
+typedef DdSectionLabel = CalcSectionLabel;
 
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Semantics(
-      header: true,
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: colors.textSecondary,
-          letterSpacing: 0.4,
-          fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
-
-class DdNote extends StatelessWidget {
-  const DdNote(this.icon, this.message, {super.key});
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 16, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-}
+typedef DdNote = CalcNote;
 
 /// The device's letter on its hue: the key that ties a card to its trace.
 class DdDeviceBadge extends StatelessWidget {

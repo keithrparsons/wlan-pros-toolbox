@@ -724,6 +724,27 @@ void main() {
       });
     });
 
+    testWidgets('reserve starts at 0%, so the default matches the RF Tools PWA', (
+      tester,
+    ) async {
+      await _withViewport(tester, const Size(390, 844), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+
+        final Finder fields = find.byType(TextField);
+        // Fields: 0 budget, 1 ports, 2 reserve.
+        expect(tester.widget<TextField>(fields.at(2)).controller!.text, '0');
+
+        // With a 370 W budget and no devices, nothing is held back: the
+        // result reads 0% (0.0 W), not 10% (37.0 W).
+        await tester.enterText(fields.at(0), '370');
+        await tester.pump();
+        expect(find.textContaining('0% (0.0 W)'), findsWidgets);
+        expect(find.textContaining('37.0 W'), findsNothing);
+      });
+    });
+
     testWidgets('typing budget + device renders the verdict', (tester) async {
       await _withViewport(tester, const Size(390, 844), () async {
         await tester.pumpWidget(
@@ -914,6 +935,7 @@ void main() {
         );
         final Finder fields = find.byType(TextField);
         await tester.enterText(fields.at(0), '370');
+        await tester.enterText(fields.at(2), '10');
         await tester.enterText(fields.at(3), '25.5');
         await tester.enterText(fields.at(4), '10'); // 300 W PSE of 333 usable
         await tester.pump();
@@ -951,6 +973,7 @@ void main() {
           );
           final Finder fields = find.byType(TextField);
           await tester.enterText(fields.at(0), '370');
+          await tester.enterText(fields.at(2), '10');
           await tester.enterText(fields.at(3), '25.5');
           await tester.pump();
 
@@ -979,7 +1002,15 @@ void main() {
         await tester.enterText(fields.at(0), '370');
         await tester.enterText(fields.at(3), '25.5');
         await tester.pump();
-        // A fresh screen still starts at 10%.
+        // A fresh screen starts at 0%; a typed 10 holds back 37.0 W.
+        expect(
+          find.byWidgetPredicate(
+            (Widget w) => w is SelectableText && w.data == '0% (0.0 W)',
+          ),
+          findsOneWidget,
+        );
+        await tester.enterText(fields.at(2), '10');
+        await tester.pump();
         expect(
           find.byWidgetPredicate(
             (Widget w) => w is SelectableText && w.data == '10% (37.0 W)',
@@ -1028,6 +1059,7 @@ void main() {
         final Finder fields = find.byType(TextField);
         await tester.enterText(fields.at(0), '370');
         await tester.enterText(fields.at(1), '24');
+        await tester.enterText(fields.at(2), '10');
         await tester.enterText(fields.at(3), '12');
         await tester.pump();
 

@@ -376,8 +376,9 @@ class PoeBudgetScreen extends StatefulWidget {
 class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   final TextEditingController _budgetCtrl = TextEditingController();
   final TextEditingController _portsCtrl = TextEditingController();
-  // Reserve defaults to 10% of the budget, held back for growth and inrush.
-  final TextEditingController _reserveCtrl = TextEditingController(text: '10');
+  // Reserve defaults to 0%, so the first result matches the RF Tools PWA; the
+  // user sets any reserve to hold budget back for growth and inrush.
+  final TextEditingController _reserveCtrl = TextEditingController(text: '0');
   PoePortType _portType = PoePortType.notSet;
 
   /// Per-row kind: [_wattsKind] for a watts row, or the PoE class 0-8.

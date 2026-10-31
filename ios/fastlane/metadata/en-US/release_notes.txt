@@ -1,17 +1,11 @@
-The Wireless Classroom now has 91 tools, including 30 Guided Lessons and 50 simulators.
+New: My Tools. Press and hold any tool, or any entry in Educational Resources, and it is added to your own short list at the top of the front page. On a Mac or PC, right-click it instead. My Tools holds up to ten, in the order you choose, and it stays on this device.
 
-New: Polarization. Turn one radio wave in 3D and watch its field. Vertical, horizontal, slant, circular and elliptical, with an end-on view of the shape the field traces.
+PoE Budget now works by PoE class. Pick each device's class, set the switch's PSE type, port count and a reserve to keep back, and see whether everything fits, with a check on every port.
 
-New: OFDMA vs MU-MIMO. Move clients around an 802.11ax access point and see which method needs less airtime, drawn to scale, sounding included.
+PoE Budget: a device you enter in watts is now counted at the power the switch must supply (PSE watts), so totals come out a little higher and closer to what the switch sees. Entries above 71.3 W are refused, since no PoE class delivers more.
 
-New: One Talker per Channel, a Guided Lesson for beginners on why Wi-Fi slows down when everyone is home.
+Test My Connection now grades download speed on one scale, the same one Network Quality's help describes: Strong is 100 Mbps or more, Moderate 25 to 99, Weak under 25.
 
-Association, Frame by Frame adds "Why won't it associate?": pair a client with a network and see whether they connect, and if not, the reason. Play the association now includes the 6 GHz race.
+Link Budget now works out free space path loss from frequency and distance, and shows the transmitter's EIRP.
 
-The 802.1X and EAP Ladder adds Break it: pick a fault, such as an untrusted server certificate, and watch where the exchange stops.
-
-Rate vs Range adds a rate set builder. Antenna Pattern adds a floor view for mounting height. Multipath adds antenna diversity: compare selection and MRC with two or four antennas.
-
-Fixed: in Channel Utilization, the ACK rate now follows the basic rate set.
-
-The Field Manual is now the one detailed reference, with a "Teaching it" note on 76 tools. The Teacher's Guide is the short front door.
+Fixed: in Rate vs Range, distances under 100 m or 100 ft now show one decimal, so the ring edges and the client readings agree.
