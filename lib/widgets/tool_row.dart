@@ -27,6 +27,10 @@
 // toggleMyTool flow (so a full list still asks which tool to replace).
 // The wiring lives in MyToolsRowHooks, which the Educational Resources rows
 // share (2026-10-09).
+//
+// STAR (Keith, 2026-10-31, on TestFlight 1.13.0): he could not find how to add
+// a tool, since press and hold shows nothing on screen. A live row now shows
+// the same MyToolsStarButton the spec drew for tool screens.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -36,6 +40,7 @@ import '../data/tool_assets.dart';
 import '../data/tool_catalog.dart';
 import '../favorites/my_tools_actions.dart';
 import '../favorites/my_tools_item.dart';
+import '../favorites/my_tools_star_button.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import 'content_type_chip.dart';
@@ -162,6 +167,7 @@ class _ToolRowState extends State<ToolRow> {
                   ToolLeadingIcon(tool: widget.tool, live: live),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(child: _content(text, live)),
+                  if (live) MyToolsStarButton(toolId: widget.tool.id),
                   if (live)
                     Padding(
                       padding: const EdgeInsets.only(

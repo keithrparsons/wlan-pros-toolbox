@@ -206,7 +206,7 @@ The simulators are designed for a tablet or a computer screen. On a phone they s
 
 ## My Tools: your own short list
 
-If you keep coming back to the same few tools, put them on the front page. Press and hold any tool in a section list or in search results, or any entry in Educational Resources, and it is added to My Tools, a list that appears just under Check My Connection. Press and hold it again to take it off.
+If you keep coming back to the same few tools, put them on the front page. Press and hold any tool in a section list or in search results, or any entry in Educational Resources, and it is added to My Tools, a list that appears just under Check My Connection. Press and hold it again to take it off. Or tap the star beside any tool in a section list or in search results; tap it again to take it off.
 
 On a Mac or PC you can right-click the tool instead. Or select it with the Tab key and press the context-menu key (Shift-F10 on Windows). A small menu opens with Add to My Tools, or Remove from My Tools if it is already there.
 

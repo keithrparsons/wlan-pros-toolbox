@@ -88,7 +88,8 @@ void main() {
   test('the user guide tells people every way to add to My Tools', () async {
     // Keith, 2026-10-04 (My Tools SPEC 7): the My Tools section names
     // press and hold, right-click, and the context-menu key with Shift-F10,
-    // and keeps the device-only storage sentences word for word.
+    // and keeps the device-only storage sentences word for word. The star on
+    // each tool row joined it on 2026-10-31.
     final String md = await rootBundle.loadString(
       'assets/guides/user-guide.md',
     );
@@ -99,6 +100,7 @@ void main() {
 
     for (final String phrase in <String>[
       'Press and hold any tool',
+      'tap the star beside any tool',
       'right-click the tool',
       'context-menu key (Shift-F10 on Windows)',
       'Your list is saved on this device and nowhere else. Each phone, '

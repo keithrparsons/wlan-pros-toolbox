@@ -517,6 +517,44 @@ void main() {
     });
   });
 
+  // Keith, 2026-10-31, on TestFlight 1.13.0: he could not find how to add a
+  // tool. Press and hold has nothing on screen to show it, so each row shows
+  // the star.
+  group('star on a tool row', () {
+    Widget rows() => Scaffold(
+      body: ListView(
+        children: <Widget>[
+          ToolRow(key: const ValueKey<String>('row0'), tool: _tools[0]),
+        ],
+      ),
+    );
+    final Finder star = find.byKey(
+      ValueKey<String>('my-tools-star-${_tools[0].id}'),
+    );
+
+    testWidgets('a tap on the star adds, then removes, without opening the '
+        'tool', (WidgetTester tester) async {
+      final MyToolsController c = MyToolsController();
+      await _pump(tester, c, rows());
+      expect(find.byIcon(Icons.star_border), findsOneWidget);
+
+      await tester.tap(star);
+      await tester.pumpAndSettle();
+      expect(c.ids, <String>[_tools[0].id]);
+      expect(find.byIcon(Icons.star), findsOneWidget);
+      expect(find.text('route:${_tools[0].routeName}'), findsNothing);
+
+      await tester.tap(star);
+      await tester.pumpAndSettle();
+      expect(c.isEmpty, isTrue);
+    });
+
+    testWidgets('no scope, no star', (WidgetTester tester) async {
+      await tester.pumpWidget(MaterialApp(home: rows()));
+      expect(star, findsNothing);
+    });
+  });
+
   group('right-click and context-menu key on a tool row', () {
     Widget rows(ToolEntry tool) => Scaffold(
       body: ListView(
