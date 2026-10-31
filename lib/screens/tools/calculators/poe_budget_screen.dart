@@ -251,7 +251,9 @@ class PoeBudgetScreen extends StatefulWidget {
     for (final PoeDeviceRow r in rows) {
       total += allocationFor(r) * r.qty;
     }
-    return total;
+    // Round to 0.01 W: summing tenths in doubles can land a hair over an
+    // exactly-full budget (15.4 + 30 + 30 + 15.4 = 90.80000000000001).
+    return (total * 100).roundToDouble() / 100;
   }
 
   /// Ports the rows need: one per device in every active row.

@@ -93,6 +93,21 @@ void main() {
       expect(r.verdict, PoeVerdict.caution);
     });
 
+    test('exactly full: 90.8 W budget, 90.8 W draw is caution, not over', () {
+      // 15.4 + 30.0 + 30.0 + 15.4 sums to 90.80000000000001 in doubles.
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        90.8,
+        const [
+          PoeDeviceRow.ofClass(3, 1),
+          PoeDeviceRow.ofClass(4, 1),
+          PoeDeviceRow.ofClass(4, 1),
+          PoeDeviceRow.ofClass(3, 1),
+        ],
+      )!;
+      expect(r.overBudget, isFalse);
+      expect(r.verdict, PoeVerdict.caution);
+    });
+
     test('over budget: 100 W budget, 135 W draw → pct capped at 100', () {
       final PoeBudgetResult r = PoeBudgetScreen.compute(
         100,

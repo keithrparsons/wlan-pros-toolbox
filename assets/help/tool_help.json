@@ -8068,7 +8068,7 @@
         {
           "name": "Reserve",
           "unit": "percent of the budget",
-          "range": "0 to 99.9; defaults to 10; blank counts as 0"
+          "range": "0 to 99.9; defaults to 0; blank counts as 0"
         },
         {
           "name": "PSE type (switch ports)",
