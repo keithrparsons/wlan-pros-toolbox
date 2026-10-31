@@ -10,7 +10,7 @@
       "howToUse": [
         "Enter the frequency and pick its unit (GHz or MHz).",
         "Enter the distance and pick its unit (km, mi, or m).",
-        "Read the path loss in dB. The result stays blank (\"—\") until both fields hold valid positive numbers."
+        "Read the path loss in dB. The result stays blank (it shows a dash) until both fields hold valid positive numbers."
       ],
       "inputs": [
         {
@@ -8443,20 +8443,20 @@
       "whyHere": "For when you see an MCS index in a capture or client stats and want to know the modulation and coding behind it and the rate it should deliver at a given width and stream count.",
       "howToUse": [
         "Choose the standard (n, ac, ax, or be) and the stream count; the rates update. 802.11n offers 1 to 4 streams (MCS 0-31, eight indices per stream count; MCS 32-76 are rarely used special cases and are not shown); ac, ax, and be offer 1 to 8.",
-        "MCS 0 (BPSK 1/2) is the most robust and slowest; higher MCS indices use denser modulation (up to 1024-QAM for ax and 4096-QAM for be) for higher rates but need a better signal.",
+        "MCS 0 (BPSK 1/2) is the slowest and works at the weakest signal; higher MCS indices use denser modulation (up to 1024-QAM for ax and 4096-QAM for be) for higher rates but need a better signal.",
         "Cells shown as \"N/A\" are genuinely invalid combinations, not zero and not made up. Some are invalid only at certain stream counts.",
-        "Above 4 spatial streams no rate is shown at all. That is not an \"N/A\" - it is a gap in the published source. The screen says so explicitly rather than computing a number it cannot source."
+        "Above 4 spatial streams no rate is shown at all. That is not an \"N/A\": it is a gap in the published source. The screen says so explicitly rather than computing a number it cannot source."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
         "What it shows: two selectors, the 802.11 standard (n, ac, ax, or be) and the number of spatial streams (1 to 8). Columns per standard: 802.11n = 20 LGI, 20 SGI, 40 LGI, 40 SGI; 802.11ac = 20/40/80/160 SGI; 802.11ax = 20/40/80/160 MHz; 802.11be = 20/40/80/160/320 MHz (both at an 800 ns guard interval).",
-        "802.11ac MCS 9 at 20 MHz is valid ONLY at 3 spatial streams - it is N/A at 1, 2 and 4. MCS 9 at 40 MHz is valid at every stream count. Two further stream-dependent exclusions: MCS 6 at 80 MHz and MCS 9 at 160 MHz are both invalid at 3 streams.",
-        "The source tables publish 1 to 4 spatial streams. Above 4 the app shows no rate, because the per-stream exclusions up there are unpublished and are not derivable from the ones below - a rule that reproduces MCS 9 at 20 MHz exactly still gets MCS 6 at 80 MHz and MCS 9 at 160 MHz wrong. A known gap beats an invented number.",
-        "Guard-interval definitions: 802.11n LGI = 800 ns and SGI = 400 ns; 802.11ac uses SGI. 802.11ax and 802.11be define 0.8, 1.6, and 3.2 microsecond guard intervals only - there is no 400 ns short GI above 802.11ac.",
+        "802.11ac MCS 9 at 20 MHz is valid ONLY at 3 spatial streams; it is N/A at 1, 2 and 4. MCS 9 at 40 MHz is valid at every stream count. Two further stream-dependent exclusions: MCS 6 at 80 MHz and MCS 9 at 160 MHz are both invalid at 3 streams.",
+        "The source tables publish 1 to 4 spatial streams. Above 4 the app shows no rate, because the per-stream exclusions up there are not shown and are not derivable from the ones below. A rule that reproduces MCS 9 at 20 MHz exactly still gets MCS 6 at 80 MHz and MCS 9 at 160 MHz wrong. A known gap beats an invented number.",
+        "Guard-interval definitions: 802.11n LGI = 800 ns and SGI = 400 ns; 802.11ac uses SGI. 802.11ax and 802.11be define 0.8, 1.6, and 3.2 microsecond guard intervals only. There is no 400 ns short GI above 802.11ac.",
         "The notes card points out that real throughput is typically 50 to 65% of the PHY rate. These rates are PHY-layer maximums, not delivered throughput.",
-        "Rates are rounded from the exact PHY value at the chosen stream count, not by multiplying a rounded single-stream figure - so 802.11ac MCS 9 at 160 MHz with 2 streams reads 1733.3, matching the source, not 1733.4.",
+        "Rates are rounded from the exact PHY value at the chosen stream count, not by multiplying a rounded single-stream figure, so 802.11ac MCS 9 at 160 MHz with 2 streams reads 1733.3, matching the source, not 1733.4.",
         "Data source: Keith Parsons' MCS Index Chart and mcsindex.net (by @VergesFrancois, SemFio Networks), cross-checked against the IEEE 802.11n/ac/ax/be PHY rate tables."
       ],
       "source": "Values come from Keith Parsons' MCS Index Chart and mcsindex.net, cross-checked against the IEEE 802.11n/ac/ax/be PHY rate tables."
