@@ -9,3 +9,11 @@ Test My Connection now grades download speed on one scale, the same one Network 
 Link Budget now works out free space path loss from frequency and distance, and shows the transmitter's EIRP.
 
 Fixed: in Rate vs Range, distances under 100 m or 100 ft now show one decimal, so the ring edges and the client readings agree.
+
+Signal Thresholds: -67 dBm is Good, and Fair now starts at -68, so no reading sits in two ranges.
+
+On a Mac, Wi-Fi Information now shows Enhanced Open (OWE) when the access point's beacon proves it. macOS reports an OWE network as open, so the tool used to say "Open (no encryption)" on an encrypted link. When the beacon shows the network really is open, the tool says that too.
+
+macOS Menu-Bar Wi-Fi lists the Option-click fields in the order macOS prints them, with the missing ones added. It also corrects the wdutil note: wdutil info needs sudo, and without it prints only its usage text.
+
+Help and the Field Manual are refreshed. Each tool now says what it does on each platform, Cable Loss, Noise Floor and Rain Fade describe the math the tool actually uses, and Network Quality's help describes its five parallel download streams.

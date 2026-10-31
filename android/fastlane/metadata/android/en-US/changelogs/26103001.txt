@@ -1,9 +1,13 @@
-New: My Tools. Press and hold any tool to add it to your own list on the front page. Up to ten.
+New: My Tools. Press and hold any tool to add it to your own list on the front page, up to ten.
 
-PoE Budget now works by PoE class. Watts entries count at the PSE watts the switch supplies; over 71.3 W is refused.
+PoE Budget works by PoE class. Watts count at the PSE watts the switch supplies; over 71.3 W is refused.
 
-Test My Connection grades download speed on one scale: Strong 100+ Mbps, Moderate 25 to 99, Weak under 25.
+Test My Connection grades download on one scale: Strong 100+ Mbps, Moderate 25 to 99, Weak under 25.
 
 Link Budget shows free space path loss and EIRP.
+
+Signal Thresholds: -67 dBm is Good; Fair starts at -68.
+
+Help refreshed for each platform.
 
 Fixed: Rate vs Range decimals under 100 m or ft.
