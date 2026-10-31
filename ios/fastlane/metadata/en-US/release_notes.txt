@@ -17,3 +17,5 @@ On a Mac, Wi-Fi Information now shows Enhanced Open (OWE) when the access point'
 macOS Menu-Bar Wi-Fi lists the Option-click fields in the order macOS prints them, with the missing ones added. It also corrects the wdutil note: wdutil info needs sudo, and without it prints only its usage text.
 
 Help and the Field Manual are refreshed. Each tool now says what it does on each platform, Cable Loss, Noise Floor and Rain Fade describe the math the tool actually uses, and Network Quality's help describes its five parallel download streams.
+
+The WLAN Pros logo on the iPhone and iPad launch screen, and on the About screen in dark mode, is now the white version, with no white box behind it.
