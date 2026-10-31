@@ -116,8 +116,9 @@ class EmergencyPhrase {
     final Map<String, String> translations = <String, String>{};
     for (final String code in targetCodes) {
       final String value = _str(map[code]);
-      if (value.isEmpty)
+      if (value.isEmpty) {
         return null; // every target must be present + non-empty
+      }
       translations[code] = value;
     }
 

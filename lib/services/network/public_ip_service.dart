@@ -117,8 +117,9 @@ class PublicIpService {
       final List<int> bytes = <int>[];
       await for (final List<int> chunk in resp.timeout(timeout)) {
         bytes.addAll(chunk);
-        if (bytes.length > 4096)
+        if (bytes.length > 4096) {
           break; // a public IP is < 50 bytes; guard runaway
+        }
       }
       return String.fromCharCodes(bytes);
     } finally {

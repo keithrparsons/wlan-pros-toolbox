@@ -18,7 +18,6 @@ import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/measure_wall_controller.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/measure_wall_controls.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/measure_wall_format.dart';
-import 'package:wlan_pros_toolbox/screens/tools/calculators/measure_wall_readouts.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/measure_wall_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/measure_wall_stage.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/wall_slab_physics.dart';

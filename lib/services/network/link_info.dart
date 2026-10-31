@@ -172,8 +172,9 @@ class LinkInfo {
     final String name = (j['name'] as String?) ?? '';
     if (name.isEmpty) return null;
     int? speed = (j['speed_mbps'] as num?)?.toInt();
-    if (speed != null && speed <= 0)
+    if (speed != null && speed <= 0) {
       speed = null; // sentinel, not a measurement
+    }
     final String? duplex = _blank(j['duplex'] as String?);
     return LinkInfo(
       name: name,
