@@ -8445,7 +8445,7 @@
         "Choose the standard (n, ac, ax, or be) and the stream count; the rates update. 802.11n offers 1 to 4 streams (MCS 0-31, eight indices per stream count; MCS 32-76 are rarely used special cases and are not shown); ac, ax, and be offer 1 to 8.",
         "MCS 0 (BPSK 1/2) is the slowest and works at the weakest signal; higher MCS indices use denser modulation (up to 1024-QAM for ax and 4096-QAM for be) for higher rates but need a better signal.",
         "Cells shown as \"N/A\" are genuinely invalid combinations, not zero and not made up. Some are invalid only at certain stream counts.",
-        "Above 4 spatial streams no rate is shown at all. That is not an \"N/A\": it is a gap in the published source. The screen says so explicitly rather than computing a number it cannot source."
+        "Above 4 spatial streams no rate is shown at all. That is not an \"N/A\": it is a gap in this tool's source tables. The screen says so explicitly rather than computing a number it cannot source."
       ],
       "inputs": [],
       "algorithm": null,
@@ -8453,7 +8453,7 @@
       "fieldNotes": [
         "What it shows: two selectors, the 802.11 standard (n, ac, ax, or be) and the number of spatial streams (1 to 8). Columns per standard: 802.11n = 20 LGI, 20 SGI, 40 LGI, 40 SGI; 802.11ac = 20/40/80/160 SGI; 802.11ax = 20/40/80/160 MHz; 802.11be = 20/40/80/160/320 MHz (both at an 800 ns guard interval).",
         "802.11ac MCS 9 at 20 MHz is valid ONLY at 3 spatial streams; it is N/A at 1, 2 and 4. MCS 9 at 40 MHz is valid at every stream count. Two further stream-dependent exclusions: MCS 6 at 80 MHz and MCS 9 at 160 MHz are both invalid at 3 streams.",
-        "The source tables publish 1 to 4 spatial streams. Above 4 the app shows no rate, because the per-stream exclusions up there are not shown and are not derivable from the ones below. A rule that reproduces MCS 9 at 20 MHz exactly still gets MCS 6 at 80 MHz and MCS 9 at 160 MHz wrong. A known gap beats an invented number.",
+        "This tool's source tables (Keith Parsons' MCS Index Chart and mcsindex.net) cover 1 to 4 spatial streams. Above 4 the app shows no rate, because the per-stream exclusions up there are not shown in this tool's source tables and are not derivable from the ones below. A rule that reproduces MCS 9 at 20 MHz exactly still gets MCS 6 at 80 MHz and MCS 9 at 160 MHz wrong. A known gap beats an invented number.",
         "Guard-interval definitions: 802.11n LGI = 800 ns and SGI = 400 ns; 802.11ac uses SGI. 802.11ax and 802.11be define 0.8, 1.6, and 3.2 microsecond guard intervals only. There is no 400 ns short GI above 802.11ac.",
         "The notes card points out that real throughput is typically 50 to 65% of the PHY rate. These rates are PHY-layer maximums, not delivered throughput.",
         "Rates are rounded from the exact PHY value at the chosen stream count, not by multiplying a rounded single-stream figure, so 802.11ac MCS 9 at 160 MHz with 2 streams reads 1733.3, matching the source, not 1733.4.",
@@ -9023,10 +9023,10 @@
         "Why your speed test may read differently: no single number is \"the\" speed of a connection. When the Toolbox shows an internet throughput figure, it is real throughput to neutral public destinations, measured over a fixed window and reported honestly. If another test on the same connection reads higher, that is the method talking: a different server, more streams, a longer ramp-up. If the Toolbox can't get a clean read, it tells you it couldn't rather than inventing a number. (see: How the Toolbox Measures Throughput)"
       ],
       "fieldNotes": [
-        "Platform differences: runs on macOS, Windows, Android, and iOS, and is coming to the WLAN Pi. On the web version it points you to download the app instead.",
+        "Platform differences: runs on macOS, Windows, Android, and iOS. Network Quality also runs on the WLAN Pi. On the web version it points you to download the app instead.",
         "Read each grade on its own: a connection can be Excellent on latency and Poor on upload at the same time, which is exactly the point. The download and upload Mbps grades are \"good enough for a household\" rules of thumb, not standards. Responsiveness is directional only.",
         "Latency times a full connection handshake to a real host, so it's a faithful stand-in for ping and reads slightly higher.",
-        "The on-screen footnote says it plainly: these are this app's own measurements, not any other service's score. Download adds two streams together, so it reflects your link's total capacity rather than a single flow. A failed measurement reads \"Unavailable\" with a note, never 0."
+        "The on-screen footnote says it plainly: these are this app's own measurements, not any other service's score. Download adds five streams together, so it reflects your link's total capacity rather than a single flow. A failed measurement reads \"Unavailable\" with a note, never 0."
       ],
       "source": "The app measures everything itself against neutral public servers; nothing is outsourced to another service."
     },
