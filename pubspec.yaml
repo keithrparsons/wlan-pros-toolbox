@@ -714,9 +714,13 @@ flutter:
     # WLAN Pros brand lockup (GL-003 §8.21). The transparent-background
     # "wirelessLAN PROFESSIONALS" wordmark + lime #A1CC3A Wi-Fi arc, trimmed to
     # its tight bounding box from the canonical `WLANProsLogo black.png` source.
-    # Rendered on a white containment plate (the §8.19 white-tile-on-dark
-    # pattern) in the About-screen header; never placed bare on a dark surface.
+    # Rendered on a card in the About-screen header in light mode only; the
+    # charcoal wordmark is never placed bare on a dark surface.
     - assets/brand/wlan_pros_logo.png
+    # The reversed white lockup (white wordmark, lime #A2CD3B arc, no plate),
+    # as delivered: Keith, 18 OCT 2026, the bare white logo on dark surfaces
+    # (GL-003 §8.21). About-screen header in dark mode.
+    - assets/brand/wlan_pros_logo_white.png
     # Keith Parsons headshot — the founder portrait shown in the About screen's
     # "About the founder" section as a circular avatar (~96px display, ~288px 2x
     # asset, face-centered square crop). PNG, no executable content (90035-safe).
