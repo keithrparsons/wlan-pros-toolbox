@@ -17,7 +17,7 @@
 // deliberately independent of the numeric constants — so this genuinely
 // compares the two user-facing representations, not a constant against itself
 // ([[feedback_tests_that_cannot_fail]]). Expected grades in the boundary group
-// are hand-typed from Keith's confirmed bands, never read back from the code.
+// are hand-typed from Keith Parsons field cutoffs (1 Nov 2026), never read back from the code.
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart' show QualityGrade;
@@ -41,17 +41,18 @@ QualityGrade _labelToGrade(String label) {
 }
 
 /// True if [dbm] falls inside a reference-table range STRING, read the way a
-/// user reads it. Parses the printed text ("> -60 dBm", "-60 to -67", "-73 or
-/// weaker") into a predicate. Independent of WifiGradingBands numeric bounds on
+/// user reads it. Parses the printed text ("-67 dBm or better", "-68 to -72",
+/// "-76 or worse") into a predicate. Independent of WifiGradingBands numeric bounds on
 /// purpose — this is the "what the screen shows" surface.
 bool _rangeContains(String range, int dbm) {
-  final List<int> nums = RegExp(r'-?\d+')
-      .allMatches(range)
-      .map((RegExpMatch m) => int.parse(m.group(0)!))
-      .toList();
+  final List<int> nums = RegExp(
+    r'-?\d+',
+  ).allMatches(range).map((RegExpMatch m) => int.parse(m.group(0)!)).toList();
   expect(nums, isNotEmpty, reason: 'Unparseable reference range "$range".');
   if (range.contains('>')) return dbm > nums.first; // "> -60 dBm"
   if (range.contains('weaker')) return dbm <= nums.first; // "-73 or weaker"
+  if (range.contains('worse')) return dbm <= nums.first; // "-76 or worse"
+  if (range.contains('better')) return dbm >= nums.first; // "-67 dBm or better"
   if (range.contains('<')) return dbm < nums.first; // "< -80 dBm" legacy form
   // "A to B", less-negative first, e.g. "-60 to -67": inclusive both ends.
   final int hi = nums.reduce((int a, int b) => a > b ? a : b);
@@ -71,8 +72,7 @@ QualityGrade _referenceScreenGrade(int dbm) {
 
 void main() {
   group('RSSI grading — engine vs reference screen agree (F2 guard)', () {
-    test(
-        'the verdict engine and the reference screen assign the SAME grade at '
+    test('the verdict engine and the reference screen assign the SAME grade at '
         'every dBm from -30 to -100', () {
       // This is the guard that would have caught 1.7.1. If either surface
       // drifts (a constant edited without the display, or vice versa), some
@@ -82,26 +82,43 @@ void main() {
         final QualityGrade engine = WifiGrading.gradeRssi(dbm);
         final QualityGrade screen = _referenceScreenGrade(dbm);
         if (engine != screen) {
-          disagreements.add('$dbm dBm: engine=${engine.name} '
-              'screen=${screen.name}');
+          disagreements.add(
+            '$dbm dBm: engine=${engine.name} '
+            'screen=${screen.name}',
+          );
         }
       }
       expect(
         disagreements,
         isEmpty,
-        reason: 'The verdict engine and the Signal Thresholds screen disagree '
+        reason:
+            'The verdict engine and the Signal Thresholds screen disagree '
             'on these readings — the exact class of drift that shipped in '
             '1.7.1:\n${disagreements.join('\n')}',
       );
     });
 
-    test('-67 dBm is Good only and -68 dBm is Fair, on both surfaces', () {
-      // Keith, 2026-10-27: -67 belongs to Good alone. Engine and printed
-      // table must both put -67 in Good and -68 in Fair.
-      expect(WifiGrading.gradeRssi(-67), QualityGrade.good);
-      expect(_referenceScreenGrade(-67), QualityGrade.good);
-      expect(WifiGrading.gradeRssi(-68), QualityGrade.fair);
-      expect(_referenceScreenGrade(-68), QualityGrade.fair);
+    test('-67 dBm is Excellent and -68 dBm is Good, on both surfaces', () {
+      // Keith Parsons field cutoffs, 1 Nov 2026: -67 is the Excellent edge.
+      expect(WifiGrading.gradeRssi(-67), QualityGrade.excellent);
+      expect(_referenceScreenGrade(-67), QualityGrade.excellent);
+      expect(WifiGrading.gradeRssi(-68), QualityGrade.good);
+      expect(_referenceScreenGrade(-68), QualityGrade.good);
+    });
+
+    test('every 1 Nov 2026 edge grades the same on both surfaces', () {
+      const Map<int, QualityGrade> edges = <int, QualityGrade>{
+        -67: QualityGrade.excellent,
+        -68: QualityGrade.good,
+        -72: QualityGrade.good,
+        -73: QualityGrade.fair,
+        -75: QualityGrade.fair,
+        -76: QualityGrade.poor,
+      };
+      edges.forEach((int dbm, QualityGrade want) {
+        expect(WifiGrading.gradeRssi(dbm), want, reason: 'engine $dbm');
+        expect(_referenceScreenGrade(dbm), want, reason: 'screen $dbm');
+      });
     });
 
     test('no reading falls inside two printed ranges', () {
@@ -118,14 +135,15 @@ void main() {
       expect(overlaps, isEmpty, reason: overlaps.join('\n'));
     });
 
-    test('the -73/-74 dBm regression: both surfaces now say Poor', () {
-      // The 1.7.1 headline bug: the engine fired R-10 "Poor / no plan will
-      // help" while the reference table called -73/-74 "Fair / usable". Pin it
-      // shut on both surfaces.
-      for (final int dbm in <int>[-73, -74]) {
-        expect(WifiGrading.gradeRssi(dbm), QualityGrade.poor, reason: '$dbm');
-        expect(_referenceScreenGrade(dbm), QualityGrade.poor, reason: '$dbm');
+    test('-73 to -75 dBm is Fair and -76 is Poor, on both surfaces', () {
+      // The 1.7.1 headline bug was the engine and the table disagreeing at the
+      // Fair/Poor edge. Pin the current edge shut on both surfaces.
+      for (final int dbm in <int>[-73, -74, -75]) {
+        expect(WifiGrading.gradeRssi(dbm), QualityGrade.fair, reason: '$dbm');
+        expect(_referenceScreenGrade(dbm), QualityGrade.fair, reason: '$dbm');
       }
+      expect(WifiGrading.gradeRssi(-76), QualityGrade.poor);
+      expect(_referenceScreenGrade(-76), QualityGrade.poor);
     });
 
     test('four bands, no orphaned "Weak", labels strongest-first', () {
@@ -142,34 +160,38 @@ void main() {
         final QualityGrade q = _labelToGrade(b.label);
         final SignalGrade expected =
             (q == QualityGrade.excellent || q == QualityGrade.good)
-                ? SignalGrade.good
-                : q == QualityGrade.fair
-                    ? SignalGrade.marginal
-                    : SignalGrade.bad;
+            ? SignalGrade.good
+            : q == QualityGrade.fair
+            ? SignalGrade.marginal
+            : SignalGrade.bad;
         expect(b.grade, expected, reason: b.label);
       }
     });
   });
 
-  group('RSSI boundary grades — hand-derived from Keith\'s confirmed bands', () {
-    // Expected values typed from Keith's bands (Excellent > -60, Good -60..-67,
-    // Fair -68..-72, Poor -73 or weaker), NOT read back from WifiGradingBands.
-    test('Excellent: rssi > -60 (so -59 in, -60 out)', () {
-      expect(WifiGrading.gradeRssi(-30), QualityGrade.excellent);
-      expect(WifiGrading.gradeRssi(-59), QualityGrade.excellent);
-      expect(WifiGrading.gradeRssi(-60), isNot(QualityGrade.excellent));
-    });
-    test('Good: -60 down to -67 inclusive', () {
-      expect(WifiGrading.gradeRssi(-60), QualityGrade.good);
-      expect(WifiGrading.gradeRssi(-67), QualityGrade.good);
-    });
-    test('Fair: -68 down to -72 (-67 is Good, -73 is Poor)', () {
-      expect(WifiGrading.gradeRssi(-68), QualityGrade.fair);
-      expect(WifiGrading.gradeRssi(-72), QualityGrade.fair);
-    });
-    test('Poor: -73 and weaker', () {
-      expect(WifiGrading.gradeRssi(-73), QualityGrade.poor);
-      expect(WifiGrading.gradeRssi(-90), QualityGrade.poor);
-    });
-  });
+  group(
+    'RSSI boundary grades, hand-derived from Keith\'s 1 Nov 2026 cutoffs',
+    () {
+      // Expected values typed from Keith's bands (Excellent -67 or better, Good
+      // -68..-72, Fair -73..-75, Poor -76 or worse), NOT read back from
+      // WifiGradingBands. Source: Keith Parsons field cutoffs, 1 Nov 2026.
+      test('Excellent: -67 or better (-67 in, -68 out)', () {
+        expect(WifiGrading.gradeRssi(-30), QualityGrade.excellent);
+        expect(WifiGrading.gradeRssi(-67), QualityGrade.excellent);
+        expect(WifiGrading.gradeRssi(-68), isNot(QualityGrade.excellent));
+      });
+      test('Good: -68 down to -72 inclusive', () {
+        expect(WifiGrading.gradeRssi(-68), QualityGrade.good);
+        expect(WifiGrading.gradeRssi(-72), QualityGrade.good);
+      });
+      test('Fair: -73 down to -75 inclusive', () {
+        expect(WifiGrading.gradeRssi(-73), QualityGrade.fair);
+        expect(WifiGrading.gradeRssi(-75), QualityGrade.fair);
+      });
+      test('Poor: -76 and worse', () {
+        expect(WifiGrading.gradeRssi(-76), QualityGrade.poor);
+        expect(WifiGrading.gradeRssi(-90), QualityGrade.poor);
+      });
+    },
+  );
 }

@@ -21,11 +21,11 @@
 //     percentage from RSSI/SNR/rate (that would be a fabricated number). The
 //     Live UI omits it rather than fake it (TICKET-01 §scope-5, GL-005).
 //
-// ── BANDS ARE KEITH-REVIEWED THRESHOLDS (canonical, confirmed 2026-07-12) ──
+// ── BANDS ARE KEITH-REVIEWED THRESHOLDS ──
 // The dBm / dB cut points below are Keith's reviewed thresholds. The RSSI scale
-// was CONFIRMED as canonical on 2026-07-12 (Excellent > -60, Good -60..-67,
-// Fair -68..-72, Poor -73 or weaker). -67 is Good only (Keith, 2026-10-27):
-// the printed Fair range starts at -68 so no reading sits in two bands.
+// is Keith Parsons field cutoffs, 1 Nov 2026 (Excellent -67 or better, Good
+// -68 to -72, Fair -73 to -75, Poor -76 or worse). These replace the earlier
+// scale (Excellent > -60, Good -60..-67, Fair -68..-72, Poor -73 or weaker).
 //
 // SINGLE SOURCE OF TRUTH. These live as named constants — and, for RSSI, as the
 // [WifiGradingBands.kRssiBands] list — in ONE place. BOTH the grading engine
@@ -64,8 +64,8 @@ class RssiBand {
   /// weaker than Poor.
   final int minDbm;
 
-  /// The range exactly as the reference table prints it, e.g. "> -60 dBm",
-  /// "-60 to -67". Human-readable; the numeric grading uses [minDbm]. A
+  /// The range exactly as the reference table prints it, e.g. "-67 dBm or better",
+  /// "-68 to -72". Human-readable; the numeric grading uses [minDbm]. A
   /// cross-check test fails the build if this string ever disagrees with the
   /// grade [WifiGrading.gradeRssi] computes.
   final String displayRange;
@@ -73,39 +73,40 @@ class RssiBand {
 
 /// Tunable grade bands for the Live-mode RF dimensions.
 ///
-/// Keith-reviewed thresholds; the RSSI scale is canonical, confirmed
-/// 2026-07-12. All thresholds are expressed as the inclusive lower bound of each
+/// Keith-reviewed thresholds; the RSSI scale is Keith Parsons field cutoffs,
+/// 1 Nov 2026. All thresholds are expressed as the inclusive lower bound of each
 /// band, evaluated top-down. The bands are contiguous and unambiguous: each
 /// integer reading falls into exactly one band.
 class WifiGradingBands {
   WifiGradingBands._();
 
   // ── RSSI (received signal strength, dBm; less-negative is stronger) ──────
-  // Keith's canonical thresholds, confirmed 2026-07-12.
-  //   rssi >  -60          Excellent
-  //   -67 <= rssi <= -60   Good   (-60 Good, -67 Good)
-  //   -72 <= rssi <  -67   Fair   (-72 Fair)
-  //   rssi <  -72          Poor   (-73 and weaker)
+  // Source: Keith Parsons field cutoffs, 1 Nov 2026.
+  //   rssi >= -67          Excellent (-67 Excellent)
+  //   -72 <= rssi <= -68   Good      (-68 Good, -72 Good)
+  //   -75 <= rssi <= -73   Fair      (-73 Fair, -75 Fair)
+  //   rssi <= -76          Poor
 
-  /// RSSI at or above this (dBm) grades Excellent. Equivalent to rssi > -60 for
-  /// integer readings. Keith's canonical threshold (confirmed 2026-07-12).
-  static const int rssiExcellentDbm = -59;
+  /// RSSI at or above this (dBm) grades Excellent, so -67 is Excellent.
+  /// Source: Keith Parsons field cutoffs, 1 Nov 2026.
+  static const int rssiExcellentDbm = -67;
 
-  /// RSSI at or above this (dBm), below [rssiExcellentDbm], grades Good. So -60
-  /// and -67 are both Good. Keith's canonical threshold (confirmed 2026-07-12).
-  static const int rssiGoodDbm = -67;
+  /// RSSI at or above this (dBm), below [rssiExcellentDbm], grades Good. So -68
+  /// and -72 are both Good. Source: Keith Parsons field cutoffs, 1 Nov 2026.
+  static const int rssiGoodDbm = -72;
 
-  /// RSSI at or above this (dBm), below [rssiGoodDbm], grades Fair. So -72 is
-  /// Fair; below it grades Poor. Keith's canonical threshold (2026-07-12).
-  static const int rssiFairDbm = -72;
+  /// RSSI at or above this (dBm), below [rssiGoodDbm], grades Fair. So -73 and
+  /// -75 are Fair; -76 and weaker grade Poor. Source: Keith Parsons field
+  /// cutoffs, 1 Nov 2026.
+  static const int rssiFairDbm = -75;
 
   /// Sentinel lower bound for the weakest band: no reading is below Poor. Used
   /// as the Poor band's [RssiBand.minDbm] so the strongest-first scan always
   /// terminates on a match.
   static const int rssiNoFloor = -1000;
 
-  /// Keith's confirmed canonical RSSI grade scale (four grades, confirmed
-  /// 2026-07-12). THE single source of truth: [WifiGrading.gradeRssi] derives
+  /// Keith's RSSI grade scale (four grades; Keith Parsons field cutoffs,
+  /// 1 Nov 2026). THE single source of truth: [WifiGrading.gradeRssi] derives
   /// its grade from this list, and SignalThresholdsScreen renders its RSSI
   /// quality scale from it. Do not hand-copy these numbers into a screen —
   /// extend or edit them HERE only. Keith's note: these bands are a convention,
@@ -115,26 +116,26 @@ class WifiGradingBands {
     RssiBand(
       grade: QualityGrade.excellent,
       label: 'Excellent',
-      minDbm: rssiExcellentDbm, // -59  → rssi > -60
-      displayRange: '> -60 dBm',
+      minDbm: rssiExcellentDbm, // -67 or better
+      displayRange: '-67 dBm or better',
     ),
     RssiBand(
       grade: QualityGrade.good,
       label: 'Good',
-      minDbm: rssiGoodDbm, // -67  → -60 to -67
-      displayRange: '-60 to -67',
+      minDbm: rssiGoodDbm, // -68 to -72
+      displayRange: '-68 to -72',
     ),
     RssiBand(
       grade: QualityGrade.fair,
       label: 'Fair',
-      minDbm: rssiFairDbm, // -72  → -68 to -72
-      displayRange: '-68 to -72',
+      minDbm: rssiFairDbm, // -73 to -75
+      displayRange: '-73 to -75',
     ),
     RssiBand(
       grade: QualityGrade.poor,
       label: 'Poor',
-      minDbm: rssiNoFloor, // -73 or weaker
-      displayRange: '-73 or weaker',
+      minDbm: rssiNoFloor, // -76 or worse
+      displayRange: '-76 or worse',
     ),
   ];
 

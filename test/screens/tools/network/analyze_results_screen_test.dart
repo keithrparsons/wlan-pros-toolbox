@@ -54,23 +54,22 @@ Widget _wrap(
   AnalysisReport report, {
   String? Function()? copy,
   bool light = false,
-}) =>
-    MaterialApp(
-      theme: light ? AppTheme.light() : AppTheme.dark(),
-      home: AnalyzeResultsScreen(
-        report: report,
-        copyTextBuilder:
-            copy ?? () => report.hasFindings ? 'report text' : null,
-      ),
-    );
+}) => MaterialApp(
+  theme: light ? AppTheme.light() : AppTheme.dark(),
+  home: AnalyzeResultsScreen(
+    report: report,
+    copyTextBuilder: copy ?? () => report.hasFindings ? 'report text' : null,
+  ),
+);
 
 void main() {
-  testWidgets('verdict hero leads with the conclusion + neutral overline',
-      (tester) async {
+  testWidgets('verdict hero leads with the conclusion + neutral overline', (
+    tester,
+  ) async {
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(
         verdict: WifiVsInternetVerdict.wifiLimiter,
-        rssiDbm: -73, // poor -> R-10
+        rssiDbm: -76, // poor -> R-10
       ),
     );
     await _precacheCategorySvgs(tester);
@@ -85,12 +84,13 @@ void main() {
     expect(find.textContaining('Your signal is weak'), findsOneWidget);
   });
 
-  testWidgets('finding chips carry the verdict WORD, never color-only',
-      (tester) async {
+  testWidgets('finding chips carry the verdict WORD, never color-only', (
+    tester,
+  ) async {
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(
         verdict: WifiVsInternetVerdict.wifiLimiter,
-        rssiDbm: -73, // poor RSSI -> R-10 (important -> "Worth a look")
+        rssiDbm: -76, // poor RSSI -> R-10 (important -> "Worth a look")
         security: WifiSecurity.open, // R-35 (critical -> "Issue")
       ),
     );
@@ -106,8 +106,9 @@ void main() {
     expect(find.text('Worth a look'), findsWidgets);
   });
 
-  testWidgets('honesty rows render as quiet "Not measured" info rows',
-      (tester) async {
+  testWidgets('honesty rows render as quiet "Not measured" info rows', (
+    tester,
+  ) async {
     // iOS, RF not captured -> R-31 honesty row; band present so something else
     // can fire too, but the honesty row is the one under test.
     final report = AnalyzeEngine.analyze(
@@ -132,47 +133,57 @@ void main() {
   });
 
   testWidgets(
-      'demoted R-06 "you are online" verdict renders a calm INFO chip, not amber',
-      (tester) async {
-    // The open-hotel-network case: the honest "you are online" verdict (R-06)
-    // co-fires with a critical open-network security finding (R-35). R-35 sorts
-    // first, so the hero slot is taken by the security finding and R-06 is
-    // DEMOTED into the §4 cards list. Its chip must read the calm INFO kind
-    // (blue glyph), not headsUp (amber): an amber accent around the word
-    // "Good" contradicts the word (GL-003 section 8.13 rule 2 / WCAG 1.4.1).
-    final report = AnalyzeEngine.analyze(
-      const AnalyzeInput(
-        verdict: WifiVsInternetVerdict.onlineUnmeasured,
-        security: WifiSecurity.open, // R-35 critical -> R-06 demoted to a card
-      ),
-    );
-    // Guard the precondition: R-06 is present, demoted (not the leading
-    // finding), and still carries the "Good" word from the engine.
-    final r06 = report.findings.firstWhere((f) => f.ruleId == 'R-06');
-    expect(report.findings.first.ruleId, 'R-35');
-    expect(r06.verdictWord, 'Good');
+    'demoted R-06 "you are online" verdict renders a calm INFO chip, not amber',
+    (tester) async {
+      // The open-hotel-network case: the honest "you are online" verdict (R-06)
+      // co-fires with a critical open-network security finding (R-35). R-35 sorts
+      // first, so the hero slot is taken by the security finding and R-06 is
+      // DEMOTED into the §4 cards list. Its chip must read the calm INFO kind
+      // (blue glyph), not headsUp (amber): an amber accent around the word
+      // "Good" contradicts the word (GL-003 section 8.13 rule 2 / WCAG 1.4.1).
+      final report = AnalyzeEngine.analyze(
+        const AnalyzeInput(
+          verdict: WifiVsInternetVerdict.onlineUnmeasured,
+          security:
+              WifiSecurity.open, // R-35 critical -> R-06 demoted to a card
+        ),
+      );
+      // Guard the precondition: R-06 is present, demoted (not the leading
+      // finding), and still carries the "Good" word from the engine.
+      final r06 = report.findings.firstWhere((f) => f.ruleId == 'R-06');
+      expect(report.findings.first.ruleId, 'R-35');
+      expect(r06.verdictWord, 'Good');
 
-    await _precacheCategorySvgs(tester);
-    await tester.pumpWidget(_wrap(report));
-    await tester.pumpAndSettle();
+      await _precacheCategorySvgs(tester);
+      await tester.pumpWidget(_wrap(report));
+      await tester.pumpAndSettle();
 
-    // Find every StatusChip whose verdict word is "Good" (the demoted R-06
-    // chip), and assert its kind is the calm info kind, never amber headsUp.
-    final Iterable<StatusChip> goodChips = tester
-        .widgetList<StatusChip>(find.byType(StatusChip))
-        .where((c) => c.word == 'Good');
-    expect(goodChips, isNotEmpty,
-        reason: 'the demoted R-06 chip should carry the "Good" word');
-    for (final StatusChip chip in goodChips) {
-      expect(chip.kind, StatusChipKind.info,
-          reason: 'demoted R-06 "Good" chip must be info (blue), not amber '
-              'headsUp');
-      expect(chip.kind, isNot(StatusChipKind.headsUp));
-    }
-  });
+      // Find every StatusChip whose verdict word is "Good" (the demoted R-06
+      // chip), and assert its kind is the calm info kind, never amber headsUp.
+      final Iterable<StatusChip> goodChips = tester
+          .widgetList<StatusChip>(find.byType(StatusChip))
+          .where((c) => c.word == 'Good');
+      expect(
+        goodChips,
+        isNotEmpty,
+        reason: 'the demoted R-06 chip should carry the "Good" word',
+      );
+      for (final StatusChip chip in goodChips) {
+        expect(
+          chip.kind,
+          StatusChipKind.info,
+          reason:
+              'demoted R-06 "Good" chip must be info (blue), not amber '
+              'headsUp',
+        );
+        expect(chip.kind, isNot(StatusChipKind.headsUp));
+      }
+    },
+  );
 
-  testWidgets('all-clear verdict reads as a Good chip, not an advisory',
-      (tester) async {
+  testWidgets('all-clear verdict reads as a Good chip, not an advisory', (
+    tester,
+  ) async {
     // R-04: both healthy -> "Nothing to fix" headline, a Good verdict.
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(verdict: WifiVsInternetVerdict.bothHealthy),
@@ -183,8 +194,9 @@ void main() {
     expect(find.textContaining('Nothing to fix'), findsOneWidget);
   });
 
-  testWidgets('no draft-guidance banner now that every rule is ratified',
-      (tester) async {
+  testWidgets('no draft-guidance banner now that every rule is ratified', (
+    tester,
+  ) async {
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(band: '2.4 GHz', standard: '802.11ax (Wi-Fi 6)'),
     );
@@ -196,8 +208,9 @@ void main() {
     expect(find.textContaining('Draft guidance'), findsNothing);
   });
 
-  testWidgets('empty report shows the honest empty state and disables Copy',
-      (tester) async {
+  testWidgets('empty report shows the honest empty state and disables Copy', (
+    tester,
+  ) async {
     final report = AnalyzeEngine.analyze(const AnalyzeInput());
     expect(report.hasFindings, isFalse);
     await tester.pumpWidget(_wrap(report));
@@ -226,12 +239,13 @@ void main() {
     expect(find.textContaining('Nothing is sent or stored'), findsOneWidget);
   });
 
-  testWidgets('no overflow across widths in BOTH dark and light',
-      (tester) async {
+  testWidgets('no overflow across widths in BOTH dark and light', (
+    tester,
+  ) async {
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(
         verdict: WifiVsInternetVerdict.bothContributing,
-        rssiDbm: -73,
+        rssiDbm: -76,
         snrDb: 10,
         security: WifiSecurity.open,
         lossPct: 5,

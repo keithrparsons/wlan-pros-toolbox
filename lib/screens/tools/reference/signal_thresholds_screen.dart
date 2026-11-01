@@ -13,8 +13,8 @@
 // table, and the SNR→MCS table.
 //
 // The RSSI quality scale uses KEITH PARSONS' OWN canonical thresholds
-// (Excellent > -60, Good -60..-67, Fair -68..-72, Poor -73 or weaker), confirmed
-// 2026-07-12 — his domain expertise over the internet/vendor-appropriated values
+// (Excellent -67 or better, Good -68..-72, Fair -73..-75, Poor -76 or worse),
+// Keith Parsons field cutoffs, 1 Nov 2026 — his domain expertise over the internet/vendor-appropriated values
 // that previously shipped (GL-005, domain-proof-over-consensus). These are read
 // from the SINGLE SOURCE, [WifiGradingBands.kRssiBands], the very same list the
 // grading engine ([WifiGrading.gradeRssi], Live mode + the Analyze verdict
@@ -57,8 +57,8 @@ class SignalBand {
   /// [WifiGradingBands.kRssiBands]).
   final String label;
 
-  /// RSSI range exactly as the canonical band prints it, e.g. "> -60 dBm",
-  /// "-60 to -67". Sourced from [RssiBand.displayRange].
+  /// RSSI range exactly as the canonical band prints it, e.g. "-67 dBm or better",
+  /// "-68 to -72". Sourced from [RssiBand.displayRange].
   final String range;
 
   final SignalGrade grade;
@@ -101,8 +101,8 @@ class SignalThresholdsScreen extends StatelessWidget {
   // the PWA source are rendered as hyphens here per the no-em-dash rule; the
   // numeric thresholds are unchanged.
 
-  /// RSSI quality scale — Keith Parsons' canonical field thresholds (confirmed
-  /// 2026-07-12; domain-proof over internet/vendor consensus, GL-005). BUILT
+  /// RSSI quality scale — Keith Parsons' canonical field thresholds (Keith
+  /// Parsons field cutoffs, 1 Nov 2026; domain-proof over internet/vendor consensus, GL-005). BUILT
   /// FROM the single source [WifiGradingBands.kRssiBands], never hand-typed
   /// here, so this table and the app's verdict engine grade every dBm reading
   /// identically. Excellent/Good read as a passing verdict, Fair as marginal,

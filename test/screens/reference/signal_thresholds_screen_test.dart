@@ -59,16 +59,16 @@ void main() {
     });
 
     test("Keith's RSSI bands carry his confirmed canonical ranges", () {
-      // Hand-typed from Keith's confirmed bands (2026-07-12), NOT derived from
+      // Hand-typed from Keith Parsons field cutoffs (1 Nov 2026), NOT derived from
       // WifiGradingBands — so this test would catch the screen drifting off the
       // canonical scale in either direction.
       String range(String label) => SignalThresholdsScreen.kSignalBands
           .firstWhere((SignalBand b) => b.label == label)
           .range;
-      expect(range('Excellent'), '> -60 dBm');
-      expect(range('Good'), '-60 to -67');
-      expect(range('Fair'), '-68 to -72');
-      expect(range('Poor'), '-73 or weaker');
+      expect(range('Excellent'), '-67 dBm or better');
+      expect(range('Good'), '-68 to -72');
+      expect(range('Fair'), '-73 to -75');
+      expect(range('Poor'), '-76 or worse');
     });
 
     test('four RSSI quality bands are present, no orphaned "Weak"', () {
@@ -98,8 +98,9 @@ void main() {
     });
   });
 
-  testWidgets('renders without overflow at 320/375/768/1280 widths',
-      (tester) async {
+  testWidgets('renders without overflow at 320/375/768/1280 widths', (
+    tester,
+  ) async {
     // Multi-width overflow regression: the threshold tables must not RenderFlex
     // overflow at small phone (320), phone (375), tablet (768), or desktop
     // (1280). Tall height so vertical scroll content never false-triggers.

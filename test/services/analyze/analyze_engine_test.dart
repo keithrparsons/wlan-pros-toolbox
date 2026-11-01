@@ -19,10 +19,9 @@ import 'package:wlan_pros_toolbox/services/network/wifi_security.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_vs_internet.dart';
 
 /// Convenience: the set of fired rule ids for an input.
-Set<String> _firedIds(AnalyzeInput input) => AnalyzeEngine.analyze(input)
-    .findings
-    .map((AnalysisFinding f) => f.ruleId)
-    .toSet();
+Set<String> _firedIds(AnalyzeInput input) => AnalyzeEngine.analyze(
+  input,
+).findings.map((AnalysisFinding f) => f.ruleId).toSet();
 
 void main() {
   group('rule library shape', () {
@@ -39,13 +38,12 @@ void main() {
       // (the speed-test-SKIPPED half of `onlineUnmeasured`, split out the same day
       // when the cellular-data consent gate landed — see below) → 35.
       expect(kAnalyzeRules.length, 35);
-      final Set<FindingCategory> cats =
-          kAnalyzeRules.map((r) => r.category).toSet();
+      final Set<FindingCategory> cats = kAnalyzeRules
+          .map((r) => r.category)
+          .toSet();
       expect(cats.length, FindingCategory.values.length); // all 9
       // R-50 is deliberately absent.
-      expect(
-        kAnalyzeRules.map((r) => r.id), isNot(contains('R-50')),
-      );
+      expect(kAnalyzeRules.map((r) => r.id), isNot(contains('R-50')));
     });
 
     test('every rule id is unique', () {
@@ -53,8 +51,7 @@ void main() {
       expect(ids.toSet().length, ids.length);
     });
 
-    test('no rule tells a user with NO Wi-Fi link to install the Wi-Fi Shortcut',
-        () {
+    test('no rule tells a user with NO Wi-Fi link to install the Wi-Fi Shortcut', () {
       // THE MECHANICAL GUARD (2026-07-13, widened round 4). Suppressing R-31 was
       // not enough: R-05 carried the SAME advice ("install the companion
       // Shortcut") through a different rule, and Keith hit it on a cellular-only
@@ -112,19 +109,28 @@ void main() {
             final AnalysisReport report = AnalyzeEngine.analyze(input);
             shapesChecked++;
 
-            final String shape = 'verdict=$verdict '
+            final String shape =
+                'verdict=$verdict '
                 'internetMeasured=$internetMeasured '
                 'speedTestSkipped=$speedTestSkipped';
 
             for (final AnalysisFinding f in report.findings) {
               final String text = f.explanation.toLowerCase();
-              expect(text, isNot(contains('shortcut')),
-                  reason: '[$shape] ${f.ruleId} tells a device with no Wi-Fi '
-                      'link to use the companion Shortcut. No Shortcut can read '
-                      'a link that does not exist (GL-005, two kinds of null).');
-              expect(text, isNot(contains('capture wi-fi details')),
-                  reason: '[$shape] ${f.ruleId} offers a capture for a link '
-                      'that is not there');
+              expect(
+                text,
+                isNot(contains('shortcut')),
+                reason:
+                    '[$shape] ${f.ruleId} tells a device with no Wi-Fi '
+                    'link to use the companion Shortcut. No Shortcut can read '
+                    'a link that does not exist (GL-005, two kinds of null).',
+              );
+              expect(
+                text,
+                isNot(contains('capture wi-fi details')),
+                reason:
+                    '[$shape] ${f.ruleId} offers a capture for a link '
+                    'that is not there',
+              );
             }
           }
         }
@@ -137,17 +143,24 @@ void main() {
       // × the 2×2 measured/skipped grid = 8 more shapes. The guard's real assertions
       // passed for all of them; this count is the tripwire that made me confirm the
       // matrix actually grew rather than a shape silently dropping out.
-      expect(shapesChecked, 36,
-          reason: 'the library-wide guard must sweep every verdict shape, not '
-              'one — that was the round-3 finding');
+      expect(
+        shapesChecked,
+        36,
+        reason:
+            'the library-wide guard must sweep every verdict shape, not '
+            'one — that was the round-3 finding',
+      );
     });
 
     test('all rules are ratified, no rule is flagged pendingRatification', () {
       // Keith ratified the rules 2026-06-16; the copy is Penn-voiced and final.
       // No rule may still read as draft.
       for (final rule in kAnalyzeRules) {
-        expect(rule.pendingRatification, isFalse,
-            reason: '${rule.id} must be ratified (not pending) post 2026-06-16');
+        expect(
+          rule.pendingRatification,
+          isFalse,
+          reason: '${rule.id} must be ratified (not pending) post 2026-06-16',
+        );
       }
     });
   });
@@ -164,28 +177,31 @@ void main() {
 
     test('each verdict maps to its rule', () {
       expect(
-        _firedIds(const AnalyzeInput(
-            verdict: WifiVsInternetVerdict.upstream)),
+        _firedIds(const AnalyzeInput(verdict: WifiVsInternetVerdict.upstream)),
         contains('R-02'),
       );
       expect(
-        _firedIds(const AnalyzeInput(
-            verdict: WifiVsInternetVerdict.bothContributing)),
+        _firedIds(
+          const AnalyzeInput(verdict: WifiVsInternetVerdict.bothContributing),
+        ),
         contains('R-03'),
       );
       expect(
-        _firedIds(const AnalyzeInput(
-            verdict: WifiVsInternetVerdict.bothHealthy)),
+        _firedIds(
+          const AnalyzeInput(verdict: WifiVsInternetVerdict.bothHealthy),
+        ),
         contains('R-04'),
       );
       expect(
-        _firedIds(const AnalyzeInput(
-            verdict: WifiVsInternetVerdict.wifiUnknown)),
+        _firedIds(
+          const AnalyzeInput(verdict: WifiVsInternetVerdict.wifiUnknown),
+        ),
         contains('R-05'),
       );
       expect(
-        _firedIds(const AnalyzeInput(
-            verdict: WifiVsInternetVerdict.onlineUnmeasured)),
+        _firedIds(
+          const AnalyzeInput(verdict: WifiVsInternetVerdict.onlineUnmeasured),
+        ),
         contains('R-06'),
       );
     });
@@ -196,22 +212,32 @@ void main() {
       // could not be measured", "install the companion Shortcut") is correct for a
       // link we failed to READ, and false for a link that does not EXIST. Exactly
       // one of the two must fire — never both, never neither.
-      final Set<String> readFailed = _firedIds(const AnalyzeInput(
-        verdict: WifiVsInternetVerdict.wifiUnknown,
-      )).toSet();
+      final Set<String> readFailed = _firedIds(
+        const AnalyzeInput(verdict: WifiVsInternetVerdict.wifiUnknown),
+      ).toSet();
       expect(readFailed, contains('R-05'));
       expect(readFailed, isNot(contains('R-05N')));
 
-      final Set<String> noLink = _firedIds(const AnalyzeInput(
-        verdict: WifiVsInternetVerdict.wifiUnknown,
-        notOnWifi: true,
-      )).toSet();
-      expect(noLink, contains('R-05N'),
-          reason: 'a cellular-only phone must get the honest "you are not on '
-              'Wi-Fi, that is not a failed reading" finding');
-      expect(noLink, isNot(contains('R-05')),
-          reason: 'and must NOT be told one side "could not be measured" or to '
-              'install a Shortcut to read a link that does not exist');
+      final Set<String> noLink = _firedIds(
+        const AnalyzeInput(
+          verdict: WifiVsInternetVerdict.wifiUnknown,
+          notOnWifi: true,
+        ),
+      ).toSet();
+      expect(
+        noLink,
+        contains('R-05N'),
+        reason:
+            'a cellular-only phone must get the honest "you are not on '
+            'Wi-Fi, that is not a failed reading" finding',
+      );
+      expect(
+        noLink,
+        isNot(contains('R-05')),
+        reason:
+            'and must NOT be told one side "could not be measured" or to '
+            'install a Shortcut to read a link that does not exist',
+      );
     });
 
     test(
@@ -219,9 +245,7 @@ void main() {
       'reads "Good", never "could not read"',
       () {
         final report = AnalyzeEngine.analyze(
-          const AnalyzeInput(
-            verdict: WifiVsInternetVerdict.onlineUnmeasured,
-          ),
+          const AnalyzeInput(verdict: WifiVsInternetVerdict.onlineUnmeasured),
         );
         expect(report.headline!.ruleId, 'R-06');
         expect(report.headline!.category, FindingCategory.verdict);
@@ -231,9 +255,12 @@ void main() {
         expect(report.headline!.explanation, contains('reachable'));
         expect(report.headline!.explanation, isNot(contains('could not read')));
         // R-05 (partial read) must NOT also fire for this distinct verdict.
-        expect(_firedIds(const AnalyzeInput(
-            verdict: WifiVsInternetVerdict.onlineUnmeasured)),
-            isNot(contains('R-05')));
+        expect(
+          _firedIds(
+            const AnalyzeInput(verdict: WifiVsInternetVerdict.onlineUnmeasured),
+          ),
+          isNot(contains('R-05')),
+        );
       },
     );
 
@@ -260,25 +287,27 @@ void main() {
     // back from WifiGradingBands — the 1.7.1 failure mode (F2) was tests that
     // derived their expected values from the very constant under test, so a
     // wrong constant stayed green. Literals below fail if the bands ever drift.
-    test('poor RSSI (-73, Keith\'s Poor floor) fires R-10', () {
-      const int rssi = -73; // Poor: -73 or weaker.
+    test('poor RSSI (-76, Keith\'s Poor edge) fires R-10', () {
+      const int rssi = -76; // Poor: -76 or worse (1 Nov 2026).
       expect(WifiGrading.gradeRssi(rssi), QualityGrade.poor);
       expect(_firedIds(const AnalyzeInput(rssiDbm: rssi)), contains('R-10'));
     });
 
-    test('excellent RSSI (-59, i.e. > -60) alone is suppressed (context-only)',
-        () {
-      // R-12 is context-only: with no other finding it must NOT render.
-      const int rssi = -59; // Excellent: rssi > -60.
-      expect(WifiGrading.gradeRssi(rssi), QualityGrade.excellent);
-      expect(
-        _firedIds(const AnalyzeInput(rssiDbm: rssi)),
-        isNot(contains('R-12')),
-      );
-    });
+    test(
+      'excellent RSSI (-67, the Excellent edge) alone is suppressed (context-only)',
+      () {
+        // R-12 is context-only: with no other finding it must NOT render.
+        const int rssi = -67; // Excellent: -67 or better (1 Nov 2026).
+        expect(WifiGrading.gradeRssi(rssi), QualityGrade.excellent);
+        expect(
+          _firedIds(const AnalyzeInput(rssiDbm: rssi)),
+          isNot(contains('R-12')),
+        );
+      },
+    );
 
     test('excellent RSSI renders when a real finding also fired', () {
-      const int rssi = -59; // Excellent: rssi > -60.
+      const int rssi = -67; // Excellent: -67 or better (1 Nov 2026).
       final report = AnalyzeEngine.analyze(
         const AnalyzeInput(rssiDbm: rssi, lossPct: 5), // loss poor → R-25
       );
@@ -301,59 +330,69 @@ void main() {
       expect(report.findings.map((f) => f.ruleId), contains('R-17'));
     });
 
-    test('strong SNR + low link rate fires R-18 (context-only, needs sibling)',
-        () {
-      // R-18 is context-only: paired here with the verdict so it surfaces.
-      final report = AnalyzeEngine.analyze(
-        const AnalyzeInput(
-          snrDb: 40,
-          linkRateMbps: 100,
-          verdict: WifiVsInternetVerdict.wifiLimiter,
-        ),
-      );
-      expect(report.findings.map((f) => f.ruleId), contains('R-18'));
-    });
+    test(
+      'strong SNR + low link rate fires R-18 (context-only, needs sibling)',
+      () {
+        // R-18 is context-only: paired here with the verdict so it surfaces.
+        final report = AnalyzeEngine.analyze(
+          const AnalyzeInput(
+            snrDb: 40,
+            linkRateMbps: 100,
+            verdict: WifiVsInternetVerdict.wifiLimiter,
+          ),
+        );
+        expect(report.findings.map((f) => f.ruleId), contains('R-18'));
+      },
+    );
   });
 
   group('band / PHY / width doctrine guardrails', () {
-    test('2.4 GHz with a modern PHY fires R-20, ratified, keeps honest caveat',
-        () {
-      final report = AnalyzeEngine.analyze(
-        const AnalyzeInput(band: '2.4 GHz', standard: '802.11ax (Wi-Fi 6)'),
-      );
-      final r20 = report.findings.firstWhere((f) => f.ruleId == 'R-20');
-      expect(r20.pendingRatification, isFalse);
-      // The ratified copy must keep the honest 2.4 GHz caveat (the doctrine
-      // guardrail: never tell users to blanket-switch bands).
-      expect(r20.explanation.toLowerCase(), contains('honest caveat'));
-      expect(r20.explanation.toLowerCase(),
-          contains('the right choice on purpose'));
-      // It must never issue a blanket "always switch" instruction.
-      expect(r20.explanation.toLowerCase(), isNot(contains('always switch')));
-    });
+    test(
+      '2.4 GHz with a modern PHY fires R-20, ratified, keeps honest caveat',
+      () {
+        final report = AnalyzeEngine.analyze(
+          const AnalyzeInput(band: '2.4 GHz', standard: '802.11ax (Wi-Fi 6)'),
+        );
+        final r20 = report.findings.firstWhere((f) => f.ruleId == 'R-20');
+        expect(r20.pendingRatification, isFalse);
+        // The ratified copy must keep the honest 2.4 GHz caveat (the doctrine
+        // guardrail: never tell users to blanket-switch bands).
+        expect(r20.explanation.toLowerCase(), contains('honest caveat'));
+        expect(
+          r20.explanation.toLowerCase(),
+          contains('the right choice on purpose'),
+        );
+        // It must never issue a blanket "always switch" instruction.
+        expect(r20.explanation.toLowerCase(), isNot(contains('always switch')));
+      },
+    );
 
-    test('narrow width on a fast band fires R-23, ratified, never forces wide',
-        () {
-      final report = AnalyzeEngine.analyze(
-        const AnalyzeInput(
-          band: '5 GHz',
-          channelWidthMhz: 20,
-          channelWidthAvailable: true,
-          verdict: WifiVsInternetVerdict.wifiLimiter, // sibling so R-23 surfaces
-        ),
-      );
-      final r23 = report.findings.firstWhere((f) => f.ruleId == 'R-23');
-      expect(r23.pendingRatification, isFalse);
-      // The ratified copy keeps the "wider is not automatically better"
-      // guardrail and tells a crowded-area user to leave the channel alone.
-      expect(r23.explanation.toLowerCase(),
-          contains('wider is not automatically better'));
-      expect(r23.explanation.toLowerCase(),
-          contains('leave it where it is'));
-      // It must never tell anyone to force a wide channel.
-      expect(r23.explanation.toLowerCase(), isNot(contains('force')));
-      expect(r23.explanation, isNot(contains('160 MHz')));
-    });
+    test(
+      'narrow width on a fast band fires R-23, ratified, never forces wide',
+      () {
+        final report = AnalyzeEngine.analyze(
+          const AnalyzeInput(
+            band: '5 GHz',
+            channelWidthMhz: 20,
+            channelWidthAvailable: true,
+            verdict:
+                WifiVsInternetVerdict.wifiLimiter, // sibling so R-23 surfaces
+          ),
+        );
+        final r23 = report.findings.firstWhere((f) => f.ruleId == 'R-23');
+        expect(r23.pendingRatification, isFalse);
+        // The ratified copy keeps the "wider is not automatically better"
+        // guardrail and tells a crowded-area user to leave the channel alone.
+        expect(
+          r23.explanation.toLowerCase(),
+          contains('wider is not automatically better'),
+        );
+        expect(r23.explanation.toLowerCase(), contains('leave it where it is'));
+        // It must never tell anyone to force a wide channel.
+        expect(r23.explanation.toLowerCase(), isNot(contains('force')));
+        expect(r23.explanation, isNot(contains('160 MHz')));
+      },
+    );
 
     test('legacy PHY fires R-21; Wi-Fi 5 does not match legacy', () {
       expect(
@@ -361,9 +400,12 @@ void main() {
         contains('R-21'),
       );
       expect(
-        _firedIds(const AnalyzeInput(
+        _firedIds(
+          const AnalyzeInput(
             standard: '802.11ac (Wi-Fi 5)',
-            verdict: WifiVsInternetVerdict.wifiLimiter)),
+            verdict: WifiVsInternetVerdict.wifiLimiter,
+          ),
+        ),
         isNot(contains('R-21')),
       );
     });
@@ -382,10 +424,9 @@ void main() {
 
       test('802.11be is NOT flagged by R-21 or R-22, end to end', () {
         // The beta tester's real reading: Wi-Fi 7, fast link rate, no problems.
-        final Set<String> ids = _firedIds(const AnalyzeInput(
-          standard: wifi7,
-          linkRateMbps: wifi7Rate,
-        ));
+        final Set<String> ids = _firedIds(
+          const AnalyzeInput(standard: wifi7, linkRateMbps: wifi7Rate),
+        );
         expect(ids, isNot(contains('R-21')));
         expect(ids, isNot(contains('R-22')));
       });
@@ -394,30 +435,37 @@ void main() {
         // _isWifi6Plus is private, so assert via R-20: a modern PHY on the
         // 2.4 GHz band fires the "use a faster band" finding; a legacy PHY
         // would not. This proves be reads as modern, not legacy.
-        final Set<String> ids = _firedIds(const AnalyzeInput(
-          band: '2.4 GHz',
-          standard: wifi7,
-        ));
+        final Set<String> ids = _firedIds(
+          const AnalyzeInput(band: '2.4 GHz', standard: wifi7),
+        );
         expect(ids, contains('R-20'));
         expect(ids, isNot(contains('R-21')));
       });
 
-      test('real legacy 802.11b labels still classify as legacy (no regression)',
-          () {
-        // The labels the app actually produces: macOS emits a bare "802.11b"
-        // (pre-branding modes get no Wi-Fi generation); iOS emits the dash
-        // form; a parenthesized form is also covered defensively.
-        for (final String legacy in <String>[
-          '802.11b',
-          '802.11b - Wi-Fi 1',
-          '802.11b (Wi-Fi 1)',
-        ]) {
-          expect(AnalyzeInput(standard: legacy).isLegacyPhy, isTrue,
-              reason: '"$legacy" must read as legacy');
-          expect(_firedIds(AnalyzeInput(standard: legacy)), contains('R-21'),
-              reason: '"$legacy" must fire R-21');
-        }
-      });
+      test(
+        'real legacy 802.11b labels still classify as legacy (no regression)',
+        () {
+          // The labels the app actually produces: macOS emits a bare "802.11b"
+          // (pre-branding modes get no Wi-Fi generation); iOS emits the dash
+          // form; a parenthesized form is also covered defensively.
+          for (final String legacy in <String>[
+            '802.11b',
+            '802.11b - Wi-Fi 1',
+            '802.11b (Wi-Fi 1)',
+          ]) {
+            expect(
+              AnalyzeInput(standard: legacy).isLegacyPhy,
+              isTrue,
+              reason: '"$legacy" must read as legacy',
+            );
+            expect(
+              _firedIds(AnalyzeInput(standard: legacy)),
+              contains('R-21'),
+              reason: '"$legacy" must fire R-21',
+            );
+          }
+        },
+      );
 
       test('802.11ac is Wi-Fi 5 (not legacy); 802.11ax/be are not legacy', () {
         const AnalyzeInput ac = AnalyzeInput(standard: '802.11ac (Wi-Fi 5)');
@@ -425,8 +473,9 @@ void main() {
         expect(ac.isLegacyPhy, isFalse);
 
         expect(
-            const AnalyzeInput(standard: '802.11ax (Wi-Fi 6)').isLegacyPhy,
-            isFalse);
+          const AnalyzeInput(standard: '802.11ax (Wi-Fi 6)').isLegacyPhy,
+          isFalse,
+        );
         expect(const AnalyzeInput(standard: wifi7).isLegacyPhy, isFalse);
       });
     });
@@ -465,8 +514,9 @@ void main() {
 
   group('security rules', () {
     test('open network fires R-35 critical', () {
-      final report =
-          AnalyzeEngine.analyze(const AnalyzeInput(security: WifiSecurity.open));
+      final report = AnalyzeEngine.analyze(
+        const AnalyzeInput(security: WifiSecurity.open),
+      );
       final f = report.findings.firstWhere((f) => f.ruleId == 'R-35');
       expect(f.severity, FindingSeverity.critical);
     });
@@ -475,10 +525,12 @@ void main() {
     // has not proven is not grounds for "your Wi-Fi is wide open".
     test('a macOS Open that may be OWE does NOT fire R-35', () {
       expect(
-        _firedIds(const AnalyzeInput(
-          security: WifiSecurity.open,
-          securityOpenMayBeOwe: true,
-        )),
+        _firedIds(
+          const AnalyzeInput(
+            security: WifiSecurity.open,
+            securityOpenMayBeOwe: true,
+          ),
+        ),
         isNot(contains('R-35')),
       );
     });
@@ -505,37 +557,44 @@ void main() {
         ),
       );
       AnalyzeInput input(ConnectedAp ap) => AnalyzeInput.fromConnectionState(
-            ap: ap,
-            internet: null,
-            engine: null,
-          );
+        ap: ap,
+        internet: null,
+        engine: null,
+      );
       expect(_firedIds(input(unproven)), isNot(contains('R-35')));
-      expect(_firedIds(input(unproven.withBeaconConfirmsOpen())),
-          contains('R-35'));
+      expect(
+        _firedIds(input(unproven.withBeaconConfirmsOpen())),
+        contains('R-35'),
+      );
     });
 
     test('WEP fires R-36 critical', () {
-      expect(_firedIds(const AnalyzeInput(security: WifiSecurity.wep)),
-          contains('R-36'));
+      expect(
+        _firedIds(const AnalyzeInput(security: WifiSecurity.wep)),
+        contains('R-36'),
+      );
     });
   });
 
   group('cloud reachability', () {
     test('0 of M reachable (internet measured) fires R-40', () {
       expect(
-        _firedIds(const AnalyzeInput(
-          cloudReachableCount: 0,
-          cloudTotalCount: 14,
-          internetMeasured: true,
-        )),
+        _firedIds(
+          const AnalyzeInput(
+            cloudReachableCount: 0,
+            cloudTotalCount: 14,
+            internetMeasured: true,
+          ),
+        ),
         contains('R-40'),
       );
     });
 
     test('mixed reachability fires R-41', () {
       expect(
-        _firedIds(const AnalyzeInput(
-            cloudReachableCount: 8, cloudTotalCount: 14)),
+        _firedIds(
+          const AnalyzeInput(cloudReachableCount: 8, cloudTotalCount: 14),
+        ),
         contains('R-41'),
       );
     });
@@ -550,8 +609,9 @@ void main() {
 
     test('iOS without Wi-Fi capture fires R-31', () {
       expect(
-        _firedIds(const AnalyzeInput(
-            platformIsIos: true, wifiSignalCaptured: false)),
+        _firedIds(
+          const AnalyzeInput(platformIsIos: true, wifiSignalCaptured: false),
+        ),
         contains('R-31'),
       );
     });
@@ -569,11 +629,13 @@ void main() {
       // suppressed RF (after the Wi-Fi link card, the copy report, and the Shortcut
       // offer card) and the only one the cold-eyes review did not list.
       expect(
-        _firedIds(const AnalyzeInput(
-          platformIsIos: true,
-          wifiSignalCaptured: false,
-          notOnWifi: true,
-        )),
+        _firedIds(
+          const AnalyzeInput(
+            platformIsIos: true,
+            wifiSignalCaptured: false,
+            notOnWifi: true,
+          ),
+        ),
         isNot(contains('R-31')),
         reason: 'no Shortcut can capture a Wi-Fi link that does not exist',
       );
@@ -583,8 +645,9 @@ void main() {
       // band present, width not available → R-30 condition true, but it is
       // context-only and nothing substantive fired, so it is suppressed.
       expect(
-        _firedIds(const AnalyzeInput(
-            band: '5 GHz', channelWidthAvailable: false)),
+        _firedIds(
+          const AnalyzeInput(band: '5 GHz', channelWidthAvailable: false),
+        ),
         isNot(contains('R-30')),
       );
     });
@@ -604,12 +667,11 @@ void main() {
       final report = AnalyzeEngine.analyze(
         const AnalyzeInput(
           verdict: WifiVsInternetVerdict.wifiLimiter, // R-01 critical
-          rssiDbm: -73, // R-10 important
+          rssiDbm: -76, // R-10 important
           standard: '802.11ac (Wi-Fi 5)', // R-22 context-only
         ),
       );
-      final ranks =
-          report.findings.map((f) => f.severity.rank).toList();
+      final ranks = report.findings.map((f) => f.severity.rank).toList();
       final sorted = <int>[...ranks]..sort();
       expect(ranks, sorted);
     });
@@ -645,7 +707,7 @@ void main() {
 
       // Important advisory -> "Worth a look" (weak RSSI, R-10).
       final AnalysisFinding weak = AnalyzeEngine.analyze(
-        const AnalyzeInput(rssiDbm: -73),
+        const AnalyzeInput(rssiDbm: -76),
       ).findings.firstWhere((AnalysisFinding f) => f.ruleId == 'R-10');
       expect(weak.verdictWord, 'Worth a look');
 
@@ -684,7 +746,7 @@ void main() {
         const AnalyzeInput(
           verdict: WifiVsInternetVerdict.upstream,
           security: WifiSecurity.open, // -> Issue
-          rssiDbm: -73, // poor -> Worth a look (R-10)
+          rssiDbm: -76, // poor -> Worth a look (R-10)
           platformIsIos: true,
           wifiSignalCaptured: false, // -> Not measured (R-31)
         ),
@@ -696,7 +758,8 @@ void main() {
         expect(
           text,
           contains(f.verdictWord),
-          reason: '${f.ruleId} verdict word "${f.verdictWord}" missing from '
+          reason:
+              '${f.ruleId} verdict word "${f.verdictWord}" missing from '
               'copied report',
         );
         // And each finding's category label is paired with its word.

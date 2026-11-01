@@ -42,8 +42,9 @@ void main() {
   // against a 370 W switch and look fine; the switch actually delivers 360 W.
   // ─────────────────────────────────────────────────────────────────────────
   group('PoE standards card renders BOTH PSE and PD', () {
-    testWidgets('the PSE watts for af / at / bt Type 3 are on screen',
-        (WidgetTester tester) async {
+    testWidgets('the PSE watts for af / at / bt Type 3 are on screen', (
+      WidgetTester tester,
+    ) async {
       await _withViewport(tester, const Size(414, 2200), () async {
         await tester.pumpWidget(
           MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
@@ -62,8 +63,9 @@ void main() {
       });
     });
 
-    testWidgets('the card says which column a switch budget is spent in',
-        (WidgetTester tester) async {
+    testWidgets('the card says which column a switch budget is spent in', (
+      WidgetTester tester,
+    ) async {
       await _withViewport(tester, const Size(414, 2200), () async {
         await tester.pumpWidget(
           MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
@@ -80,8 +82,9 @@ void main() {
       });
     });
 
-    testWidgets('Type 4 PSE is 90.0 W per IEEE 802.3-2022 Table 145-11',
-        (WidgetTester tester) async {
+    testWidgets('Type 4 PSE is 90.0 W per IEEE 802.3-2022 Table 145-11', (
+      WidgetTester tester,
+    ) async {
       // SETTLED from the standard, not guessed.
       //
       // IEEE Std 802.3-2022, Table 145-11 — Class 8 P_Class (the PSE's minimum
@@ -103,7 +106,8 @@ void main() {
         expect(
           find.text('100.0 W'),
           findsNothing,
-          reason: 'That is P_Type max (99.9 W, Table 145-16 item 13) rounded up '
+          reason:
+              'That is P_Type max (99.9 W, Table 145-16 item 13) rounded up '
               '— the PSE rating band, NOT the Class 8 P_Class output power.',
         );
       });
@@ -140,55 +144,65 @@ void main() {
   // ─────────────────────────────────────────────────────────────────────────
   // Signal thresholds — the help must match the screen's CANONICAL scale.
   //
-  // Canonical (Keith, confirmed 2026-07-12): Excellent > -60 / Good -60..-67 /
-  // Fair -68..-72 / Poor -73 or weaker. Earlier the help and the screen carried
+  // Current (Keith Parsons field cutoffs, 1 Nov 2026): Excellent -67 or better /
+  // Good -68..-72 / Fair -73..-75 / Poor -76 or worse. Earlier the help and the screen carried
   // different numbers (the app told the user one scale and showed another); this
   // pins the help to the single canonical scale the screen renders.
   // ─────────────────────────────────────────────────────────────────────────
   group('signal thresholds — help matches the screen', () {
-    test('the help carries Keith\'s canonical bands, not a superseded scale',
-        () async {
-      final String help =
-          await rootBundle.loadString('assets/help/tool_help.json');
-      final Map<String, dynamic> tools =
-          (jsonDecode(help) as Map<String, dynamic>)['tools']
-              as Map<String, dynamic>;
-      final String notes =
-          jsonEncode(tools['signal-thresholds'] as Map<String, dynamic>);
-
-      // Numbers from superseded scales (old reference -55/-65/-75/-80 and the
-      // older vendor -50/-70) must be gone, along with the folded-away "Weak".
-      for (final String stale in <String>[
-        '-50',
-        '-55',
-        '-65',
-        '-70',
-        '-75',
-        '-80',
-      ]) {
-        expect(
-          notes,
-          isNot(contains(stale)),
-          reason: 'Superseded threshold $stale still in the help.',
+    test(
+      'the help carries Keith\'s canonical bands, not a superseded scale',
+      () async {
+        final String help = await rootBundle.loadString(
+          'assets/help/tool_help.json',
         );
-      }
-      expect(notes, isNot(contains('Weak')));
+        final Map<String, dynamic> tools =
+            (jsonDecode(help) as Map<String, dynamic>)['tools']
+                as Map<String, dynamic>;
+        final String notes = jsonEncode(
+          tools['signal-thresholds'] as Map<String, dynamic>,
+        );
 
-      // Keith's canonical bands, as rendered by the screen.
-      expect(notes, contains('-60'));
-      expect(notes, contains('-67'));
-      expect(notes, contains('-72'));
-      expect(notes, contains('-73'));
-    });
+        // Numbers from superseded scales (old reference -55/-65/-75/-80 and the
+        // older vendor -50/-70) must be gone, along with the folded-away "Weak".
+        for (final String stale in <String>[
+          '-50',
+          '-55',
+          '-65',
+          '-70',
+          '-80',
+        ]) {
+          expect(
+            notes,
+            isNot(contains(stale)),
+            reason: 'Superseded threshold $stale still in the help.',
+          );
+        }
+        expect(notes, isNot(contains('Weak')));
+
+        // Keith's canonical bands, as rendered by the screen.
+        expect(notes, contains('-67'));
+        expect(notes, contains('-68'));
+        expect(notes, contains('-72'));
+        expect(notes, contains('-73'));
+        expect(notes, contains('-75'));
+        expect(notes, contains('-76'));
+        // The replaced 2026-07-12 scale must be gone.
+        expect(notes, isNot(contains('> -60')));
+        expect(notes, isNot(contains('-73 or weaker')));
+      },
+    );
 
     test('every band the screen renders is named in the help', () async {
-      final String help =
-          await rootBundle.loadString('assets/help/tool_help.json');
+      final String help = await rootBundle.loadString(
+        'assets/help/tool_help.json',
+      );
       for (final SignalBand b in SignalThresholdsScreen.kSignalBands) {
         expect(
           help,
           contains(b.range),
-          reason: 'The help must quote the screen\'s "${b.label}" band '
+          reason:
+              'The help must quote the screen\'s "${b.label}" band '
               '(${b.range}) verbatim, not a different scale.',
         );
       }
@@ -198,8 +212,9 @@ void main() {
       // Keith's framing, confirmed today. IEEE 802.11 defines no "good" or
       // "poor" signal level; presenting these as if a standard blessed them
       // would be a fabricated authority.
-      final String help =
-          await rootBundle.loadString('assets/help/tool_help.json');
+      final String help = await rootBundle.loadString(
+        'assets/help/tool_help.json',
+      );
       expect(help, contains('not an industry standard'));
       expect(help, contains('IEEE 802.11 does not define'));
     });
@@ -211,14 +226,16 @@ void main() {
   group('adjacent radio systems — heading matches its contents', () {
     test('Zigbee, Thread and BLE do share 2.4 GHz (the rows are right)', () {
       for (final String s in <String>['Zigbee', 'Thread', 'BLE']) {
-        final RadioSystemRow row =
-            kRadioSystems.firstWhere((RadioSystemRow r) => r.system == s);
+        final RadioSystemRow row = kRadioSystems.firstWhere(
+          (RadioSystemRow r) => r.system == s,
+        );
         expect(row.sharesTwoFour, 'Yes', reason: s);
       }
     });
 
-    testWidgets('no card claims these systems do not touch your air',
-        (WidgetTester tester) async {
+    testWidgets('no card claims these systems do not touch your air', (
+      WidgetTester tester,
+    ) async {
       await _withViewport(tester, const Size(414, 4000), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -231,7 +248,8 @@ void main() {
         expect(
           find.text('What does not touch your air'),
           findsNothing,
-          reason: 'That card contains Zigbee, Thread and BLE, each of which '
+          reason:
+              'That card contains Zigbee, Thread and BLE, each of which '
               'renders "Shares 2.4 GHz: Yes" directly beneath the heading.',
         );
       });
@@ -245,7 +263,8 @@ void main() {
       expect(
         kEnvelopeWarning,
         isNot(contains('battery')),
-        reason: 'RadioSystemRow has no battery field and the table renders no '
+        reason:
+            'RadioSystemRow has no battery field and the table renders no '
             'battery column.',
       );
       // The columns it DOES point at must actually be there.
@@ -262,8 +281,9 @@ void main() {
   // app assert 0.0000 mW. A broken honesty promise, on screen.
   // ─────────────────────────────────────────────────────────────────────────
   group('dBm/W converter is honest about non-positive input', () {
-    testWidgets('a negative watts input renders a dash, never 0.0000',
-        (WidgetTester tester) async {
+    testWidgets('a negative watts input renders a dash, never 0.0000', (
+      WidgetTester tester,
+    ) async {
       await _withViewport(tester, const Size(414, 1200), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -286,8 +306,9 @@ void main() {
       });
     });
 
-    testWidgets('a negative mW input renders a dash, never 0.0000',
-        (WidgetTester tester) async {
+    testWidgets('a negative mW input renders a dash, never 0.0000', (
+      WidgetTester tester,
+    ) async {
       await _withViewport(tester, const Size(414, 1200), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -323,8 +344,9 @@ void main() {
       });
     });
 
-    testWidgets('a valid positive input still converts (no false honesty)',
-        (WidgetTester tester) async {
+    testWidgets('a valid positive input still converts (no false honesty)', (
+      WidgetTester tester,
+    ) async {
       await _withViewport(tester, const Size(414, 1200), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -347,8 +369,9 @@ void main() {
   // HIGH — Ping (ICMP) told a WINDOWS user the macOS App Sandbox blocked them.
   // ─────────────────────────────────────────────────────────────────────────
   group('ICMP unavailable message is platform-correct', () {
-    testWidgets('a Windows user is never told about the macOS App Sandbox',
-        (WidgetTester tester) async {
+    testWidgets('a Windows user is never told about the macOS App Sandbox', (
+      WidgetTester tester,
+    ) async {
       await _withViewport(tester, const Size(900, 1000), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -376,8 +399,9 @@ void main() {
       });
     });
 
-    testWidgets('a Linux user is never told about the macOS App Sandbox',
-        (WidgetTester tester) async {
+    testWidgets('a Linux user is never told about the macOS App Sandbox', (
+      WidgetTester tester,
+    ) async {
       await _withViewport(tester, const Size(900, 1000), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -392,69 +416,72 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(
-          find.textContaining('macOS', findRichText: true),
-          findsNothing,
-        );
+        expect(find.textContaining('macOS', findRichText: true), findsNothing);
       });
     });
 
-    testWidgets('a macOS user IS still told about the App Sandbox (it is true)',
-        (WidgetTester tester) async {
-      await _withViewport(tester, const Size(900, 1000), () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: IcmpPingScreen(
-              service: IcmpService(
-                platformOverride: 'macos',
-                isWebOverride: false,
+    testWidgets(
+      'a macOS user IS still told about the App Sandbox (it is true)',
+      (WidgetTester tester) async {
+        await _withViewport(tester, const Size(900, 1000), () async {
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: AppTheme.dark(),
+              home: IcmpPingScreen(
+                service: IcmpService(
+                  platformOverride: 'macos',
+                  isWebOverride: false,
+                ),
               ),
             ),
-          ),
-        );
-        await tester.pumpAndSettle();
+          );
+          await tester.pumpAndSettle();
 
-        expect(
-          find.textContaining('App Sandbox', findRichText: true),
-          findsWidgets,
-        );
-      });
-    });
+          expect(
+            find.textContaining('App Sandbox', findRichText: true),
+            findsWidgets,
+          );
+        });
+      },
+    );
   });
 
   // ─────────────────────────────────────────────────────────────────────────
   // HIGH — three inverted guards. Each comment promised the OPPOSITE of the
   // behavior directly beneath it.
   // ─────────────────────────────────────────────────────────────────────────
-  group('inverted guard 1 — optical form-factor table really is always shown',
-      () {
-    testWidgets('a no-match search still leaves the form-factor ladder up',
-        (WidgetTester tester) async {
-      await _withViewport(tester, const Size(414, 1600), () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const OpticalTransceiversScreen(),
-          ),
-        );
-        await tester.pumpAndSettle();
+  group(
+    'inverted guard 1 — optical form-factor table really is always shown',
+    () {
+      testWidgets('a no-match search still leaves the form-factor ladder up', (
+        WidgetTester tester,
+      ) async {
+        await _withViewport(tester, const Size(414, 1600), () async {
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: AppTheme.dark(),
+              home: const OpticalTransceiversScreen(),
+            ),
+          );
+          await tester.pumpAndSettle();
 
-        await tester.enterText(
-          find.byType(TextField).first,
-          'zzz-no-such-transceiver',
-        );
-        await tester.pumpAndSettle();
+          await tester.enterText(
+            find.byType(TextField).first,
+            'zzz-no-such-transceiver',
+          );
+          await tester.pumpAndSettle();
 
-        expect(find.text('No match'), findsOneWidget);
-        expect(
-          find.text('Form factors · SFP → OSFP'),
-          findsOneWidget,
-          reason: 'The comment says "always shown in full" — the code hid it.',
-        );
+          expect(find.text('No match'), findsOneWidget);
+          expect(
+            find.text('Form factors · SFP → OSFP'),
+            findsOneWidget,
+            reason:
+                'The comment says "always shown in full" — the code hid it.',
+          );
+        });
       });
-    });
-  });
+    },
+  );
 
   group('inverted guard 2 — Linux WLAN group-label search', () {
     test('searching a group name returns that group, not "No match"', () {
@@ -468,15 +495,17 @@ void main() {
       for (final String label in labels) {
         final String q = label.toLowerCase();
         final int matched = LinuxWlanCommandsScreen.groups
-            .map((WlanCommandGroup g) =>
-                LinuxWlanCommandsScreen.filterGroup(g, q))
+            .map(
+              (WlanCommandGroup g) => LinuxWlanCommandsScreen.filterGroup(g, q),
+            )
             .whereType<WlanCommandGroup>()
             .fold<int>(0, (int n, WlanCommandGroup g) => n + g.commands.length);
 
         expect(
           matched,
           greaterThan(0),
-          reason: 'Searching the group label "$label" must surface that '
+          reason:
+              'Searching the group label "$label" must surface that '
               'group\'s commands, not "No match".',
         );
       }
@@ -485,11 +514,14 @@ void main() {
     test('searching "monitor" surfaces the Monitor-mode group in full', () {
       // The exact case from the audit.
       final WlanCommandGroup monitor = LinuxWlanCommandsScreen.groups
-          .firstWhere((WlanCommandGroup g) =>
-              g.label.toLowerCase().contains('monitor'));
+          .firstWhere(
+            (WlanCommandGroup g) => g.label.toLowerCase().contains('monitor'),
+          );
 
-      final WlanCommandGroup? filtered =
-          LinuxWlanCommandsScreen.filterGroup(monitor, 'monitor');
+      final WlanCommandGroup? filtered = LinuxWlanCommandsScreen.filterGroup(
+        monitor,
+        'monitor',
+      );
 
       expect(filtered, isNotNull);
       expect(
@@ -501,8 +533,10 @@ void main() {
 
     test('a genuinely absent term still reports no matches', () {
       final int matched = LinuxWlanCommandsScreen.groups
-          .map((WlanCommandGroup g) =>
-              LinuxWlanCommandsScreen.filterGroup(g, 'zzz-not-a-command'))
+          .map(
+            (WlanCommandGroup g) =>
+                LinuxWlanCommandsScreen.filterGroup(g, 'zzz-not-a-command'),
+          )
           .whereType<WlanCommandGroup>()
           .fold<int>(0, (int n, WlanCommandGroup g) => n + g.commands.length);
       expect(matched, 0);
@@ -510,8 +544,9 @@ void main() {
   });
 
   group('inverted guard 3 — ASCII "tables below are unaffected"', () {
-    testWidgets('the CR/LF note survives a no-match search',
-        (WidgetTester tester) async {
+    testWidgets('the CR/LF note survives a no-match search', (
+      WidgetTester tester,
+    ) async {
       await _withViewport(tester, const Size(414, 3000), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -530,7 +565,8 @@ void main() {
         expect(
           find.textContaining('CR', findRichText: true),
           findsWidgets,
-          reason: 'The card promises the reference tables below are unaffected.',
+          reason:
+              'The card promises the reference tables below are unaffected.',
         );
       });
     });
@@ -541,10 +577,12 @@ void main() {
   // ─────────────────────────────────────────────────────────────────────────
   group('the app does not contradict its own help', () {
     test('tool_help says exactly as many ports as the data file holds', () async {
-      final String helpRaw =
-          await rootBundle.loadString('assets/help/tool_help.json');
-      final String portsRaw =
-          await rootBundle.loadString('assets/ports/well_known_ports.json');
+      final String helpRaw = await rootBundle.loadString(
+        'assets/help/tool_help.json',
+      );
+      final String portsRaw = await rootBundle.loadString(
+        'assets/ports/well_known_ports.json',
+      );
 
       final Map<String, dynamic> ports =
           jsonDecode(portsRaw) as Map<String, dynamic>;
@@ -565,8 +603,9 @@ void main() {
     });
 
     test('the 60 m ham band does not say 5 channels and 4 channels at once', () {
-      final HamBand band =
-          kHamBandPlan.firstWhere((HamBand b) => b.band == '60 m');
+      final HamBand band = kHamBandPlan.firstWhere(
+        (HamBand b) => b.band == '60 m',
+      );
 
       // The record's own `general` field says "4 channels". The freqRange said
       // "5 channels area". The ARRL manual says the 5-channel version is wrong.
@@ -578,20 +617,23 @@ void main() {
       expect(band.general, contains('4 channels'));
     });
 
-    test('the model-decode screen makes no promise about a parser it lacks', () {
-      // The screen has zero text inputs and no parser. It cannot read "a
-      // segment" and report it "unrecognized" — there is nothing to read.
-      expect(
-        kDecodeStandingCaveat,
-        isNot(contains('unrecognized segment')),
-        reason: 'A phantom promise: the screen has no input and no parser.',
-      );
-      expect(
-        kDecodeStandingCaveat,
-        contains('heuristic'),
-        reason: 'The honest part of the caveat stays.',
-      );
-    });
+    test(
+      'the model-decode screen makes no promise about a parser it lacks',
+      () {
+        // The screen has zero text inputs and no parser. It cannot read "a
+        // segment" and report it "unrecognized" — there is nothing to read.
+        expect(
+          kDecodeStandingCaveat,
+          isNot(contains('unrecognized segment')),
+          reason: 'A phantom promise: the screen has no input and no parser.',
+        );
+        expect(
+          kDecodeStandingCaveat,
+          contains('heuristic'),
+          reason: 'The honest part of the caveat stays.',
+        );
+      },
+    );
   });
 }
 
