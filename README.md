@@ -6,13 +6,14 @@ The app is honest about platform limits. Where an operating system blocks a capa
 
 ## What it is
 
-The Toolbox bundles 120+ tools into five categories:
+The Toolbox bundles more than 260 tools into six categories:
 
 - **Test Network** — live Wi-Fi and internet diagnostics: Network Quality, Wi-Fi Information, Cellular Information, and the consumer-facing "Check My Connection" front door.
 - **Networking Tools** — interface info, device info, DNS lookup, port scan, ping (TCP and ICMP), ping plotter, ping sweep, network discovery, nearby AP scan, traceroute, SSL/TLS inspector, HTTP header inspector, WHOIS, Wake-on-LAN, ARP/NDP, BGP/ASN, IP geolocation, current location, MAC vendor OUI lookup, packet sender, and IPv4/IPv6 subnetting.
 - **Calculators & Tools** — RF, GPS, signal, and planning math: dBm/Watt, free space path loss, EIRP, Fresnel zone, cable loss, link budget, wavelength, antenna downtilt, earth curvature, ITU rain fade, noise floor, RF attenuation, PoE budget, throughput, capacity planning, point-to-point link checks, GPS conversions, unit converters, QR and DTMF generators, and more.
 - **Quick Reference** — field-reference tables and guides: 802.11 standards, MCS index, signal thresholds, WPA security, roaming parameters, AP placement, channel and spectrum maps, cabling and connector references, reason codes, frame exchange, 802.1X/EAP types, regulatory domains, standards bodies, glossaries, checklists, and CLI/Wireshark cheatsheets.
 - **Educational Resources** — curated, independent-author places to learn Wi-Fi: blogs, talks, channels, podcasts, and reference diagrams.
+- **Wireless Classroom** — WLAN Pros teaching material: guided lessons, interactive simulators, and course handouts.
 
 The catalog is the single source of truth for what ships; the home-grid count is read straight from it.
 

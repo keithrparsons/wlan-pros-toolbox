@@ -1267,7 +1267,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'the Wi-Fi link, the local network, or the WAN',
         routeName: '/tools/throughput-testing-where',
         isLive: true,
-        subgroup: 'Clients & Field Wi-Fi',
+        subgroup: 'Roaming and Clients',
       ),
       // Field Plate 15 — the Book 3 master graphic. Ruled into 1.10.0 by Keith
       // on 2026-09-06. The description states what the drawing ARGUES rather
@@ -1282,7 +1282,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Wi-Fi is only the first one',
         routeName: '/tools/how-devices-access-the-internet',
         isLive: true,
-        subgroup: 'Clients & Field Wi-Fi',
+        subgroup: 'Roaming and Clients',
       ),
       // ── Field & Trade Reference set (pilot, 2026-07-05) ──
       // Enclosure Ratings is the pilot REFERENCE-screen entry of the Field
@@ -1300,7 +1300,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Decode IP and NEMA ingress ratings, and bridge NEMA to IP',
         routeName: '/tools/enclosure-ratings',
         isLive: true,
-        subgroup: 'Codes, Safety & Compliance',
+        subgroup: 'Site Safety and Access',
       ),
       // Field Reference #3 — read-only recognize-and-defer reference for
       // classified (hazardous) areas: NEC Class/Division and the IEC Zone
@@ -1312,7 +1312,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Class, Division, and Zone classified-area basics',
         routeName: '/tools/hazardous-locations',
         isLive: true,
-        subgroup: 'Codes, Safety & Compliance',
+        subgroup: 'Site Safety and Access',
       ),
       // Field Reference #4 — the NEC articles that bite a WLAN install
       // (hoistways, plenum, cable ladder, PoE bundle heat, grounding, firestop,
@@ -1324,7 +1324,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Code articles that bite a WLAN install, then defer',
         routeName: '/tools/nec-gotchas',
         isLive: true,
-        subgroup: 'Codes, Safety & Compliance',
+        subgroup: 'Regulatory and Compliance',
       ),
       // Field Reference #5 — read-only PPE + ESD awareness reference: the gear a
       // GC expects to badge you on, plus the recognize-and-STOP hazards
@@ -1337,7 +1337,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'PPE ratings, ESD, and the recognize-and-STOP hazards',
         routeName: '/tools/safety-basics',
         isLive: true,
-        subgroup: 'Codes, Safety & Compliance',
+        subgroup: 'Site Safety and Access',
       ),
       // Field Reference #6 — read-only plan-set literacy: sheet-number anatomy,
       // discipline designators, the RCP as the AP sheet, and drawing scales.
@@ -1354,7 +1354,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Read a drawing set, and find the RCP for AP placement',
         routeName: '/tools/plan-set-literacy',
         isLive: true,
-        subgroup: 'Buildings & Verticals',
+        subgroup: 'Buildings and Verticals',
       ),
       // Field Reference #7 — read-only "Know Before You Go" site-access
       // checklist: the credential, screening, orientation, or escort that gates
@@ -1366,7 +1366,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Know before you go: the credential that gates the site',
         routeName: '/tools/site-access',
         isLive: true,
-        subgroup: 'Codes, Safety & Compliance',
+        subgroup: 'Site Safety and Access',
       ),
       // Field Reference #8 — read-only "what the building files actually are":
       // the CAD/BIM format decode table (DWG, IFC, RVT, ...), Level of
@@ -1380,7 +1380,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Decode DWG, IFC, RVT, and how they reach a design tool',
         routeName: '/tools/cad-bim-formats',
         isLive: true,
-        subgroup: 'Buildings & Verticals',
+        subgroup: 'Buildings and Verticals',
       ),
       // Field Reference #9 — read-only TIA/BICSI structured-cabling reference:
       // the TIA-568 family, the 90+10 m channel rule, the cable-category ladder
@@ -1394,7 +1394,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'TIA standards, the 90 m channel, and cable categories',
         routeName: '/tools/structured-cabling',
         isLive: true,
-        subgroup: 'Buildings & Verticals',
+        subgroup: 'Cabling and Connectors',
       ),
       // Field Reference #10 — read-only AEC process + glossary: the AIA design
       // phases (and when Wi-Fi should engage), and the AEC shorthand (RFI,
@@ -1408,7 +1408,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Design phases and the AEC shorthand the trades use',
         routeName: '/tools/aec-process-glossary',
         isLive: true,
-        subgroup: 'Buildings & Verticals',
+        subgroup: 'Buildings and Verticals',
       ),
       // ── Field & Trade Reference set, second wave (2026-07-05) ──
       // Eight read-only references cloning the pilot pattern, split into three
@@ -1424,7 +1424,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Read a cloud tool\'s security badges before you upload',
         routeName: '/tools/cloud-tool-trust',
         isLive: true,
-        subgroup: 'Codes, Safety & Compliance',
+        subgroup: 'Regulatory and Compliance',
       ),
       ToolEntry(
         id: 'network-in-scope',
@@ -1432,7 +1432,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'When PCI, HIPAA, SOX, or GDPR reaches the WLAN',
         routeName: '/tools/network-in-scope',
         isLive: true,
-        subgroup: 'Codes, Safety & Compliance',
+        subgroup: 'Regulatory and Compliance',
       ),
       // Wireless Landscape: the non-Wi-Fi radios a WLAN pro coexists with.
       ToolEntry(
@@ -1441,7 +1441,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'The non-Wi-Fi radios, and what shares 2.4 GHz',
         routeName: '/tools/adjacent-radio-systems',
         isLive: true,
-        subgroup: 'Radio & Spectrum',
+        subgroup: 'Channels and Spectrum',
       ),
       // Codes & Safety: portable credentials and the credential lead-time
       // landmine (pairs with Site Access, which stays in Codes & Safety).
@@ -1451,7 +1451,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Portable IDs, FCC licenses, and their lead times',
         routeName: '/tools/credentials-licenses',
         isLive: true,
-        subgroup: 'Codes, Safety & Compliance',
+        subgroup: 'Regulatory and Compliance',
       ),
       // Verticals: what each industry tends to trigger. by-vertical-index and
       // data-centers-wifi are text-reference (no decoder plate).
@@ -1461,7 +1461,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Pick the industry, see what it triggers, read the entry',
         routeName: '/tools/by-vertical-index',
         isLive: true,
-        subgroup: 'Buildings & Verticals',
+        subgroup: 'Buildings and Verticals',
       ),
       ToolEntry(
         id: 'healthcare-vertical',
@@ -1469,7 +1469,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'WMTS, EMC, roaming grades, and the four authorities',
         routeName: '/tools/healthcare-vertical',
         isLive: true,
-        subgroup: 'Buildings & Verticals',
+        subgroup: 'Buildings and Verticals',
       ),
       ToolEntry(
         id: 'data-centers-wifi',
@@ -1477,7 +1477,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Why the room fights RF, and Rated vs Tier',
         routeName: '/tools/data-centers-wifi',
         isLive: true,
-        subgroup: 'Buildings & Verticals',
+        subgroup: 'Buildings and Verticals',
       ),
       ToolEntry(
         id: 'facility-spaces',
@@ -1485,7 +1485,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Decode MDF, IDF, TR, and the data closet',
         routeName: '/tools/facility-spaces',
         isLive: true,
-        subgroup: 'Buildings & Verticals',
+        subgroup: 'Buildings and Verticals',
       ),
       // Vendor & Hardware (2026-07-05): the two INTERACTIVE drill-down
       // references (selection state, not static screens). LED Decoder =
@@ -1499,7 +1499,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Pick a vendor, read that AP\'s status-LED meanings',
         routeName: '/tools/led-decoder',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'AP and Rack Hardware',
       ),
       ToolEntry(
         id: 'vendor-model-decode',
@@ -1507,7 +1507,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'How to read an AP model number, per vendor',
         routeName: '/tools/vendor-model-decode',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'AP and Rack Hardware',
       ),
       // SD & microSD Cards (2026-07-25): the "decode the markings" reference for
       // every mark on a card face. The load-bearing insight is that the class
@@ -1525,7 +1525,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and A1 / A2',
         routeName: '/tools/sd-cards',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'AP and Rack Hardware',
       ),
       // ── from the dissolved Infrastructure category ──
       ToolEntry(
@@ -1534,7 +1534,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'PoE class, wattage, and budget',
         routeName: '/tools/poe-reference',
         isLive: true,
-        subgroup: 'Power & Cooling',
+        subgroup: 'Power, PoE and Cooling',
       ),
       // Tier-1 references (integration batch, 2026-06-12). RF Bands = a frequency
       // map of where common wireless technologies live (the neighbors of the
@@ -1549,7 +1549,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'cellular, Bluetooth, Zigbee, and Wi-Fi',
         routeName: '/tools/rf-bands',
         isLive: true,
-        subgroup: 'Radio & Spectrum',
+        subgroup: 'Channels and Spectrum',
       ),
       ToolEntry(
         id: 'wifi-halow',
@@ -1559,7 +1559,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'thousands of devices per AP',
         routeName: '/tools/wifi-halow',
         isLive: true,
-        subgroup: 'Radio & Spectrum',
+        subgroup: '802.11 Standards and Rates',
       ),
       // Wi-Fi Channels (the plainer channels reference table) was REMOVED
       // 2026-06-06 (BF6-13): it duplicated the visual "Channel Map". Channel Map
@@ -1570,7 +1570,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Non-Wi-Fi Wireless Channels',
         description: 'LoRaWAN, 802.15.4, Bluetooth, BLE, Zigbee channel plans',
         routeName: '/tools/non-wifi-channels',
-        subgroup: 'Radio & Spectrum',
+        subgroup: 'Channels and Spectrum',
         isLive: true,
       ),
       ToolEntry(
@@ -1579,7 +1579,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Generations, bands, rates, widths, Wi-Fi 4 to 7',
         routeName: '/tools/standards',
         isLive: true,
-        subgroup: 'Wi-Fi Standards & Terminology',
+        subgroup: '802.11 Standards and Rates',
       ),
       // How Strong Is Wi-Fi, Really? — v1.1 read-along reference. Puts Wi-Fi RF
       // exposure in perspective against everyday sunlight (one hour of sun ≈ 2.3
@@ -1593,7 +1593,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Wi-Fi vs sunlight: RF exposure in perspective',
         routeName: '/tools/wifi-exposure-perspective',
         isLive: true,
-        subgroup: 'Radio & Spectrum',
+        subgroup: 'RF and Signal',
       ),
       ToolEntry(
         id: 'mcs-index',
@@ -1601,7 +1601,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Modulation and data rates by MCS, width, streams',
         routeName: '/tools/mcs-index',
         isLive: true,
-        subgroup: 'Wi-Fi Standards & Terminology',
+        subgroup: '802.11 Standards and Rates',
       ),
       // Visual companion to the MCS Index table: what a constellation IS and why
       // higher-order QAM needs a cleaner link. Eight dark-baked raster cards
@@ -1613,7 +1613,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Constellations, bits per symbol, and EVM / SNR demand',
         routeName: '/tools/modulation',
         isLive: true,
-        subgroup: 'Wi-Fi Standards & Terminology',
+        subgroup: 'RF and Signal',
       ),
       ToolEntry(
         id: 'signal-thresholds',
@@ -1621,7 +1621,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'RSSI and SNR targets by application',
         routeName: '/tools/signal-thresholds',
         isLive: true,
-        subgroup: 'Radio & Spectrum',
+        subgroup: 'RF and Signal',
       ),
       // ── from the dissolved Wi-Fi Design category ──
       ToolEntry(
@@ -1630,7 +1630,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'WPA2 / WPA3 reference matrix',
         routeName: '/tools/wpa-security',
         isLive: true,
-        subgroup: 'Security & Auth',
+        subgroup: 'Security and Authentication',
       ),
       // Diffie-Hellman (by colors) — Tier-1 reference (Pass 2b, 2026-06-12). The
       // paint-mixing key-exchange analogy with the real math, tied to WPA3 SAE.
@@ -1641,7 +1641,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Key exchange by colors: the paint analogy, the math, WPA3 SAE',
         routeName: '/tools/diffie-hellman',
         isLive: true,
-        subgroup: 'Security & Auth',
+        subgroup: 'Security and Authentication',
       ),
       ToolEntry(
         id: 'roaming',
@@ -1649,7 +1649,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '802.11r/k/v and RSSI/SNR roaming thresholds',
         routeName: '/tools/roaming',
         isLive: true,
-        subgroup: 'Clients & Field Wi-Fi',
+        subgroup: 'Roaming and Clients',
       ),
       // ── Apple Wi-Fi references (2026-06-12, Tier-1) ──
       ToolEntry(
@@ -1660,7 +1660,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'iOS troubleshooting steps',
         routeName: '/tools/apple-wifi-tips',
         isLive: true,
-        subgroup: 'Clients & Field Wi-Fi',
+        subgroup: 'Roaming and Clients',
       ),
       ToolEntry(
         id: 'macos-menubar-wifi',
@@ -1670,7 +1670,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'each field means',
         routeName: '/tools/macos-menubar-wifi',
         isLive: true,
-        subgroup: 'Clients & Field Wi-Fi',
+        subgroup: 'Roaming and Clients',
       ),
       ToolEntry(
         id: 'port-reference',
@@ -1679,7 +1679,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Search common TCP/UDP ports by number or service name. Offline',
         routeName: '/tools/port-reference',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       ToolEntry(
         id: 'plmn-id-reference',
@@ -1687,7 +1687,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'US mobile carrier codes: MCC, MNC, PLMN ID. Offline',
         routeName: '/tools/plmn-id-reference',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       ToolEntry(
         id: 'reason-codes',
@@ -1695,7 +1695,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '802.11 deauth / disassoc reason and status codes',
         routeName: '/tools/reason-codes',
         isLive: true,
-        subgroup: 'Capture & Troubleshooting',
+        subgroup: 'Frames and Capture',
       ),
       ToolEntry(
         id: 'frame-exchange',
@@ -1703,7 +1703,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'The 802.11 association sequence, step by step',
         routeName: '/tools/frame-exchange',
         isLive: true,
-        subgroup: 'Capture & Troubleshooting',
+        subgroup: 'Frames and Capture',
       ),
       // Byte-level Layer 3-4 companion to the 802.11 references: IPv4/IPv6/TCP/
       // UDP/ICMP header anatomy, TCP flags + states, and ICMP/ICMPv6 code tables.
@@ -1716,7 +1716,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'states, and ICMP codes',
         routeName: '/tools/packet-decode',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Frames and Capture',
       ),
       ToolEntry(
         id: 'http-status-codes',
@@ -1724,7 +1724,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'HTTP response status codes by class: 1xx to 5xx, offline',
         routeName: '/tools/http-status-codes',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       // Speed Test Services — a curated, offline reference of the popular
       // internet speed tests (Ookla, Fast.com, Cloudflare, nPerf, LibreSpeed,
@@ -1740,7 +1740,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'measures.',
         routeName: '/tools/speedtest-services',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       ToolEntry(
         id: 'db-reference',
@@ -1748,7 +1748,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'dB to ratio and dBm anchor values',
         routeName: '/tools/db-reference',
         isLive: true,
-        subgroup: 'Radio & Spectrum',
+        subgroup: 'RF and Signal',
       ),
       ToolEntry(
         id: 'channel-map',
@@ -1756,7 +1756,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '5 and 6 GHz channel bonding map by width',
         routeName: '/tools/channel-map',
         isLive: true,
-        subgroup: 'Radio & Spectrum',
+        subgroup: 'Channels and Spectrum',
       ),
       ToolEntry(
         id: 'spectrum',
@@ -1764,7 +1764,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Band allocations, sub-bands, and co-existence',
         routeName: '/tools/spectrum',
         isLive: true,
-        subgroup: 'Radio & Spectrum',
+        subgroup: 'Channels and Spectrum',
       ),
       // Antenna Fundamentals MOVED 2026-06-06 (BF6-3) from Quick Reference into
       // the Educational Resources category (it is a read-along teaching screen,
@@ -1781,7 +1781,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Coax types: impedance, velocity factor, max frequency',
         routeName: '/tools/coax-cable',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'Cabling and Connectors',
       ),
       // Ethernet Cable & Connector — consolidated 2026-06-12 from the former
       // ethernet-cable + ethernet-pinout + cable-connector tiles (Keith: "all
@@ -1797,7 +1797,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'the T568A / T568B RJ-45 pinout',
         routeName: '/tools/ethernet-cable',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'Cabling and Connectors',
       ),
       ToolEntry(
         id: 'fiber-optic',
@@ -1806,7 +1806,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'OM1 to OM5, OS1/OS2, connectors (LC/SC/MPO), polish (PC/UPC/APC)',
         routeName: '/tools/fiber-optic',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'Cabling and Connectors',
       ),
       ToolEntry(
         id: 'cable-bend-radius',
@@ -1814,7 +1814,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Min bend radius and max pull tension, copper and fiber',
         routeName: '/tools/cable-bend-radius',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'Cabling and Connectors',
       ),
       ToolEntry(
         id: 'rack-units',
@@ -1822,7 +1822,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'U sizes, EIA-310 holes, the 19-inch reality, rack screws',
         routeName: '/tools/rack-units',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'AP and Rack Hardware',
       ),
       ToolEntry(
         id: 'screw-drives',
@@ -1830,7 +1830,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Common + security driver bits on APs, enclosures, racks',
         routeName: '/tools/screw-drives',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'AP and Rack Hardware',
       ),
       // Optical Transceivers — searchable, offline reference of 35 optical
       // Ethernet variants (1G–400G) grouped by speed tier (lead tiers
@@ -1845,7 +1845,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'SFP to OSFP optics by speed tier: reach, fiber, wavelength. Offline',
         routeName: '/tools/optical-transceivers',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'Cabling and Connectors',
       ),
       // RF Connectors + Antenna Connectors MERGED 2026-06-06 (BF6-18) into the
       // single "Antenna Connectors" tool below (Keith: "we only need one"). The
@@ -1865,7 +1865,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'impedance, coupling, mating',
         routeName: '/tools/antenna-connectors',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'Cabling and Connectors',
       ),
       // RJ Connectors — registered-jack form factors (RJ11/14/25/45/48 etc.):
       // positions, conductors, typical use. Cross-links to the Ethernet Cable &
@@ -1877,7 +1877,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'RJ11, RJ45 (8P8C), RJ48: positions, conductors, use',
         routeName: '/tools/rj-connectors',
         isLive: true,
-        subgroup: 'Cabling, Connectors & Hardware',
+        subgroup: 'Cabling and Connectors',
       ),
       // OSI Model — NEW (Quick Reference, last per the LOCKED map order).
       ToolEntry(
@@ -1886,7 +1886,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '7 layers, PDUs, and hardware',
         routeName: '/tools/osi-model',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       // Top-Level Domains — curated DNS TLD reference grouped by registry type
       // (gTLD / ccTLD / sponsored / infrastructure / newer gTLDs). Batch 5.
@@ -1896,7 +1896,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'gTLD, ccTLD, sponsored and infrastructure domains',
         routeName: '/tools/top-level-domains',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       ToolEntry(
         id: 'ascii-reference',
@@ -1904,7 +1904,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'ASCII table with hex, octal, binary, and control codes',
         routeName: '/tools/ascii-reference',
         isLive: true,
-        subgroup: 'Encoding & Formats',
+        subgroup: 'Encoding and Formats',
       ),
       ToolEntry(
         id: 'emoji-reference',
@@ -1912,7 +1912,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'The 30 most-used emoji, names, and common meaning',
         routeName: '/tools/emoji-reference',
         isLive: true,
-        subgroup: 'Encoding & Formats',
+        subgroup: 'Encoding and Formats',
       ),
       // Wireless Glossary (renamed from Wi-Fi Glossary 2026-09-28, Keith) —
       // searchable, grouped plain-language definitions (offline bundled JSON).
@@ -1925,7 +1925,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Wireless Glossary',
         description: 'Plain-language definitions of 123 wireless terms',
         routeName: '/tools/wifi-glossary',
-        subgroup: 'Wi-Fi Standards & Terminology',
+        subgroup: '802.11 Standards and Rates',
         isLive: true,
       ),
       // Wi-Fi Authentication Glossary — sibling of the Wireless Glossary,
@@ -1938,7 +1938,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description:
             'Plain-language definitions of 58 Wi-Fi authentication terms',
         routeName: '/tools/wifi-auth-glossary',
-        subgroup: 'Security & Auth',
+        subgroup: 'Security and Authentication',
         isLive: true,
       ),
       // Wi-Fi Tools Comparison — v1.1 beta. A vendor-neutral capability-and-cost
@@ -1955,7 +1955,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description:
             'Survey, design, spectrum and troubleshooting toolkits compared by capability and cost. Offline',
         routeName: '/tools/wifi-tools-comparison',
-        subgroup: 'Clients & Field Wi-Fi',
+        subgroup: 'Field Checklists and CLI',
         isLive: true,
       ),
       // NOTE: the 10 laminated PDF reference cards (6 reference cards + 4
@@ -1979,7 +1979,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'notation rules',
         routeName: '/tools/ip-address-reference',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       ToolEntry(
         id: 'cidr-table',
@@ -1989,7 +1989,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'wildcard mask',
         routeName: '/tools/cidr-table',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       ToolEntry(
         id: 'naming-conventions',
@@ -1999,7 +1999,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and OUI/CID',
         routeName: '/tools/naming-conventions',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       // Protocols additions.
       ToolEntry(
@@ -2009,7 +2009,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'A, AAAA, CNAME, MX, TXT, SRV, and more: purpose and format',
         routeName: '/tools/dns-record-types',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       ToolEntry(
         id: 'dhcp-options',
@@ -2017,7 +2017,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Common DHCPv4 option codes, names, and typical use',
         routeName: '/tools/dhcp-options',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       ToolEntry(
         id: 'http-methods',
@@ -2026,7 +2026,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'HTTP request methods plus common request/response headers',
         routeName: '/tools/http-methods',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       ToolEntry(
         id: 'dscp-qos',
@@ -2036,7 +2036,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'access-category mapping',
         routeName: '/tools/dscp-qos',
         isLive: true,
-        subgroup: 'Networking & Protocols',
+        subgroup: 'Networking and IP',
       ),
       // Models & Standards.
       ToolEntry(
@@ -2047,7 +2047,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'fits',
         routeName: '/tools/eap-types',
         isLive: true,
-        subgroup: 'Security & Auth',
+        subgroup: 'Security and Authentication',
       ),
       ToolEntry(
         id: 'wifi-feature-matrix',
@@ -2057,7 +2057,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'features',
         routeName: '/tools/wifi-feature-matrix',
         isLive: true,
-        subgroup: 'Wi-Fi Standards & Terminology',
+        subgroup: '802.11 Standards and Rates',
       ),
       // Wi-Fi & RF addition.
       ToolEntry(
@@ -2067,7 +2067,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Per-region Wi-Fi band availability, power limits, and DFS rules',
         routeName: '/tools/regulatory-domains',
         isLive: true,
-        subgroup: 'Radio & Spectrum',
+        subgroup: 'Regulatory and Compliance',
       ),
       ToolEntry(
         id: 'wifi-standards-bodies',
@@ -2076,7 +2076,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Who defines, certifies, and coordinates Wi-Fi: IEEE, Wi-Fi Alliance, ITU-R, and more',
         routeName: '/tools/wifi-standards-bodies',
         isLive: true,
-        subgroup: 'Wi-Fi Standards & Terminology',
+        subgroup: '802.11 Standards and Rates',
       ),
       // Time & Formats.
       ToolEntry(
@@ -2087,7 +2087,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'tokens',
         routeName: '/tools/datetime-standards',
         isLive: true,
-        subgroup: 'Travel & International',
+        subgroup: 'Travel and International',
       ),
       ToolEntry(
         id: 'data-units',
@@ -2097,7 +2097,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'rate ladder',
         routeName: '/tools/data-units',
         isLive: true,
-        subgroup: 'Encoding & Formats',
+        subgroup: 'Encoding and Formats',
       ),
       // Time Zones — Tier-1 reference (Pass 2b, 2026-06-12). A world UTC-offset
       // map plus the offset rail and US time-zone table, for coordinating work
@@ -2108,7 +2108,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'World UTC offsets, anchor cities, and US time zones',
         routeName: '/tools/time-zone-maps',
         isLive: true,
-        subgroup: 'Travel & International',
+        subgroup: 'Travel and International',
       ),
       // Encoding additions.
       ToolEntry(
@@ -2119,7 +2119,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'use',
         routeName: '/tools/hash-lengths',
         isLive: true,
-        subgroup: 'Encoding & Formats',
+        subgroup: 'Encoding and Formats',
       ),
       ToolEntry(
         id: 'regex-cheatsheet',
@@ -2129,7 +2129,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and lookarounds',
         routeName: '/tools/regex-cheatsheet',
         isLive: true,
-        subgroup: 'Encoding & Formats',
+        subgroup: 'Encoding and Formats',
       ),
       ToolEntry(
         id: 'markdown-cheatsheet',
@@ -2138,7 +2138,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'CommonMark + GitHub Flavored Markdown: what you type and what it renders as',
         routeName: '/tools/markdown-cheatsheet',
         isLive: true,
-        subgroup: 'Encoding & Formats',
+        subgroup: 'Encoding and Formats',
       ),
       // Keyboard Shortcuts — Tier-1 reference (Pass 2b, 2026-06-12). macOS /
       // Windows system + terminal shortcuts, the Mac Option-key symbol layer, and
@@ -2150,7 +2150,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'macOS / Windows system and terminal keys, Mac symbols, Greek letters',
         routeName: '/tools/keyboard-shortcuts',
         isLive: true,
-        subgroup: 'Encoding & Formats',
+        subgroup: 'Encoding and Formats',
       ),
       // Phonetic Alphabet — Tier-1 reference (Pass 2b, 2026-06-12). NATO/ICAO
       // spelling words, Morse, semaphore, and maritime signal flags.
@@ -2161,7 +2161,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'NATO spelling words, Morse, semaphore, and maritime flags',
         routeName: '/tools/phonetic-alphabet',
         isLive: true,
-        subgroup: 'Encoding & Formats',
+        subgroup: 'Encoding and Formats',
       ),
       // ── moved in from the dissolved Command & Capture category
       // (2026-06-01): CLI / monitor-mode / Wireshark reference sheets ──
@@ -2171,7 +2171,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Windows + macOS/Linux troubleshooting',
         routeName: '/tools/cli-commands',
         isLive: true,
-        subgroup: 'Capture & Troubleshooting',
+        subgroup: 'Field Checklists and CLI',
       ),
       ToolEntry(
         id: 'linux-wlan-commands',
@@ -2179,7 +2179,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Linux CLI + monitor-mode for WLAN',
         routeName: '/tools/linux-wlan-commands',
         isLive: true,
-        subgroup: 'Capture & Troubleshooting',
+        subgroup: 'Frames and Capture',
       ),
       ToolEntry(
         id: 'lldp-cdp-reference',
@@ -2187,7 +2187,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Read LLDP/CDP to find a device\'s switch port',
         routeName: '/tools/lldp-cdp-reference',
         isLive: true,
-        subgroup: 'Capture & Troubleshooting',
+        subgroup: 'Field Checklists and CLI',
       ),
       ToolEntry(
         id: 'wireshark-80211-filters',
@@ -2195,7 +2195,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Display + capture filters for 802.11',
         routeName: '/tools/wireshark-80211-filters',
         isLive: true,
-        subgroup: 'Capture & Troubleshooting',
+        subgroup: 'Frames and Capture',
       ),
       // NET-NEW (2026-09-15, Keith: "We do VoIP packet analysis quite a bit in
       // Wi-Fi so those would be useful to add as their own card."). Sits beside
@@ -2210,7 +2210,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Packet-analysis filters for voice on Wi-Fi',
         routeName: '/tools/voip-wifi-filters',
         isLive: true,
-        subgroup: 'Capture & Troubleshooting',
+        subgroup: 'Frames and Capture',
       ),
       // ── moved in from the dissolved Checklists category (2026-06-01):
       // tappable-checklist screens + PDF reference-card checklists ──
@@ -2221,7 +2221,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'AP install pre/post-check phases',
         routeName: '/tools/checklist-ap-install',
         isLive: true,
-        subgroup: 'Capture & Troubleshooting',
+        subgroup: 'Field Checklists and CLI',
       ),
       ToolEntry(
         id: 'checklist-client-test',
@@ -2229,7 +2229,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '12 client-side connectivity tests',
         routeName: '/tools/checklist-client-test',
         isLive: true,
-        subgroup: 'Capture & Troubleshooting',
+        subgroup: 'Field Checklists and CLI',
       ),
       // The 4 checklist PDF cards moved to Educational Resources on 2026-06-04
       // (see the NOTE above); only the two interactive checklists remain here.
@@ -2242,7 +2242,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Stand up a lab RADIUS server for 802.1X (guide + script)',
         routeName: '/tools/freeradius-wlanpi',
         isLive: true,
-        subgroup: 'Security & Auth',
+        subgroup: 'Security and Authentication',
         keywords: <String>[
           'radius',
           '802.1X',
@@ -2277,7 +2277,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             '208V, and the 208-vs-240 distinction installers confuse',
         routeName: '/tools/power-phasing',
         isLive: true,
-        subgroup: 'Power & Cooling',
+        subgroup: 'Power, PoE and Cooling',
       ),
       // Batteries (2026-07-25): the "decode the markings" reference for cell
       // types, sizes, chemistries, and codes. The load-bearing correction is
@@ -2293,7 +2293,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'LR44 does not',
         routeName: '/tools/batteries',
         isLive: true,
-        subgroup: 'Power & Cooling',
+        subgroup: 'Power, PoE and Cooling',
       ),
       ToolEntry(
         id: 'ohms-law',
@@ -2303,7 +2303,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'single-phase vs three-phase power with the power-factor caveat',
         routeName: '/tools/ohms-law',
         isLive: true,
-        subgroup: 'Power & Cooling',
+        subgroup: 'Power, PoE and Cooling',
       ),
       ToolEntry(
         id: 'cooling-thermal',
@@ -2313,7 +2313,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and heat-load references for sizing rack and closet cooling',
         routeName: '/tools/cooling-thermal',
         isLive: true,
-        subgroup: 'Power & Cooling',
+        subgroup: 'Power, PoE and Cooling',
       ),
       ToolEntry(
         id: 'iec-connectors',
@@ -2323,7 +2323,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             '60309 pin-and-sleeve connectors, with current ratings and keying',
         routeName: '/tools/iec-connectors',
         isLive: true,
-        subgroup: 'Power & Cooling',
+        subgroup: 'Power, PoE and Cooling',
       ),
       ToolEntry(
         id: 'nema-connectors',
@@ -2333,7 +2333,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'with voltage, current, and pole/wire counts',
         routeName: '/tools/nema-connectors',
         isLive: true,
-        subgroup: 'Power & Cooling',
+        subgroup: 'Power, PoE and Cooling',
       ),
       ToolEntry(
         id: 'international-plugs',
@@ -2343,7 +2343,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'frequency, so you know what mains to expect on site',
         routeName: '/tools/international-plugs',
         isLive: true,
-        subgroup: 'Travel & International',
+        subgroup: 'Travel and International',
       ),
       // Emergency Phrases — a searchable, grouped, offline phrase translator for
       // a Wi-Fi pro working on-site internationally: ~124 travel/emergency
@@ -2361,7 +2361,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Italian, and German. Searchable and offline',
         routeName: '/tools/emergency-phrases',
         isLive: true,
-        subgroup: 'Travel & International',
+        subgroup: 'Travel and International',
       ),
     ],
   ),

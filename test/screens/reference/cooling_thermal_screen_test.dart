@@ -1,5 +1,5 @@
 // Tests for the Cooling & Thermal reference screen — page 3 of the
-// Power & Cooling category. Mirrors power_phasing_screen_test.dart.
+// Power, PoE and Cooling category. Mirrors power_phasing_screen_test.dart.
 //
 // Three layers:
 //   1. Data fidelity (GL-005): the typed const datasets match the two verified
@@ -8,7 +8,7 @@
 //      brief. Every conversion row is checked to derive correctly from the
 //      anchors, so the table cannot silently drift. Plus the no-em-dash /
 //      ASCII-glyph rules.
-//   2. Catalog + help registration: the Power & Cooling category carries a live
+//   2. Catalog + help registration: the Power, PoE and Cooling category carries a live
 //      cooling-thermal tool whose route is registered, and the help store has a
 //      matching cooling-thermal entry.
 //   3. Widget render: the read-only TABLES-ONLY screen renders title + both
@@ -121,7 +121,7 @@ void main() {
 
   group('catalog + router + help registration', () {
     test(
-        'Quick Reference / Power & Cooling subgroup carries the live '
+        'Quick Reference / Power, PoE and Cooling subgroup carries the live '
         'cooling-thermal tool', () {
       final ToolCategory cat = kToolCategories
           .firstWhere((ToolCategory c) => c.id == 'quick-reference');
@@ -129,7 +129,7 @@ void main() {
           cat.tools.firstWhere((ToolEntry t) => t.id == 'cooling-thermal');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/cooling-thermal');
-      expect(tool.subgroup, 'Power & Cooling');
+      expect(tool.subgroup, 'Power, PoE and Cooling');
     });
 
     test('cooling-thermal route resolves to a registered builder', () {

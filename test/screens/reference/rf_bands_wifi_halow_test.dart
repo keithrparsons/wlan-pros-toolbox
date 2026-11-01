@@ -113,8 +113,8 @@ void main() {
 
   group('registration (catalog + router + keywords)', () {
     const Map<String, String> subgroupById = <String, String>{
-      'rf-bands': 'Radio & Spectrum',
-      'wifi-halow': 'Radio & Spectrum',
+      'rf-bands': 'Channels and Spectrum',
+      'wifi-halow': '802.11 Standards and Rates',
     };
 
     test('each new tool is a live Quick Reference tile in Wi-Fi & RF', () {

@@ -8,7 +8,7 @@ I built the WLAN Pros Toolbox so that the next time your video call freezes or a
 
 ## What this app is, and who it's for
 
-The WLAN Pros Toolbox is free. It runs on iPhone and iPad, Mac, Windows, and Android, and in a web browser. It is packed with more than 100 small tools that read your connection, run quick tests, and look things up. Some of those tools are for full-time Wi-Fi professionals, and they are deep. Some of them, though, are for anyone who has ever stared at a spinning loading wheel and wondered why.
+The WLAN Pros Toolbox is free. It runs on iPhone and iPad, Mac, Windows, and Android, and in a web browser. It is packed with more than 260 small tools that read your connection, run quick tests, and look things up. Some of those tools are for full-time Wi-Fi professionals, and they are deep. Some of them, though, are for anyone who has ever stared at a spinning loading wheel and wondered why.
 
 This guide is written for the rest of us. The teacher whose classroom Wi-Fi drops every afternoon. The office manager fielding "the internet is down again" for the third time today. The small-business owner whose card reader keeps timing out. The curious person who just wants to know where to tap. If that's you, you're in the right place.
 
@@ -183,6 +183,8 @@ For everyone else, a few of these cards are genuinely worth a look:
 - The **checklists**, like the Wi-Fi Connection Checklist, walk you through what to check when something's wrong, step by step.
 
 The rest of the reference cards are deep professional material. They're there when you need them and out of the way when you don't.
+
+Two shortcuts sit at the top of this section. Tap the star next to any card and it joins your **Favorites**, so the ones you use most are always first. **Recents** shows the last 10 cards you opened, newest first, with a Clear button. Both are kept on your device only and never leave it.
 
 ### Educational Resources: other people's good work
 

@@ -7,7 +7,7 @@
 //      must not silently drift (14-50 is single-phase split NOT three-phase; the
 //      4th pin is neutral; L21 IS three-phase wye; CS8364/65 are 250V), plus the
 //      no-em-dash / ASCII-glyph and "no router" GL-004 rules.
-//   2. Catalog + help registration: the catalog's Power & Cooling category
+//   2. Catalog + help registration: the catalog's Power, PoE and Cooling category
 //      carries a live nema-connectors tool whose route is registered, and the
 //      help store has a matching nema-connectors entry. (Larry wires these in
 //      during integration; the assertions document the contract.)
@@ -175,7 +175,7 @@ void main() {
 
   group('catalog + router + help registration', () {
     test(
-        'Quick Reference / Power & Cooling subgroup carries the live '
+        'Quick Reference / Power, PoE and Cooling subgroup carries the live '
         'nema-connectors tool', () {
       final ToolCategory cat = kToolCategories
           .firstWhere((ToolCategory c) => c.id == 'quick-reference');
@@ -183,7 +183,7 @@ void main() {
           cat.tools.firstWhere((ToolEntry t) => t.id == 'nema-connectors');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/nema-connectors');
-      expect(tool.subgroup, 'Power & Cooling');
+      expect(tool.subgroup, 'Power, PoE and Cooling');
     });
 
     test('nema-connectors route resolves to a registered builder', () {

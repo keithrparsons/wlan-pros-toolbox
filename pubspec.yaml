@@ -1,5 +1,5 @@
 name: wlan_pros_toolbox
-description: "WLAN Pros Toolbox — 60 RF calculators, live network diagnostics, and reference tables for Wi-Fi and network professionals."
+description: "WLAN Pros Toolbox: more than 260 tools for Wi-Fi and network professionals, including RF calculators, live network diagnostics, reference tables, and Wi-Fi lessons."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

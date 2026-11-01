@@ -1,7 +1,7 @@
 // Tests for the Verticals Index reference screen, a Field & Trade Reference set
 // entry (2026-07-05). Text-reference only (no decoder plate). Three layers: data
 // fidelity (the ten-vertical map, the five retail/PCI facts, plus the
-// no-em-dash / "Wi-Fi" guards), registration (a live "Buildings & Verticals" Quick Reference
+// no-em-dash / "Wi-Fi" guards), registration (a live "Buildings and Verticals" Quick Reference
 // tile, route, keywords), and widget render (dark + light, no overflow at
 // 320/375/768/1280; no plate).
 
@@ -58,7 +58,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in "Buildings & Verticals"', () {
+    test('live Quick Reference tile in "Buildings and Verticals"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -68,10 +68,10 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/by-vertical-index');
       expect(t.title, 'Verticals Index');
-      expect(t.subgroup, 'Buildings & Verticals');
+      expect(t.subgroup, 'Buildings and Verticals');
     });
 
-    test('grouping places the tool under "Buildings & Verticals", not "Other"', () {
+    test('grouping places the tool under "Buildings and Verticals", not "Other"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -85,7 +85,7 @@ void main() {
         );
       }
       final ToolSection v = sections.firstWhere(
-        (ToolSection s) => s.header == 'Buildings & Verticals',
+        (ToolSection s) => s.header == 'Buildings and Verticals',
       );
       expect(v.tools.any((ToolEntry e) => e.id == 'by-vertical-index'), isTrue);
     });

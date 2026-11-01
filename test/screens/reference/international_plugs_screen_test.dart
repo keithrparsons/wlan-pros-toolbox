@@ -1,5 +1,5 @@
 // Tests for the International Power Plugs reference screen — page 4 of 6 in the
-// Travel & International subgroup (moved there by the 2026-09-16 Quick
+// Travel and International subgroup (moved there by the 2026-09-16 Quick
 // Reference reorg -- it is a travel aid, and it now sits with Emergency
 // Phrases, Time Zones and Date / Time Standards rather than with NEMA and IEC).
 //
@@ -9,7 +9,7 @@
 //      family breakout, and the load-bearing Type I safety caveat (Argentina
 //      reverses line and neutral), plus the no-em-dash / GL-004 voice rules.
 //   2. Catalog + help registration: the catalog carries the international-plugs
-//      tool in the Travel & International subgroup with its route registered, and the
+//      tool in the Travel and International subgroup with its route registered, and the
 //      help store has a matching international-plugs entry. (Larry wires these
 //      registrations in at integration; the test guards them.)
 //   3. Widget render: the read-only screen renders title, both tables, and the
@@ -170,7 +170,7 @@ void main() {
 
   group('catalog + router + help registration', () {
     test(
-        'Quick Reference / Travel & International subgroup carries the live '
+        'Quick Reference / Travel and International subgroup carries the live '
         'international-plugs tool', () {
       final ToolCategory cat = kToolCategories
           .firstWhere((ToolCategory c) => c.id == 'quick-reference');
@@ -178,7 +178,7 @@ void main() {
           cat.tools.firstWhere((ToolEntry t) => t.id == 'international-plugs');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/international-plugs');
-      expect(tool.subgroup, 'Travel & International');
+      expect(tool.subgroup, 'Travel and International');
     });
 
     test('international-plugs route resolves to a registered builder', () {

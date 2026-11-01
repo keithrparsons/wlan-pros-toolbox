@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 268;
+const int _expectedEntryCount = 269;
 
 const String _fixture = '''
 {
@@ -560,6 +560,9 @@ void main() {
       // ONE entry, one-talker, on top of that. 267 + 1 = 268. Counted off the
       // merged file on wifi-lab/preview-1.12: `len(json['tools'])` returned
       // 268 and each of the three new ids appears exactly once.
+      // 269 = + Quick Reference (quick-reference) 2026-11-01: the help for the
+      // Quick Reference screen itself (groups, Favorites, Recents). Not a
+      // catalog tile, so it is listed in nonCatalogHelpIds. 268 + 1 = 269.
       expect(store.count, _expectedEntryCount);
     });
 
@@ -588,6 +591,10 @@ void main() {
       'blue-box',
       'red-box',
       'analyze-results',
+      // quick-reference: the Quick Reference category screen renders
+      // ToolHelpFooter(toolId: 'quick-reference') for its Favorites and
+      // Recents help (2026-11-01). A category, not a tool tile.
+      'quick-reference',
     };
 
     test('every help key matches a catalog tool id', () {

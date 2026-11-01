@@ -246,7 +246,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in the proposed "Cabling, Connectors & Hardware" subgroup',
+    test('live Quick Reference tile in the proposed "AP and Rack Hardware" subgroup',
         () {
       final ToolCategory qr = kToolCategories
           .firstWhere((ToolCategory c) => c.id == 'quick-reference');
@@ -255,12 +255,12 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/led-decoder');
       expect(t.title, 'LED Decoder');
-      expect(t.subgroup, 'Cabling, Connectors & Hardware');
+      expect(t.subgroup, 'AP and Rack Hardware');
     });
 
-    test('"Cabling, Connectors & Hardware" is a registered subgroup header', () {
+    test('"AP and Rack Hardware" is a registered subgroup header', () {
       expect(
-        kCategorySubgroupOrder['quick-reference']!.contains('Cabling, Connectors & Hardware'),
+        kCategorySubgroupOrder['quick-reference']!.contains('AP and Rack Hardware'),
         isTrue,
       );
     });
@@ -274,7 +274,7 @@ void main() {
         expect(s.tools.any((ToolEntry e) => e.id == 'led-decoder'), isFalse);
       }
       final ToolSection vh = sections
-          .firstWhere((ToolSection s) => s.header == 'Cabling, Connectors & Hardware');
+          .firstWhere((ToolSection s) => s.header == 'AP and Rack Hardware');
       expect(vh.tools.any((ToolEntry e) => e.id == 'led-decoder'), isTrue);
     });
 

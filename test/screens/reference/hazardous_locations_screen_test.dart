@@ -137,7 +137,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in the "Codes, Safety & Compliance" subgroup', () {
+    test('live Quick Reference tile in the "Site Safety and Access" subgroup', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -147,7 +147,7 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/hazardous-locations');
       expect(t.title, 'Hazardous Locations');
-      expect(t.subgroup, 'Codes, Safety & Compliance');
+      expect(t.subgroup, 'Site Safety and Access');
     });
 
     test('no orphaned subgroup — grouping places the tool under its header', () {
@@ -156,17 +156,17 @@ void main() {
       );
       final List<ToolSection> sections = groupedCategoryTools(qr);
       final ToolSection codes =
-          sections.firstWhere((ToolSection s) => s.header == 'Codes, Safety & Compliance');
+          sections.firstWhere((ToolSection s) => s.header == 'Site Safety and Access');
       expect(
         codes.tools.any((ToolEntry e) => e.id == 'hazardous-locations'),
         isTrue,
       );
     });
 
-    test('"Codes, Safety & Compliance" is a registered subgroup header for quick-reference',
+    test('"Site Safety and Access" is a registered subgroup header for quick-reference',
         () {
       expect(
-        kCategorySubgroupOrder['quick-reference']!.contains('Codes, Safety & Compliance'),
+        kCategorySubgroupOrder['quick-reference']!.contains('Site Safety and Access'),
         isTrue,
       );
     });

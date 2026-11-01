@@ -1,6 +1,6 @@
 // Category subgroup ordering + the grouped-tools helper for the category screen.
 //
-// The redesign (mockup 02) groups Quick Reference (37 tools) and Calculators &
+// The redesign (mockup 02) groups Quick Reference and Calculators &
 // Tools (24) into section headers in ONE scroll. Section ORDER is editorial, not
 // alphabetical on the subgroup string, so it lives here as an ordered list per
 // category. A tool's section membership is its ToolEntry.subgroup (set in the
@@ -54,19 +54,29 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // section here, and the comment was not updated with the list beneath it.
     // Caught by a test written for an unrelated change, which had trusted the
     // comment and asserted the name still existed here. It does not.
-    'Radio & Spectrum',
-    'Wi-Fi Standards & Terminology',
-    'Security & Auth',
-    'Clients & Field Wi-Fi',
-    'Capture & Troubleshooting',
-    'Networking & Protocols',
-    'Cabling, Connectors & Hardware',
-    'Power & Cooling',
-    'Codes, Safety & Compliance',
-    'Buildings & Verticals',
+    // REGROUPED 2026-11-01 (Keith approved): 13 sections -> 17, named for
+    // what a field engineer looks up. RF and channels split; roaming and
+    // clients together; frames and capture apart from checklists and CLI;
+    // HTTP folded into Networking and IP; AP and rack hardware apart from
+    // cabling; codes split into regulatory and site safety. No tool dropped.
+    // Each tool's group is its ToolEntry.subgroup in tool_catalog.dart.
+    'RF and Signal',
+    'Channels and Spectrum',
+    '802.11 Standards and Rates',
+    'Security and Authentication',
+    'Roaming and Clients',
+    'Frames and Capture',
+    'Field Checklists and CLI',
+    'Networking and IP',
+    'Cabling and Connectors',
+    'AP and Rack Hardware',
+    'Power, PoE and Cooling',
+    'Regulatory and Compliance',
+    'Site Safety and Access',
+    'Buildings and Verticals',
     'Ham Radio',
-    'Encoding & Formats',
-    'Travel & International',
+    'Encoding and Formats',
+    'Travel and International',
   ],
   'rf-calculators': <String>[
     'RF & Propagation',

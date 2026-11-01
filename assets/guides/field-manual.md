@@ -23,19 +23,23 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Ham Radio (2)
   - Utilities & Generators (4)
 - **Quick Reference** (103 tools)
-  - Radio & Spectrum (10)
-  - Wi-Fi Standards & Terminology (6)
-  - Security & Auth (5)
-  - Clients & Field Wi-Fi (6)
-  - Capture & Troubleshooting (9)
-  - Networking & Protocols (14)
-  - Cabling, Connectors & Hardware (12)
-  - Power & Cooling (7)
-  - Codes, Safety & Compliance (8)
-  - Buildings & Verticals (8)
+  - RF and Signal (4)
+  - Channels and Spectrum (5)
+  - 802.11 Standards and Rates (6)
+  - Security and Authentication (5)
+  - Roaming and Clients (5)
+  - Frames and Capture (6)
+  - Field Checklists and CLI (5)
+  - Networking and IP (13)
+  - Cabling and Connectors (8)
+  - AP and Rack Hardware (5)
+  - Power, PoE and Cooling (7)
+  - Regulatory and Compliance (5)
+  - Site Safety and Access (4)
+  - Buildings and Verticals (7)
   - Ham Radio (6)
-  - Encoding & Formats (8)
-  - Travel & International (4)
+  - Encoding and Formats (8)
+  - Travel and International (4)
 - **Educational Resources** (1 tool)
 - **Wireless Classroom** (91 tools)
   - Guided Lessons (30)
@@ -1905,42 +1909,9 @@ Quick Reference also carries the codes, trades, documents, compliance frameworks
 
 Most of the field and trade entries carry a reference plate you can download as a PDF from inside the app, so you can save, share, or AirDrop the full-resolution plate for print. Several are text reference only, with no plate and no download: CAD & BIM Formats, Structured Cabling, AEC Process & Glossary, Verticals Index, Data Centers & Wi-Fi, and Architectural Scale. LED Decoder and Vendor Model Decode are interactive drill-downs (they carry selection state) rather than static plates. The download control simply does not appear on the text-only entries.
 
-## Radio & Spectrum (10)
+**Favorites and Recents.** Tap the star at the right of any Quick Reference item to add it to Favorites, which then appears as the first group on the screen. Recents, just below it, lists the last 10 items you opened from Quick Reference, most recent first, and its Clear button empties it. Both lists are saved on the device only (the browser's local storage on web and WLAN Pi web), are never sent anywhere, and do not sync between devices.
 
-### Adjacent Radio Systems
-
-The non-Wi-Fi radios a WLAN pro coexists with, designs around, and gets asked about: which five (BLE, Bluetooth Classic, Zigbee, Thread, ANT+) contend for your 2.4 GHz airtime, and which (LoRaWAN, Z-Wave, UWB, NB-IoT, LTE-M, CBRS and private 5G, Wi-Fi HaLow) run coexistence-clean in sub-GHz or licensed spectrum.
-
-**Why it's here.** The client increasingly hands you the whole smart-building radio stack, not just the Wi-Fi. Knowing what shares the 2.4 GHz air, what runs clean in sub-GHz, and when to talk a client out of a private-cellular pitch that Wi-Fi already covers is both authority and self-defense in a spectrum sweep.
-
-**How to use**
-1. Scan the 2.4 GHz contenders: BLE, Bluetooth Classic, Zigbee, Thread, and ANT+ subtract real airtime at scale, so coordinate a Zigbee lighting mesh with your 1/6/11 plan.
-2. Use the coexistence table to route congested-band IoT onto a coexistence-clean radio (LoRaWAN, Z-Wave, cellular IoT) rather than fighting for airtime.
-3. Carry the three corrections: Matter is an application layer that can ride Wi-Fi, 802.15.4 is not 2.4 GHz only, and CBRS and private 5G never touch your air.
-4. Use the "which radio when" picker to answer the "should this be Wi-Fi or something else" question honestly.
-
-**Field notes**
-- Read every range, rate, and battery figure as a real-world envelope, not a hard spec; they move with power, antenna, spreading factor, channel width, and environment.
-- CBRS lives at 3.55 to 3.70 GHz and does not overlap any Wi-Fi band; private cellular competes for the job and the budget, never for your air.
-- A Zigbee mesh and a wall of BLE beacons show up in a 2.4 GHz sweep as non-Wi-Fi energy; naming what you see is the difference between a diagnosis and a guess.
-- Reference only. Confirm current standards editions and regional band allocations for the specific deployment.
-- Data source: bands and topologies per the relevant IEEE 802.15.4, Bluetooth SIG, LoRa Alliance, and 3GPP specifications.
-
-### Channel Map
-
-A visual channel-bonding map showing, per band, how 20/40/80/160/320 MHz channels bond together, which primary (center) channel labels each bonded block, and which blocks require DFS.
-
-**Why it's here.** When planning channel widths and bonding, to see at a glance which 20 MHz primaries fold into a given 80 or 160 MHz channel, and which bonds drag in a DFS sub-channel.
-
-**How to use**
-1. Scroll the 5/6 GHz maps horizontally. A block's number is its primary (center) channel.
-2. Color/chip legend: No DFS (neutral, an attribute not a verdict), DFS (amber, radar detection required), Mixed / DFS (danger, a 160 MHz bond spanning DFS and non-DFS sub-bands, where any DFS sub-channel subjects the whole bond to DFS), PSC (lime, the 6 GHz preferred scanning channels).
-3. The 6 GHz 320 MHz row shows a primary set of three blocks (centers 31, 95, 159) and an overlapping alternative set (centers 63, 127, 191), each alternate marked as such. A primary and its alternate overlap, so only one of the pair is used at a time.
-
-**Field notes**
-- What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labelled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across the full US band, UNII-5 through UNII-8 (the 59 20 MHz primaries ch 1,5,9,…,233), with the PSC channels (5,21,37,…,229) marked.
-- US-default. The full US 6 GHz plan (5925 to 7125 MHz) is drawn end to end. An earlier build truncated the map at ch 93, restored to the complete band per a beta report. 6 GHz needs no DFS; indoors it runs low-power (LPI) with no AFC, while standard-power use is AFC-coordinated.
-- Reference basis: the US (FCC) channel plan. 5 GHz DFS: No DFS = UNII-1 (36 to 48), UNII-3 (149 to 165), and UNII-4 (169 to 177); DFS = UNII-2A/2C. Colors are for readability; the meaning (DFS/PSC/mixed) is what matters.
+## RF and Signal (4)
 
 ### dB Reference
 
@@ -1980,6 +1951,78 @@ A vendor-neutral comparison of how much energy Wi-Fi puts into your body versus 
 - Where it sits against the limit: the FCC and ICNIRP cap public RF exposure at 10 W/m². The 10-AP ring at about 0.05 W/m² is roughly 200× below that limit, and measured real-world Wi-Fi runs far lower still.
 - Every figure is stated as approximate and traces to a verified source: FCC 47 CFR 1.1310 and OET-65; ICNIRP 2020 RF guidelines; ASTM G173 / NREL reference solar spectrum; WHO and IARC on non-ionizing RF (Group 2B) versus solar UV (Group 1); peer-reviewed Wi-Fi exposure surveys (PMC5927334, PMC8172712).
 
+### Modulation
+
+Teaches what a modulation constellation is on the I/Q plane and why each step up in order (BPSK -> QPSK -> 16/64/256/1024-QAM) carries more bits per symbol but demands a cleaner link (lower EVM, higher SNR).
+
+**Why it's here.** The visual companion to the MCS Index table. Reach for it when you want to understand WHY a higher MCS needs better signal, or to explain constellations, bits per symbol, and EVM to someone, rather than to look up a spec rate.
+
+**How to use**
+1. Read the six constellation diagrams in order; each step doubles the points and adds one bit per symbol while the points pack closer together.
+2. Read the Error Vector Magnitude (EVM) explainer to see what the receiver must overcome to keep each symbol on the correct side of its decision boundary.
+3. Read the summary card for the order -> bits/symbol -> SNR/EVM relationship at a glance.
+4. Tap any diagram to open a full-screen pinch-zoom view for the detail-dense planes.
+
+**Field notes**
+- The SNR and EVM figures on the cards are REPRESENTATIVE order-of-magnitude demands, not exact 802.11 MCS thresholds. The relationship, not the precise number, is the point. Use the MCS Index tool for the spec rate/modulation table.
+- EVM (Error Vector Magnitude) is the distance from the ideal symbol point to where the symbol actually landed, expressed as a percentage (or dB) of the reference amplitude. As order rises, decision boundaries shrink, so higher-order QAM demands a lower EVM and a higher SNR.
+- The eight diagrams sit on an always-dark card in both light and dark modes so they never read inverted; every fact is also in the screen's prose and copy text, so the screen reads fully without the images.
+- The Copy action exports the order -> bits -> SNR/EVM summary as a tab-separated table plus the representative-numbers caveat.
+
+### Signal Thresholds
+
+RSSI and SNR targets: a quality scale for RSSI, minimum RSSI/SNR by application, and the SNR needed to reach each typical MCS index.
+
+**Why it's here.** When validating a survey or troubleshooting a complaint: "is −68 dBm good enough for VoIP?" or "what SNR do I need to hold MCS 7?"
+
+**How to use**
+1. RSSI bands carry a colored verdict dot plus the quality word (green = Excellent/Good, amber = Fair, red = Poor); the word always carries the meaning, never color alone.
+2. For the application table, read across to the min RSSI and min SNR your target use case needs.
+3. The SNR→MCS table tells you the SNR floor to sustain a given rate.
+
+**Field notes**
+- What it shows: three blocks. RSSI quality scale (four bands): Excellent (> −60 dBm) / Good (−60 to −67) / Fair (−67 to −72) / Poor (−73 or weaker). These are Keith Parsons' canonical field thresholds (confirmed 2026-07-12), rendered from the app's single source of truth, `WifiGradingBands.kRssiBands` in `lib/services/network/wifi_grading.dart`, the very same list the Live-mode and Analyze verdict engines grade on, so the number the app shows can never drift from the number it grades. Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with min RSSI, min SNR, and a note. SNR to MCS (80 MHz, 1 SS): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.
+- The RSSI scale is a convention, not physics (Keith: great connectivity happens at −75 dBm too); treat every value here as a field-planning guideline, not a guarantee. The application and SNR→MCS thresholds vary by client hardware, environment, and AP vendor.
+- The SNR→MCS rates are indicative (80 MHz, single stream); MCS 10/11 rates are noted as 802.11ax.
+- Provenance: the RSSI quality scale is Keith's reviewed canonical scale (source: `kRssiBands`). The application-minimum and SNR→MCS tables are field-planning reference values ported from the RF Tools PWA; they are widely-used working numbers, not reproduced from a single named standard.
+
+## Channels and Spectrum (5)
+
+### Adjacent Radio Systems
+
+The non-Wi-Fi radios a WLAN pro coexists with, designs around, and gets asked about: which five (BLE, Bluetooth Classic, Zigbee, Thread, ANT+) contend for your 2.4 GHz airtime, and which (LoRaWAN, Z-Wave, UWB, NB-IoT, LTE-M, CBRS and private 5G, Wi-Fi HaLow) run coexistence-clean in sub-GHz or licensed spectrum.
+
+**Why it's here.** The client increasingly hands you the whole smart-building radio stack, not just the Wi-Fi. Knowing what shares the 2.4 GHz air, what runs clean in sub-GHz, and when to talk a client out of a private-cellular pitch that Wi-Fi already covers is both authority and self-defense in a spectrum sweep.
+
+**How to use**
+1. Scan the 2.4 GHz contenders: BLE, Bluetooth Classic, Zigbee, Thread, and ANT+ subtract real airtime at scale, so coordinate a Zigbee lighting mesh with your 1/6/11 plan.
+2. Use the coexistence table to route congested-band IoT onto a coexistence-clean radio (LoRaWAN, Z-Wave, cellular IoT) rather than fighting for airtime.
+3. Carry the three corrections: Matter is an application layer that can ride Wi-Fi, 802.15.4 is not 2.4 GHz only, and CBRS and private 5G never touch your air.
+4. Use the "which radio when" picker to answer the "should this be Wi-Fi or something else" question honestly.
+
+**Field notes**
+- Read every range, rate, and battery figure as a real-world envelope, not a hard spec; they move with power, antenna, spreading factor, channel width, and environment.
+- CBRS lives at 3.55 to 3.70 GHz and does not overlap any Wi-Fi band; private cellular competes for the job and the budget, never for your air.
+- A Zigbee mesh and a wall of BLE beacons show up in a 2.4 GHz sweep as non-Wi-Fi energy; naming what you see is the difference between a diagnosis and a guess.
+- Reference only. Confirm current standards editions and regional band allocations for the specific deployment.
+- Data source: bands and topologies per the relevant IEEE 802.15.4, Bluetooth SIG, LoRa Alliance, and 3GPP specifications.
+
+### Channel Map
+
+A visual channel-bonding map showing, per band, how 20/40/80/160/320 MHz channels bond together, which primary (center) channel labels each bonded block, and which blocks require DFS.
+
+**Why it's here.** When planning channel widths and bonding, to see at a glance which 20 MHz primaries fold into a given 80 or 160 MHz channel, and which bonds drag in a DFS sub-channel.
+
+**How to use**
+1. Scroll the 5/6 GHz maps horizontally. A block's number is its primary (center) channel.
+2. Color/chip legend: No DFS (neutral, an attribute not a verdict), DFS (amber, radar detection required), Mixed / DFS (danger, a 160 MHz bond spanning DFS and non-DFS sub-bands, where any DFS sub-channel subjects the whole bond to DFS), PSC (lime, the 6 GHz preferred scanning channels).
+3. The 6 GHz 320 MHz row shows a primary set of three blocks (centers 31, 95, 159) and an overlapping alternative set (centers 63, 127, 191), each alternate marked as such. A primary and its alternate overlap, so only one of the pair is used at a time.
+
+**Field notes**
+- What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labelled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across the full US band, UNII-5 through UNII-8 (the 59 20 MHz primaries ch 1,5,9,…,233), with the PSC channels (5,21,37,…,229) marked.
+- US-default. The full US 6 GHz plan (5925 to 7125 MHz) is drawn end to end. An earlier build truncated the map at ch 93, restored to the complete band per a beta report. 6 GHz needs no DFS; indoors it runs low-power (LPI) with no AFC, while standard-power use is AFC-coordinated.
+- Reference basis: the US (FCC) channel plan. 5 GHz DFS: No DFS = UNII-1 (36 to 48), UNII-3 (149 to 165), and UNII-4 (169 to 177); DFS = UNII-2A/2C. Colors are for readability; the meaning (DFS/PSC/mixed) is what matters.
+
 ### Non-Wi-Fi Wireless Channels
 
 Look up the channel/frequency plans of the common non-Wi-Fi radios that share or sit beside the bands a Wi-Fi pro works in: LoRaWAN, IEEE 802.15.4, Bluetooth Classic, Bluetooth LE, and Zigbee.
@@ -2000,22 +2043,6 @@ Look up the channel/frequency plans of the common non-Wi-Fi radios that share or
 - 802.15.4's 868/915 MHz bands are region-restricted; 2.4 GHz ch 11 to 26 are global.
 - Data source: cross-checked against LoRa Alliance RP002, IEEE 802.15.4, Bluetooth SIG Core Spec, and CSA/Zigbee spec. 802.15.4 centers verified against the standard formula (ch 0 = 868.3 MHz; ch 1 to 10 = 906 + 2·(k−1); ch 11 to 26 = 2405 + 5·(k−11)).
 
-### Regulatory Domains
-
-The radio regulator that governs Wi-Fi in each market: name, official website, governing docs, and 2.4/5/6 GHz band and power notes for 43 jurisdictions, as a dated snapshot.
-
-**Why it's here.** Working a market you do not know? Find its regulator, the governing rule, and a starting band and power note, then confirm against the official site.
-
-**How to use**
-1. Search by jurisdiction or regulator abbreviation. Shared abbreviations (NCC, TRA, CRA) carry the jurisdiction so they stay unambiguous.
-2. The page leads with a snapshot date: the band and power notes are a dated snapshot, not settled constants.
-3. Tap a regulator's website to confirm any value against the current rule text before relying on it.
-
-**Field notes**
-- What it shows: a per-jurisdiction directory of 43 jurisdictions, each with its regulator (name, abbreviation, logo), the governing regulation, official website, and a 2.4/5/6 GHz bands note. The structural rules (band edges, DFS/TPC, which power classes exist) are high confidence; the exact dBm figures are a dated snapshot to verify against the regulator.
-- Regulatory-volatility caveat: the screen leads with a persistent snapshot banner ("Snapshot verified <date>. Regulations change; confirm against the regulator before relying on a value."). The band and power figures (the 6 GHz dBm values especially) are a dated snapshot, never a settled constant: verify before deploying or certifying.
-- Provenance: the entries are compiled and cross-checked from official regulator documents and vendor regulatory white papers, current as of the on-screen snapshot date. Offline, read-only.
-
 ### RF Bands
 
 A frequency map of where the common wireless technologies live in the spectrum, low to high: RFID, GPS/GNSS, cellular, the 2.4 GHz ISM crowd, and Wi-Fi across all its bands. Five spectrum neighborhoods, each with its band rows, plus a region-variance list for the bands where "what operates where" changes by regulator. A log-scale spectrum-bar plate sits at the top.
@@ -2035,23 +2062,6 @@ A frequency map of where the common wireless technologies live in the spectrum, 
 - The spectrum-bar plate sits on a dark card; every fact in it is also in the tables, so the screen reads end-to-end without the image.
 - Data source: every load-bearing figure cross-verified against at least two independent sources. US/FCC default; region splits are called out explicitly.
 
-### Signal Thresholds
-
-RSSI and SNR targets: a quality scale for RSSI, minimum RSSI/SNR by application, and the SNR needed to reach each typical MCS index.
-
-**Why it's here.** When validating a survey or troubleshooting a complaint: "is −68 dBm good enough for VoIP?" or "what SNR do I need to hold MCS 7?"
-
-**How to use**
-1. RSSI bands carry a colored verdict dot plus the quality word (green = Excellent/Good, amber = Fair, red = Poor); the word always carries the meaning, never color alone.
-2. For the application table, read across to the min RSSI and min SNR your target use case needs.
-3. The SNR→MCS table tells you the SNR floor to sustain a given rate.
-
-**Field notes**
-- What it shows: three blocks. RSSI quality scale (four bands): Excellent (> −60 dBm) / Good (−60 to −67) / Fair (−67 to −72) / Poor (−73 or weaker). These are Keith Parsons' canonical field thresholds (confirmed 2026-07-12), rendered from the app's single source of truth, `WifiGradingBands.kRssiBands` in `lib/services/network/wifi_grading.dart`, the very same list the Live-mode and Analyze verdict engines grade on, so the number the app shows can never drift from the number it grades. Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with min RSSI, min SNR, and a note. SNR to MCS (80 MHz, 1 SS): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.
-- The RSSI scale is a convention, not physics (Keith: great connectivity happens at −75 dBm too); treat every value here as a field-planning guideline, not a guarantee. The application and SNR→MCS thresholds vary by client hardware, environment, and AP vendor.
-- The SNR→MCS rates are indicative (80 MHz, single stream); MCS 10/11 rates are noted as 802.11ax.
-- Provenance: the RSSI quality scale is Keith's reviewed canonical scale (source: `kRssiBands`). The application-minimum and SNR→MCS tables are field-planning reference values ported from the RF Tools PWA; they are widely-used working numbers, not reproduced from a single named standard.
-
 ### Spectrum Reference
 
 A per-band fact sheet for the three Wi-Fi bands: total usable spectrum, supported standards, channel counts, non-overlapping counts, channel widths, DFS/radar requirements, common co-existing interferers, and key deployment notes.
@@ -2069,28 +2079,7 @@ A per-band fact sheet for the three Wi-Fi bands: total usable spectrum, supporte
 - Carries useful specifics: UNII-1 indoor-only in some regions; UNII-2A/2C DFS implies a 60-second channel availability check before first use (10 minutes for 5600-5650 MHz in the EU), and on radar the AP leaves within 10 seconds and stays off for 30 minutes; 6 GHz has four US power modes, namely Standard Power (up to 36 dBm EIRP, AFC required indoors and outdoors), LPI (up to 30 dBm, no AFC), VLP (up to 14 dBm EIRP, no AFC, mobile), and Geofenced Variable Power (up to 24 dBm EIRP, U-NII-5 and U-NII-7 only); WPA3 mandatory on 6 GHz.
 - Data source: US (FCC) regulatory domain. Values: 2.4 GHz = 83.5 MHz (US); 5 GHz = ~580 MHz usable (UNII-1/2A/2C/3); 6 GHz = 1200 MHz (5925 to 7125 MHz).
 
-### Wi-Fi HaLow
-
-A per-section reference for IEEE 802.11ah, Wi-Fi moved down into the sub-1-GHz ISM bands for IoT: what it is, bands by region, channel widths, the headline numbers, a single-stream MCS rate table, power features, PHY/MAC, use cases, a comparison against the other IoT radios, and 2026 maturity. A channel-width plate compares HaLow's 1 to 16 MHz channels against a 20 MHz Wi-Fi channel.
-
-**Why it's here.** HaLow is the Wi-Fi most Wi-Fi pros have never touched, and it is full of confidently-wrong numbers online. This is the honest read: it trades raw speed for about 1 km range, multi-year battery life, and thousands of devices per AP, while keeping native IP and WPA3. When a client asks "should we use HaLow for the sensor network," you want the real ceiling and the real caveats, not a vendor slide.
-
-**How to use**
-1. Read the region-lock banner first, it is the load-bearing fact. Frequency and channel width are set by each regulator, so a device certified for one region cannot legally run in another.
-2. Work down through the cards: headline numbers, bands by region (with a confidence tag on the secondary-source rows), channel widths, the MCS rate table, then power, PHY/MAC, use cases, and the comparison.
-3. The MCS table's peak cell (MCS 9, 256-QAM, 16 MHz, short guard interval) carries the lime accent: that is the 86.7 Mbps headline.
-
-**How it works.** The clean mental model: the 802.11ac PHY clocked at one tenth. Same OFDM machinery, ten times slower clock, so symbols are 10x longer (more resilient over distance and multipath) and rates land at about a tenth of 802.11ac. Capacity comes from a 13-bit Association ID (2^13 minus 1 = 8,191 devices per AP) plus a hierarchical TIM. Power efficiency comes from Target Wake Time, Restricted Access Window, Extended Max Idle, non-TIM mode, and short MAC headers.
-
-**Field notes**
-- The defensible single-stream maximum is 86.7 Mbps (MCS 9, 256-QAM, 16 MHz, SGI), from the Wi-Fi Alliance overview. Use that number, NOT the contested 433.3 Mbps. Wikipedia's 433 figure is a 4-spatial-stream claim, but a 4x scaling of the WFA figure is about 347 Mbps, and first-generation HaLow silicon is single-stream. The far edge of the cell drops to about 150 kbps.
-- HaLow does NOT use 2.4, 5, or 6 GHz. Lower frequencies travel farther for the same power, which is the entire reason it exists. Even the widest HaLow channel (16 MHz) is narrower than the minimum 20 MHz 2.4 GHz Wi-Fi channel; narrow channels concentrate energy, which is how it reaches farther.
-- Bands by region: US 902 to 928 MHz (widest, full 1 to 16 MHz channels), EU 863 to 868 MHz (narrow, duty-cycle limited, 1/2 MHz only), AU/NZ 915 to 928 MHz. Japan, Korea, China, and Singapore carry a Medium-confidence tag because they come from secondary technical sources, not the WFA doc.
-- Where it sits: more range and device count than BLE, Zigbee, and Z-Wave, and more data rate plus native IP than LoRaWAN, Sigfox, and NB-IoT. It does not match LoRa/Sigfox/NB-IoT for multi-kilometer range, and unlike carrier NB-IoT it needs its own AP infrastructure. Its strongest case is replacing short-range mesh radios with longer reach and direct IP, and carrying video where LoRa/Zigbee cannot.
-- Maturity (2026): certified and shipping, with Morse Micro the clear silicon leader (MM6108, MM8108) and sub-$130 developer gateways (HaLowLink 1 at $99, HaLowLink 2 at $129). It is early-mainstream, NOT yet mass-deployed like Zigbee or BLE. "HaLow replaced Zigbee" is a roadmap claim, not a 2026 fact.
-- The channel-width plate sits on a dark card; every fact is also in the tables, so the screen reads without the image.
-
-## Wi-Fi Standards & Terminology (6)
+## 802.11 Standards and Rates (6)
 
 ### 802.11 Feature Matrix
 
@@ -2141,39 +2130,26 @@ Look up the modulation, coding rate, and PHY data rate for any 802.11 MCS index 
 - The notes card states actual throughput is typically 50 to 65% of the PHY rate. Rates are PHY-layer maximums, not delivered throughput.
 - Provenance: values come from Keith Parsons' MCS Index Chart and mcsindex.net (by @VergesFrancois, SemFio Networks), cross-checked against the IEEE 802.11n/ac/ax/be PHY rate tables.
 
-### Modulation
+### Wi-Fi HaLow
 
-Teaches what a modulation constellation is on the I/Q plane and why each step up in order (BPSK -> QPSK -> 16/64/256/1024-QAM) carries more bits per symbol but demands a cleaner link (lower EVM, higher SNR).
+A per-section reference for IEEE 802.11ah, Wi-Fi moved down into the sub-1-GHz ISM bands for IoT: what it is, bands by region, channel widths, the headline numbers, a single-stream MCS rate table, power features, PHY/MAC, use cases, a comparison against the other IoT radios, and 2026 maturity. A channel-width plate compares HaLow's 1 to 16 MHz channels against a 20 MHz Wi-Fi channel.
 
-**Why it's here.** The visual companion to the MCS Index table. Reach for it when you want to understand WHY a higher MCS needs better signal, or to explain constellations, bits per symbol, and EVM to someone, rather than to look up a spec rate.
-
-**How to use**
-1. Read the six constellation diagrams in order; each step doubles the points and adds one bit per symbol while the points pack closer together.
-2. Read the Error Vector Magnitude (EVM) explainer to see what the receiver must overcome to keep each symbol on the correct side of its decision boundary.
-3. Read the summary card for the order -> bits/symbol -> SNR/EVM relationship at a glance.
-4. Tap any diagram to open a full-screen pinch-zoom view for the detail-dense planes.
-
-**Field notes**
-- The SNR and EVM figures on the cards are REPRESENTATIVE order-of-magnitude demands, not exact 802.11 MCS thresholds. The relationship, not the precise number, is the point. Use the MCS Index tool for the spec rate/modulation table.
-- EVM (Error Vector Magnitude) is the distance from the ideal symbol point to where the symbol actually landed, expressed as a percentage (or dB) of the reference amplitude. As order rises, decision boundaries shrink, so higher-order QAM demands a lower EVM and a higher SNR.
-- The eight diagrams sit on an always-dark card in both light and dark modes so they never read inverted; every fact is also in the screen's prose and copy text, so the screen reads fully without the images.
-- The Copy action exports the order -> bits -> SNR/EVM summary as a tab-separated table plus the representative-numbers caveat.
-
-### Wireless Glossary
-
-Plain-language definitions of 123 wireless terms, grouped by topic and searchable live across the term, abbreviation, and definition. 93 are the Wi-Fi terms a working engineer meets, in 8 categories. The other 30 cover the radios and links people mix up with Wi-Fi, in 4 more: Cellular, Short-Range Radio, Location & Satellite, and Home Internet. The same grouped, searchable screen as the authentication glossary, with its own dataset.
-
-**Why it's here.** When a term in a config screen, a log, or a standards document is the thing standing between you and understanding what is happening. It answers what a term means in Wi-Fi terms, in Keith's voice, without a vendor's slant.
+**Why it's here.** HaLow is the Wi-Fi most Wi-Fi pros have never touched, and it is full of confidently-wrong numbers online. This is the honest read: it trades raw speed for about 1 km range, multi-year battery life, and thousands of devices per AP, while keeping native IP and WPA3. When a client asks "should we use HaLow for the sensor network," you want the real ceiling and the real caveats, not a vendor slide.
 
 **How to use**
-1. Browse the terms grouped by category, or type in the search box to filter live.
-2. Each entry shows the full term, its abbreviation when it has one, and a short plain-language definition that makes sense on its own.
-3. Use the copy action to grab the current view (the filtered subset when searching, otherwise the full list).
+1. Read the region-lock banner first, it is the load-bearing fact. Frequency and channel width are set by each regulator, so a device certified for one region cannot legally run in another.
+2. Work down through the cards: headline numbers, bands by region (with a confidence tag on the secondary-source rows), channel widths, the MCS rate table, then power, PHY/MAC, use cases, and the comparison.
+3. The MCS table's peak cell (MCS 9, 256-QAM, 16 MHz, short guard interval) carries the lime accent: that is the 86.7 Mbps headline.
+
+**How it works.** The clean mental model: the 802.11ac PHY clocked at one tenth. Same OFDM machinery, ten times slower clock, so symbols are 10x longer (more resilient over distance and multipath) and rates land at about a tenth of 802.11ac. Capacity comes from a 13-bit Association ID (2^13 minus 1 = 8,191 devices per AP) plus a hierarchical TIM. Power efficiency comes from Target Wake Time, Restricted Access Window, Extended Max Idle, non-TIM mode, and short MAC headers.
 
 **Field notes**
-- Multilingual: a language picker (English default, plus Spanish, French, Italian, and German) switches the definition language, so a non-English-first engineer can read the same definition in their own language. The English definitions remain the source of truth: whenever a non-English language is active the screen shows a "Translations in beta" note, because the translations are drafts pending professional review, and that draft flag travels with any copied text.
-- Vendor-neutral by design. Definitions describe standards-based behavior, not one vendor's implementation.
-- Data source: the curated 123-term Wireless Glossary (93 Wi-Fi terms, then 30 wireless terms beyond Wi-Fi). The tool was called Wi-Fi Glossary until 2026-09-28, and searching for that name still finds it. The Wi-Fi Authentication Glossary below is the security-focused sibling with its own dataset.
+- The defensible single-stream maximum is 86.7 Mbps (MCS 9, 256-QAM, 16 MHz, SGI), from the Wi-Fi Alliance overview. Use that number, NOT the contested 433.3 Mbps. Wikipedia's 433 figure is a 4-spatial-stream claim, but a 4x scaling of the WFA figure is about 347 Mbps, and first-generation HaLow silicon is single-stream. The far edge of the cell drops to about 150 kbps.
+- HaLow does NOT use 2.4, 5, or 6 GHz. Lower frequencies travel farther for the same power, which is the entire reason it exists. Even the widest HaLow channel (16 MHz) is narrower than the minimum 20 MHz 2.4 GHz Wi-Fi channel; narrow channels concentrate energy, which is how it reaches farther.
+- Bands by region: US 902 to 928 MHz (widest, full 1 to 16 MHz channels), EU 863 to 868 MHz (narrow, duty-cycle limited, 1/2 MHz only), AU/NZ 915 to 928 MHz. Japan, Korea, China, and Singapore carry a Medium-confidence tag because they come from secondary technical sources, not the WFA doc.
+- Where it sits: more range and device count than BLE, Zigbee, and Z-Wave, and more data rate plus native IP than LoRaWAN, Sigfox, and NB-IoT. It does not match LoRa/Sigfox/NB-IoT for multi-kilometer range, and unlike carrier NB-IoT it needs its own AP infrastructure. Its strongest case is replacing short-range mesh radios with longer reach and direct IP, and carrying video where LoRa/Zigbee cannot.
+- Maturity (2026): certified and shipping, with Morse Micro the clear silicon leader (MM6108, MM8108) and sub-$130 developer gateways (HaLowLink 1 at $99, HaLowLink 2 at $129). It is early-mainstream, NOT yet mass-deployed like Zigbee or BLE. "HaLow replaced Zigbee" is a roadmap claim, not a 2026 fact.
+- The channel-width plate sits on a dark card; every fact is also in the tables, so the screen reads without the image.
 
 ### Wi-Fi Standards Bodies
 
@@ -2191,7 +2167,23 @@ Who defines, certifies, and coordinates Wi-Fi and adjacent wireless: IEEE, the W
 - ETSI appears here as a standards body and also as the EU's referenced harmonizer on the Regulatory Domains page.
 - Data source: each body's official site (IEEE, Wi-Fi Alliance, WBA, ITU, IETF, 3GPP, Bluetooth SIG, CWNP, ETSI, Ecma, Wi-SUN, CSA, LoRa Alliance).
 
-## Security & Auth (5)
+### Wireless Glossary
+
+Plain-language definitions of 123 wireless terms, grouped by topic and searchable live across the term, abbreviation, and definition. 93 are the Wi-Fi terms a working engineer meets, in 8 categories. The other 30 cover the radios and links people mix up with Wi-Fi, in 4 more: Cellular, Short-Range Radio, Location & Satellite, and Home Internet. The same grouped, searchable screen as the authentication glossary, with its own dataset.
+
+**Why it's here.** When a term in a config screen, a log, or a standards document is the thing standing between you and understanding what is happening. It answers what a term means in Wi-Fi terms, in Keith's voice, without a vendor's slant.
+
+**How to use**
+1. Browse the terms grouped by category, or type in the search box to filter live.
+2. Each entry shows the full term, its abbreviation when it has one, and a short plain-language definition that makes sense on its own.
+3. Use the copy action to grab the current view (the filtered subset when searching, otherwise the full list).
+
+**Field notes**
+- Multilingual: a language picker (English default, plus Spanish, French, Italian, and German) switches the definition language, so a non-English-first engineer can read the same definition in their own language. The English definitions remain the source of truth: whenever a non-English language is active the screen shows a "Translations in beta" note, because the translations are drafts pending professional review, and that draft flag travels with any copied text.
+- Vendor-neutral by design. Definitions describe standards-based behavior, not one vendor's implementation.
+- Data source: the curated 123-term Wireless Glossary (93 Wi-Fi terms, then 30 wireless terms beyond Wi-Fi). The tool was called Wi-Fi Glossary until 2026-09-28, and searching for that name still finds it. The Wi-Fi Authentication Glossary below is the security-focused sibling with its own dataset.
+
+## Security and Authentication (5)
 
 ### 802.1X / EAP Types
 
@@ -2278,7 +2270,7 @@ A matrix of Wi-Fi security modes (WEP through WPA3-Enterprise) with encryption, 
 - The verdicts are reference guidance reflecting current best practice.
 - Data source: IEEE 802.11 / Wi-Fi Alliance security standards. Verdict colors meet WCAG contrast.
 
-## Clients & Field Wi-Fi (6)
+## Roaming and Clients (5)
 
 ### Apple Wi-Fi Support Tips
 
@@ -2388,28 +2380,7 @@ A reference plate showing how the placement of a test server decides what a thro
 - A single number from a single spot is a data point, not a survey.
 - The panel's Wi-Fi efficiency and its 300 Mb/s plan are illustrative; the Ethernet figures are arithmetic. CWNA-109 objective 6.6.1 lists LAN port speed and insufficient Internet or WAN bandwidth among the causes of insufficient throughput.
 
-### Wi-Fi Tools Comparison
-
-A vendor-neutral, offline reference that compares professional Wi-Fi survey, design, spectrum-analysis, and troubleshooting toolkits, grouped by the activity each one serves. Each config lists its vendor, product, license model, up-front cost, and 3-year total cost of ownership, with a neutral note on what the bundle does and does not include. A per-vendor summary and a typical-toolkit roll-up ride alongside.
-
-**Why it's here.** There is no neutral, capability-level map of the professional Wi-Fi tooling landscape. This is that map, built from Keith's vendor-interviewed workbook, so a leveling-up engineer can see the four activities and which tools serve which job without a vendor sales pitch.
-
-**How to use**
-1. Browse by activity: Design, Validation, Spectrum Analysis, then Troubleshooting. Within each activity, configs are listed alphabetically by vendor.
-2. Search by vendor (e.g. Ekahau), product, activity (e.g. spectrum), capability (e.g. survey), or license model (e.g. perpetual). The match is a case-insensitive substring and narrows the activities in place.
-3. Read the up-front and 3-year TCO figures as planning estimates, not quotes. Use the vendor Website and Docs links to confirm current pricing and product details before you buy.
-4. A query that matches nothing shows an honest "No match" card; it never fabricates a tool. The typical-toolkit roll-up and the per-vendor summaries are always available below the activities.
-
-**Field notes**
-- The figures are still being confirmed with vendors, and a few may change before the final release.
-- Pricing is dated. The figures are as of July 2026; confirm current pricing with each vendor, because prices, bundles, and product names change often.
-- Cost figures are MODELED ESTIMATES assembled by WLAN Pros from vendor-supplied numbers and list pricing, not vendor-published quotes. Treat every dollar amount as a planning estimate, never a binding price.
-- This is NOT a ranking. There is no score and no "best". Tools are listed alphabetically and the same vendor can appear under more than one activity, because real toolkits are assembled across vendors. The set reflects vendors interviewed by WLAN Pros, not every tool that exists, so an omitted tool is not a snub.
-- No vendor logos or product photos appear here. Those are trademarks and copyrighted images that need each vendor's written permission, which is still being gathered. The reference is text and data only for now.
-- Fully offline: the comparison is bundled in the app and works with no connection.
-- Source: the Wi-Fi Design, Validation, Spectrum Analysis & Troubleshooting Tools V6 workbook (Keith Parsons, vendor-interviewed, last revised 2026-02-16).
-
-## Capture & Troubleshooting (9)
+## Frames and Capture (6)
 
 ### 802.11 Reason Codes
 
@@ -2443,6 +2414,93 @@ The frame-by-frame 802.11 association and roaming sequences, showing the order a
 - What it shows: a scenario selector with six scenarios (Open / WPA2-PSK, WPA3-SAE, OWE / Enhanced Open, Passpoint / Hotspot 2.0, WPA2-Enterprise 802.1X/EAP, and 802.11r FT roam). Each scenario is broken into named phases (e.g. Probe & Auth, Association, 4-Way Handshake, EAP Authentication, DHCP); each frame shows a step number, direction, frame name, a frame-type code, and an explanatory note.
 - These are representative sequences, not exhaustive; optional/passive-scan paths and EAP-method round-trips are summarized (e.g. the WPA3 DHCP phase is shown as one combined Discover/Offer/Request/Ack line "identical to WPA2 flow").
 - Provenance: the frame sequences are ported from the RF Tools PWA (FX_SCENARIOS) and represent the real 802.11 exchanges (SAE Dragonfly commit/confirm for WPA3, the 4-way handshake, 802.1X/EAP over RADIUS, 802.11r FT over-the-air). They are representative teaching sequences, not reproduced clause-by-clause from the standard. Not region-specific.
+
+### Linux / WLAN Commands
+
+A grouped Linux command reference for WLAN work: file/process basics, modern and legacy networking, the wireless-specific tools (iw, iwconfig, airmon-ng, rfkill), tested monitor-mode sequences, and the macOS non-root packet-capture setup.
+
+**Why it's here.** You're driving a WLAN Pi, a Linux capture box, or a survey laptop and need to put an adapter into monitor mode on a specific channel/width, or recall the exact iw syntax to read the current link.
+
+**How to use**
+1. Commands are grouped (File, Directory, Process, Network, Wireless, Monitor-mode, macOS capture).
+2. Filter by command or group name; a group-label match surfaces the whole group.
+
+**Example.** Commands as shipped. Wireless: iw dev, iw dev wlan0 info (type/channel/mode), iw dev wlan0 link (SSID/signal/rate), iw dev wlan0 scan (sudo), iw dev wlan0 set channel 6, iw phy (PHY caps), iwconfig (legacy), iwlist wlan0 scan (legacy), rfkill list, rfkill unblock wifi. Monitor-mode: sudo airmon-ng start wlan0 (creates wlan0mon), sudo airmon-ng start wlan0 36 (monitor + channel 36), sudo airmon-ng stop wlan0mon, sudo airmon-ng check kill, sudo ifconfig wlan0 down / sudo iwconfig wlan0 mode monitor / sudo ifconfig wlan0 up (3-step), sudo iw dev wlan0 set channel 36 HT40+ (40 MHz secondary above), sudo iw dev wlan0 set channel 40 HT40- (40 MHz secondary below), sudo iwconfig wlan0 mode managed, sudo iw dev wlan0 info, lsusb, sudo dmesg, sudo ethtool -i wlan0, lsmod. macOS capture: sudo dseditgroup -o edit -a USERNAME -t user access_bpf (non-root capture), dscl . read /Groups/access_bpf (verify membership), sudo wdutil info (macOS 14+).
+
+**Field notes**
+- Caveat: iwconfig/iwlist/ifconfig are legacy "wireless extensions" tools; modern distros prefer iw and the iproute2 suite; monitor-mode sequences need sudo and a capable adapter/driver.
+- Footnote: wireless extensions are deprecated in favor of iw + nl80211 (both shown because field gear still ships the legacy tools); HT40+/HT40- selects a 40 MHz channel with the secondary 20 MHz channel above (+) or below (-) the control channel; the access_bpf group lets a non-root macOS user capture via libpcap (BPF devices). Replace USERNAME and wlan0 with your actual user and interface.
+- Source / basis: targets Linux primarily, with a macOS-capture group. Cross-checked against Linux man-pages, iw/nl80211 docs, and aircrack-ng docs.
+
+### Packet Decode
+
+A byte-level Layer 3-4 reference for the headers a capture shows beneath 802.11: IPv4, IPv6, TCP, UDP, and ICMP, each as a field / bit-offset / bit-length / meaning table. Adds the TCP control bits, the TCP connection states with the three-way handshake and teardown, a common IP-protocol-numbers table, and the ICMP and ICMPv6 type and code tables.
+
+**Why it's here.** You have a packet open in Wireshark and need to confirm which field sits at which offset, what a TCP flag combination means, or what an ICMP type and code is telling you, without leaving the app or going online. This is the companion to the Wireshark filters above: those surface the frame, this decodes the bytes inside it.
+
+**How to use**
+1. Scroll to the header you are decoding. Each table lists the field, its bit offset (counted from bit 0, the first / most-significant bit), its bit length, and a plain-language meaning; variable-length fields (Options, padding, payload) read "variable".
+2. The IPv4 Type-of-Service octet is shown the modern way, DSCP (6 bits) plus ECN (2 bits); the legacy RFC 791 precedence reading is footnoted, not led with.
+3. The IPv4 Protocol and IPv6 Next Header fields point at the IP-protocol-numbers table sitting between the two IP headers. For TCP and UDP port numbers, use the Well-Known Ports reference instead.
+4. Copy any table from the toolbar as tab-separated text, one section per header.
+
+**Example.** Tables as shipped. IPv4 header (field, bit offset, bit length): Version (0, 4), IHL (4, 4), ToS / DiffServ (8, 8), Total Length (16, 16), Identification (32, 16), Flags (48, 3), Fragment Offset (51, 13), Time to Live (64, 8), Protocol (72, 8), Header Checksum (80, 16), Source Address (96, 32), Destination Address (128, 32), Options (160, variable), Padding (variable). IPv6 header: a fixed 320 bits (40 octets) with no header checksum and no in-header fragmentation. TCP control bits (bits 104-111, MSB to LSB): CWR, ECE, URG, ACK, PSH, RST, SYN, FIN. TCP connection states: CLOSED, LISTEN, SYN-SENT, SYN-RECEIVED, ESTABLISHED, FIN-WAIT-1, FIN-WAIT-2, CLOSE-WAIT, CLOSING, LAST-ACK, TIME-WAIT. Common IP protocol numbers: 1 = ICMP, 6 = TCP, 17 = UDP, 47 = GRE, 50 = ESP, 51 = AH, 58 = ICMPv6, 88 = EIGRP, 89 = OSPF, 132 = SCTP. ICMP types: 0 Echo Reply, 3 Destination Unreachable (16-code table, 0-15), 4 Source Quench (deprecated), 5 Redirect, 8 Echo Request, 11 Time Exceeded, 12 Parameter Problem, 13 Timestamp, 14 Timestamp Reply. ICMPv6: error types 1-4, Echo Request / Reply 128 / 129, and Neighbor Discovery 133-137 (Router and Neighbor Solicitation and Advertisement, plus Redirect).
+
+**Field notes**
+- Bit offsets count from bit 0 of each header (bit 0 = first / most-significant bit); bit lengths are exact, never approximate.
+- The TCP flags table uses RFC 9293's canonical layout: a 4-bit reserved field plus 8 control bits (CWR through FIN). The bit at position 103 that Wireshark still labels NS is Reserved in RFC 9293. It was NS (Nonce Sum, RFC 3540), which RFC 8311 made Historic, and RFC 9768 reassigns it as AE (Accurate ECN). It ships flagged historic in text, not as a current flag.
+- ICMP type 4 (Source Quench) is kept in the table but marked deprecated per RFC 6633.
+- Ports are not duplicated here; the app already ships a Well-Known Ports reference.
+- Source / basis: every field offset, width, flag, state, type, and code is transcribed from the primary RFC or IANA registry and cited per table: IPv4 (RFC 791, DSCP / ECN per RFC 2474 and RFC 3168), IPv6 (RFC 8200), TCP (RFC 9293), UDP (RFC 768), ICMP (RFC 792 plus the IANA ICMP Parameters registry), and ICMPv6 (RFC 4443, NDP per RFC 4861). Nothing is invented or approximated.
+
+### VoIP over Wi-Fi Filters
+
+Wireshark display filters for analyzing voice calls carried over Wi-Fi: the SIP signaling, the RTP and RTCP media, and then the three questions that are specifically about the air rather than about VoIP in general. Did the QoS marking survive the trip onto the wireless side, did the call break at a roam, and is power save eating it. A seventh group covers the loss and jitter figures Wireshark computes as statistics rather than as filterable fields.
+
+**Why it's here.** Anyone can list `sip` and `rtp`, and the web is full of enterprise VoIP filter sheets built around firewall and session-border playbooks. A WLAN pro opens a capture for a different reason: a call sounded bad, the wired side looks perfect, and the answer is usually in the 802.11 header. These are the filters that put the IP marking and the 802.11 User Priority on screen at the same time, and the ones that line an RTP gap up against a reassociation. This is the companion to the Wireshark 802.11 Filters card, which carries no VoIP filters at all, and to the DSCP / QoS Markings reference, which explains the marking this card teaches you to check.
+
+**How to use**
+1. Filters are grouped by the question they answer; filter the list by syntax or task, and a group-label match surfaces the whole group.
+2. The syntax is selectable for copy.
+3. Several groups carry a short note above their filters. That note is the method, not decoration: it says what the filter is for and how to read what comes back.
+4. The last group is deliberately not display filters. Those are tshark statistics taps and Wireshark menu paths, and typing them into the filter bar will not work.
+
+**Example.** Filters as shipped. Find the call, signaling: sip, sip.Method == "INVITE", sip.Method == "BYE", sip.Status-Code >= 400, sip.Status-Code == 486 (Busy Here), sip.Call-ID (present on every message of one dialog), sip.resend == 1 (a retransmitted SIP message), sdp, sdp.media.format, udp.port == 5060, tcp.port == 5060. Find the media: rtp, rtcp, rtp.ssrc == 0x12345678 (one stream, by its synchronization source), rtp.seq, rtp.timestamp, rtp.marker == 1 (talkspurt starts), rtp.p_type, and the payload types rtp.p_type == 0 (G.711 PCMU), == 8 (G.711 PCMA), == 9 (G.722), == 18 (G.729), plus rtp.setup-frame. Did the QoS marking survive: ip.dsfield.dscp == 46 (EF, what voice should be marked on the wire), wlan.qos.priority == 6 (User Priority 6, the Voice access category on the air), ip.dsfield.dscp == 46 && wlan.qos.priority != 6 (the bug: marked EF on the wire, not Voice on the air), ip.dsfield.dscp == 46 && wlan.qos.priority == 5 (the classic signature, EF landing in the Video access category), rtp && wlan.qos.priority == 0 (media riding Best Effort), ip.dsfield.dscp == 0 && rtp, sip && ip.dsfield.dscp == 0, ip.dsfield.dscp == 40 (CS5), ip.dsfield.dscp == 34 (AF41), wlan.qos.priority. Did it break at a roam: wlan.fc.type_subtype == 0x02 (Reassociation request, the roam itself), == 0x03 (Reassociation response), == 0x0b (Authentication), == 0x0c (Deauthentication, a roam that was not the client's idea), wlan.tag.number == 54 (Mobility Domain element, present when 802.11r Fast Transition is in play), rtp.ssrc == 0x12345678 && wlan.fc.retry == 1. Is power save eating it: wlan.fc.pwrmgt == 1, wlan.fc.pwrmgt == 1 && rtp (a voice client sleeping mid-call), wlan.fc.type_subtype == 0x2c (QoS Null), == 0x1a (PS-Poll), wlan.qos.eosp == 1 (end of a U-APSD service period). What the endpoint itself says: rtcp.pt == 200 (Sender Report), rtcp.pt == 201 (Receiver Report), rtcp.ssrc.fraction (Fraction lost), rtcp.ssrc.fraction > 0, rtcp.ssrc.cum_nr (Cumulative number of packets lost), rtcp.ssrc.high_seq (Highest sequence number received), rtcp.ssrc.jitter (Interarrival jitter), rtcp.ssrc.jitter > 30, rtcp.senderssrc. Loss and jitter as statistics rather than filters: tshark -q -z rtp,streams -r capture.pcapng, tshark -q -z sip,stat -r capture.pcapng, tshark -q -z follow,sip -r capture.pcapng, and Telephony then RTP then RTP Streams in the Wireshark GUI.
+
+**Field notes**
+- The teaching point sits on the card, not only in the help. DSCP lives in the IP header and User Priority lives in the 802.11 header, so something has to map one to the other. When that mapping is missing, wrong, or stripped by a tunnel, the call competes with everything else on the channel and the wired capture still looks perfect.
+- Most equipment, with no explicit policy applied, derives User Priority from the top three bits of the DSCP value. EF is 46, which is 101110 in binary, and the top three bits are 101, which is 5. So EF lands in User Priority 5, the Video access category, rather than User Priority 6, which is Voice. That is why the `ip.dsfield.dscp == 46 && wlan.qos.priority != 6` filter usually turns up UP 5 rather than nothing, and it is why the card ships a filter for that exact case. The DSCP / QoS Markings reference carries the full mapping table and the RFC 8325 fix.
+- Reading a roam: filter to one rtp.ssrc, note the sequence numbers either side of the gap, then look at what the client did in between. A roam that costs 300 ms is audible. A roam that costs 50 ms is not. An RTP gap that lines up with a reassociation is a roaming problem wearing a VoIP costume.
+- Reading power save: a voice client that sleeps between packets sounds exactly like a network with loss, and the far end's own report will call it loss. The Power Management bit rides in the frame control field of every frame, so watch for where it flips rather than looking for a single announcement.
+- There are two sources for loss and jitter and they measure different things. The RTCP fields are what the far endpoint reported about what it received. The tshark rtp,streams tap is what this capture actually saw. When the two disagree, that is the result rather than an error: the capture point and the endpoint did not experience the same stream, which on Wi-Fi usually means the loss happened between them.
+- Caveat: the filters that combine an IP field with an 802.11 field need both headers visible in the same frame. That means a monitor-mode capture of an open or decrypted network, not a capture taken on the client's own interface, where there is no 802.11 header to filter on. Wireshark also does not label a UDP stream as RTP unless it saw the SIP or SDP exchange that set the call up. A monitor-mode capture started mid-call usually has not, so every rtp filter here will match nothing until you right-click one of the media packets, choose Decode As, and set it to RTP. The rtcp filters are unaffected.
+- Worth flagging (intentional, not a defect): Wireshark has no `rtp.analysis` display filter of any kind. Its per-stream loss and jitter is a statistic, not a filterable field, so there is no field name to type into the filter bar however plausible one sounds. Four names that look right and do not exist are rtp.analysis.lost, rtp.analysis.jitter, rtp.analysis.delta, and rtp.analysis.out_of_seq. All four were compile-tested against Wireshark and rejected before this card shipped.
+- Frame type and subtype values are shown in hexadecimal on this card (0x02 is Reassociation request, 0x0c is Deauthentication). The Wireshark 802.11 Filters card shows the same values in decimal. Wireshark accepts either form.
+- The RTCP jitter figure is in RTP timestamp units, not milliseconds. At an 8 kHz sampling clock, one unit is 125 microseconds.
+- Source / basis: every filter on the card was compiled with dftest, the display-filter compiler Wireshark ships, against Wireshark 4.6.6 on 2026-09-15, before it shipped. RTP and RTCP per RFC 3550, payload type numbers per RFC 3551, DSCP to User Priority per RFC 8325.
+
+### Wireshark 802.11 Filters
+
+Copy-ready Wireshark display filters (typed into the filter bar after capture) and capture filters (BPF syntax, applied during capture) for 802.11 analysis: frame type/subtype, addressing, BSSID/SSID, RadioTap metadata, and RSN cipher/AKM selectors. Now also carries the 802.11 status-code and reason-code lookup tables next to the filters, so the moment a filter surfaces a deauth or a failed assoc, the code's meaning is right there. It now pairs the 802.11 filters with a general TCP/IP display-filter set (IP addressing, TCP/UDP, and the common higher-layer protocols), so a capture that drops below the radio layer stays in one screen.
+
+**Why it's here.** You have a capture open and need the exact display-filter field to isolate deauths, beacons, a specific BSSID, or a security cipher, without guessing field names from memory. Then, once the deauth is on screen, you need to know what reason code 15 actually means without leaving the tool.
+
+**How to use**
+1. Filters are grouped; filter the list by syntax or task, and a group-label match surfaces the whole group.
+2. The syntax is selectable for copy.
+3. Below the filters, the status-code and reason-code tables list the highest-frequency 802.11 codes: status codes appear in Auth/Assoc responses; reason codes appear in Deauth/Disassoc frames.
+
+**Example.** Filters as shipped. Frame type/subtype (display): wlan.fc.type == 0 (all management), == 1 (all control), == 2 (all data); wlan.fc.type_subtype == 0 (Assoc req), 1 (Assoc resp), 2 (Reassoc req), 3 (Reassoc resp), 4 (Probe req), 5 (Probe resp), 8 (Beacon), 9 (ATIM), 10 (Disassoc), 11 (Auth), 12 (Deauth), 13 (Action), 24 (Block Ack Req), 25 (Block Ack), 26 (PS-Poll), 27 (RTS), 28 (CTS), 29 (Ack), 36 (Null data), 40 (QoS data), 44 (QoS Null). Address (display): wlan.addr == aa:bb:cc:dd:ee:ff (any field), wlan.ta, wlan.ra, wlan.sa, wlan.da. BSSID/SSID: wlan.bssid == ..., wlan.ssid == "MyNetwork", wlan.ssid contains "Guest". RadioTap: radiotap.channel.freq == 2412, radiotap.datarate >= 6, radiotap.dbm_antsignal > -70, radiotap.dbm_antnoise < -90, radiotap.channel.freq >= 2400 && < 2500 (2.4 GHz), >= 5000 && < 5900 (5 GHz), >= 5925 && <= 7125 (6 GHz). Capture filter (BPF): type mgt, type ctl, type data, type mgt subtype beacon, type mgt subtype probe-req, type mgt subtype deauth, type ctl subtype rts, type ctl subtype ack, wlan host aa:bb:cc:dd:ee:ff. RSN cipher (display): wlan.rsn.pcs.type == 4 (CCMP-128, 00-0F-AC:4), == 8 (GCMP-128, 00-0F-AC:8), == 9 (GCMP-256, 00-0F-AC:9), wlan.rsn.gcs.type == 2 (group cipher TKIP, 00-0F-AC:2). RSN AKM (display): wlan.rsn.akms.type == 1 (802.1X, 00-0F-AC:1), == 2 (PSK, 00-0F-AC:2), == 8 (SAE / WPA3-Personal, 00-0F-AC:8), == 18 (OWE, 00-0F-AC:18). TCP/IP display filters. IP addressing: ip.addr == 10.0.0.5 (source or destination), ip.src == 10.0.0.5, ip.dst == 10.0.0.5, ip.addr == 192.168.1.0/24 (any address in a subnet, CIDR), !(ip.addr == 10.0.0.5) (exclude an address), ipv6.addr == 2001:db8::1, ipv6.src == 2001:db8::1, ipv6.dst == 2001:db8::1, ip.ttl < 5 (low TTL, near a routing loop or a traceroute). TCP / UDP: tcp.port == 443 (source or destination port), tcp.dstport == 22 (destination only), udp.port == 53, tcp.flags.syn == 1 && tcp.flags.ack == 0 (connection attempts), tcp.flags.reset == 1 (resets), tcp.flags.fin == 1 (graceful close), tcp.analysis.retransmission, tcp.analysis.zero_window (receiver told the sender to stop), tcp.analysis.flags (all of Wireshark's TCP expert findings), tcp.stream eq 0 (every packet of one conversation), tcp.len > 0 (segments carrying payload, excluding pure ACKs). Higher-layer protocols: icmp, icmpv6, arp, dns, dns.flags.response == 1 (responses only), http, http.request, http.response.code == 404, tls, tls.handshake.type == 1 (Client Hello), dhcp (was bootp in older Wireshark).
+
+**Field notes**
+- The groups above are a representative selection. The tool also ships a Retries / QoS / weak-signal group, an 802.11k / v / r roaming group, a Security / EAPOL (4-way-handshake) group, and an Operators reference group, alongside the frame-type, address, BSSID/SSID, RadioTap, capture-BPF, and RSN cipher/AKM groups shown here. It also ships three general TCP/IP display-filter groups: IP addressing, TCP / UDP, and higher-layer protocols.
+- The TCP/IP display filters use Wireshark dfref field names (ip, ipv6, tcp, udp, icmp, arp, dns, http, tls). For the Layer 3-4 header fields those filters match on (the byte offsets and flags behind ip.ttl, tcp.flags, an ICMP type/code), see the Packet Decode reference.
+- Caveat: display-filter field names match Wireshark's dfref; capture filters use libpcap/BPF "type/subtype" syntax and only work when capturing with a RadioTap/PPI header.
+- Footnote: type_subtype is the combined value (type in the high bits, subtype in the low bits) matching IEEE 802.11 frame type/subtype assignments; capture filters require capturing with a RadioTap header (monitor mode); for the full RSN cipher/AKM number-to-name map, see the RSN groups or the WPA Security reference tool. The bundled status-code and reason-code tables list the highest-frequency 802.11 codes only (the full tables live in the 802.11 Reason Codes reference tool).
+- Two deliberate corrections are baked in. (1) The RSN cipher-suite vs AKM tables were rebuilt from IEEE 802.11-2020 Tables 9-149 (cipher = wlan.rsn.pcs.type / wlan.rsn.gcs.type) and 9-151 (AKM = wlan.rsn.akms.type) because the original source card mislabeled cipher values as AKM. (2) The 5 GHz/2.4 GHz/6 GHz band filters ship a deliberate safe fallback using documented radiotap.channel.freq ranges instead of the unverified radiotap.channel.flags.5ghz child-token. Band-edge detail: the 5 GHz range stops at < 5900 and the 6 GHz range starts at >= 5925, so center frequencies in the 5900 to 5924 MHz gap fall into neither band filter. This is intentional.
+- Source / basis: targets Wireshark display-filter (dfref) and libpcap/BPF capture-filter conventions, sourced from the Wireshark dfref, the RadioTap dfref, pcap-filter(7), and IEEE 802.11-2020.
+
+## Field Checklists and CLI (5)
 
 ### Find the Switch and Port (LLDP/CDP)
 
@@ -2493,23 +2551,6 @@ A run-through-it AP install checklist organized into Before / Install / After ph
 - Checked state is not saved; it resets when you leave the screen.
 - Source / basis: Keith Parsons / WLAN Pros original card (© 2024 WLAN Pros). The "After Installing" list is renumbered to a clean 1-11 (the original card was gap-numbered with no item 2, so the eleven items now read 1 through 11).
 
-### Linux / WLAN Commands
-
-A grouped Linux command reference for WLAN work: file/process basics, modern and legacy networking, the wireless-specific tools (iw, iwconfig, airmon-ng, rfkill), tested monitor-mode sequences, and the macOS non-root packet-capture setup.
-
-**Why it's here.** You're driving a WLAN Pi, a Linux capture box, or a survey laptop and need to put an adapter into monitor mode on a specific channel/width, or recall the exact iw syntax to read the current link.
-
-**How to use**
-1. Commands are grouped (File, Directory, Process, Network, Wireless, Monitor-mode, macOS capture).
-2. Filter by command or group name; a group-label match surfaces the whole group.
-
-**Example.** Commands as shipped. Wireless: iw dev, iw dev wlan0 info (type/channel/mode), iw dev wlan0 link (SSID/signal/rate), iw dev wlan0 scan (sudo), iw dev wlan0 set channel 6, iw phy (PHY caps), iwconfig (legacy), iwlist wlan0 scan (legacy), rfkill list, rfkill unblock wifi. Monitor-mode: sudo airmon-ng start wlan0 (creates wlan0mon), sudo airmon-ng start wlan0 36 (monitor + channel 36), sudo airmon-ng stop wlan0mon, sudo airmon-ng check kill, sudo ifconfig wlan0 down / sudo iwconfig wlan0 mode monitor / sudo ifconfig wlan0 up (3-step), sudo iw dev wlan0 set channel 36 HT40+ (40 MHz secondary above), sudo iw dev wlan0 set channel 40 HT40- (40 MHz secondary below), sudo iwconfig wlan0 mode managed, sudo iw dev wlan0 info, lsusb, sudo dmesg, sudo ethtool -i wlan0, lsmod. macOS capture: sudo dseditgroup -o edit -a USERNAME -t user access_bpf (non-root capture), dscl . read /Groups/access_bpf (verify membership), sudo wdutil info (macOS 14+).
-
-**Field notes**
-- Caveat: iwconfig/iwlist/ifconfig are legacy "wireless extensions" tools; modern distros prefer iw and the iproute2 suite; monitor-mode sequences need sudo and a capable adapter/driver.
-- Footnote: wireless extensions are deprecated in favor of iw + nl80211 (both shown because field gear still ships the legacy tools); HT40+/HT40- selects a 40 MHz channel with the secondary 20 MHz channel above (+) or below (-) the control channel; the access_bpf group lets a non-root macOS user capture via libpcap (BPF devices). Replace USERNAME and wlan0 with your actual user and interface.
-- Source / basis: targets Linux primarily, with a macOS-capture group. Cross-checked against Linux man-pages, iw/nl80211 docs, and aircrack-ng docs.
-
 ### Network CLI Commands
 
 A three-column Windows, macOS, and Linux command reference for the everyday network-troubleshooting tasks (reachability, path tracing, DNS, interface config, sockets, ARP, routing, Wi-Fi link state), each with the field-common flags. A trailing Linux-only "shell essentials" group covers the capture-rig / WLAN Pi context.
@@ -2529,32 +2570,6 @@ A three-column Windows, macOS, and Linux command reference for the everyday netw
 - The reference is broader than the tasks shown above. The Windows column also carries the profile commands `netsh wlan show profiles` and `netsh wlan show profile name="SSID" key=clear`, plus pathping and nbtstat, alongside the everyday reachability/DNS/interface/routing tasks. The latter profile command reveals a saved network's plaintext key and is flagged as sensitive output.
 - Source / basis: data consolidated from Keith's Network CLI sheet plus the WLAN Pros Linux cheat sheets, reconciled against current Windows/macOS/Linux docs. The macOS Wi-Fi entry shows only wdutil info; the deprecated airport CLI was removed entirely.
 
-### VoIP over Wi-Fi Filters
-
-Wireshark display filters for analyzing voice calls carried over Wi-Fi: the SIP signaling, the RTP and RTCP media, and then the three questions that are specifically about the air rather than about VoIP in general. Did the QoS marking survive the trip onto the wireless side, did the call break at a roam, and is power save eating it. A seventh group covers the loss and jitter figures Wireshark computes as statistics rather than as filterable fields.
-
-**Why it's here.** Anyone can list `sip` and `rtp`, and the web is full of enterprise VoIP filter sheets built around firewall and session-border playbooks. A WLAN pro opens a capture for a different reason: a call sounded bad, the wired side looks perfect, and the answer is usually in the 802.11 header. These are the filters that put the IP marking and the 802.11 User Priority on screen at the same time, and the ones that line an RTP gap up against a reassociation. This is the companion to the Wireshark 802.11 Filters card, which carries no VoIP filters at all, and to the DSCP / QoS Markings reference, which explains the marking this card teaches you to check.
-
-**How to use**
-1. Filters are grouped by the question they answer; filter the list by syntax or task, and a group-label match surfaces the whole group.
-2. The syntax is selectable for copy.
-3. Several groups carry a short note above their filters. That note is the method, not decoration: it says what the filter is for and how to read what comes back.
-4. The last group is deliberately not display filters. Those are tshark statistics taps and Wireshark menu paths, and typing them into the filter bar will not work.
-
-**Example.** Filters as shipped. Find the call, signaling: sip, sip.Method == "INVITE", sip.Method == "BYE", sip.Status-Code >= 400, sip.Status-Code == 486 (Busy Here), sip.Call-ID (present on every message of one dialog), sip.resend == 1 (a retransmitted SIP message), sdp, sdp.media.format, udp.port == 5060, tcp.port == 5060. Find the media: rtp, rtcp, rtp.ssrc == 0x12345678 (one stream, by its synchronization source), rtp.seq, rtp.timestamp, rtp.marker == 1 (talkspurt starts), rtp.p_type, and the payload types rtp.p_type == 0 (G.711 PCMU), == 8 (G.711 PCMA), == 9 (G.722), == 18 (G.729), plus rtp.setup-frame. Did the QoS marking survive: ip.dsfield.dscp == 46 (EF, what voice should be marked on the wire), wlan.qos.priority == 6 (User Priority 6, the Voice access category on the air), ip.dsfield.dscp == 46 && wlan.qos.priority != 6 (the bug: marked EF on the wire, not Voice on the air), ip.dsfield.dscp == 46 && wlan.qos.priority == 5 (the classic signature, EF landing in the Video access category), rtp && wlan.qos.priority == 0 (media riding Best Effort), ip.dsfield.dscp == 0 && rtp, sip && ip.dsfield.dscp == 0, ip.dsfield.dscp == 40 (CS5), ip.dsfield.dscp == 34 (AF41), wlan.qos.priority. Did it break at a roam: wlan.fc.type_subtype == 0x02 (Reassociation request, the roam itself), == 0x03 (Reassociation response), == 0x0b (Authentication), == 0x0c (Deauthentication, a roam that was not the client's idea), wlan.tag.number == 54 (Mobility Domain element, present when 802.11r Fast Transition is in play), rtp.ssrc == 0x12345678 && wlan.fc.retry == 1. Is power save eating it: wlan.fc.pwrmgt == 1, wlan.fc.pwrmgt == 1 && rtp (a voice client sleeping mid-call), wlan.fc.type_subtype == 0x2c (QoS Null), == 0x1a (PS-Poll), wlan.qos.eosp == 1 (end of a U-APSD service period). What the endpoint itself says: rtcp.pt == 200 (Sender Report), rtcp.pt == 201 (Receiver Report), rtcp.ssrc.fraction (Fraction lost), rtcp.ssrc.fraction > 0, rtcp.ssrc.cum_nr (Cumulative number of packets lost), rtcp.ssrc.high_seq (Highest sequence number received), rtcp.ssrc.jitter (Interarrival jitter), rtcp.ssrc.jitter > 30, rtcp.senderssrc. Loss and jitter as statistics rather than filters: tshark -q -z rtp,streams -r capture.pcapng, tshark -q -z sip,stat -r capture.pcapng, tshark -q -z follow,sip -r capture.pcapng, and Telephony then RTP then RTP Streams in the Wireshark GUI.
-
-**Field notes**
-- The teaching point sits on the card, not only in the help. DSCP lives in the IP header and User Priority lives in the 802.11 header, so something has to map one to the other. When that mapping is missing, wrong, or stripped by a tunnel, the call competes with everything else on the channel and the wired capture still looks perfect.
-- Most equipment, with no explicit policy applied, derives User Priority from the top three bits of the DSCP value. EF is 46, which is 101110 in binary, and the top three bits are 101, which is 5. So EF lands in User Priority 5, the Video access category, rather than User Priority 6, which is Voice. That is why the `ip.dsfield.dscp == 46 && wlan.qos.priority != 6` filter usually turns up UP 5 rather than nothing, and it is why the card ships a filter for that exact case. The DSCP / QoS Markings reference carries the full mapping table and the RFC 8325 fix.
-- Reading a roam: filter to one rtp.ssrc, note the sequence numbers either side of the gap, then look at what the client did in between. A roam that costs 300 ms is audible. A roam that costs 50 ms is not. An RTP gap that lines up with a reassociation is a roaming problem wearing a VoIP costume.
-- Reading power save: a voice client that sleeps between packets sounds exactly like a network with loss, and the far end's own report will call it loss. The Power Management bit rides in the frame control field of every frame, so watch for where it flips rather than looking for a single announcement.
-- There are two sources for loss and jitter and they measure different things. The RTCP fields are what the far endpoint reported about what it received. The tshark rtp,streams tap is what this capture actually saw. When the two disagree, that is the result rather than an error: the capture point and the endpoint did not experience the same stream, which on Wi-Fi usually means the loss happened between them.
-- Caveat: the filters that combine an IP field with an 802.11 field need both headers visible in the same frame. That means a monitor-mode capture of an open or decrypted network, not a capture taken on the client's own interface, where there is no 802.11 header to filter on. Wireshark also does not label a UDP stream as RTP unless it saw the SIP or SDP exchange that set the call up. A monitor-mode capture started mid-call usually has not, so every rtp filter here will match nothing until you right-click one of the media packets, choose Decode As, and set it to RTP. The rtcp filters are unaffected.
-- Worth flagging (intentional, not a defect): Wireshark has no `rtp.analysis` display filter of any kind. Its per-stream loss and jitter is a statistic, not a filterable field, so there is no field name to type into the filter bar however plausible one sounds. Four names that look right and do not exist are rtp.analysis.lost, rtp.analysis.jitter, rtp.analysis.delta, and rtp.analysis.out_of_seq. All four were compile-tested against Wireshark and rejected before this card shipped.
-- Frame type and subtype values are shown in hexadecimal on this card (0x02 is Reassociation request, 0x0c is Deauthentication). The Wireshark 802.11 Filters card shows the same values in decimal. Wireshark accepts either form.
-- The RTCP jitter figure is in RTP timestamp units, not milliseconds. At an 8 kHz sampling clock, one unit is 125 microseconds.
-- Source / basis: every filter on the card was compiled with dftest, the display-filter compiler Wireshark ships, against Wireshark 4.6.6 on 2026-09-15, before it shipped. RTP and RTCP per RFC 3550, payload type numbers per RFC 3551, DSCP to User Priority per RFC 8325.
-
 ### Wi-Fi Client Testing Checklist
 
 An ordered, twelve-step client-side connectivity test to run from a client device after an install or when triaging a connectivity complaint.
@@ -2570,28 +2585,28 @@ An ordered, twelve-step client-side connectivity test to run from a client devic
 - Per-session only; not saved.
 - Source / basis: Keith Parsons / WLAN Pros original card (© 2024 WLAN Pros).
 
-### Wireshark 802.11 Filters
+### Wi-Fi Tools Comparison
 
-Copy-ready Wireshark display filters (typed into the filter bar after capture) and capture filters (BPF syntax, applied during capture) for 802.11 analysis: frame type/subtype, addressing, BSSID/SSID, RadioTap metadata, and RSN cipher/AKM selectors. Now also carries the 802.11 status-code and reason-code lookup tables next to the filters, so the moment a filter surfaces a deauth or a failed assoc, the code's meaning is right there. It now pairs the 802.11 filters with a general TCP/IP display-filter set (IP addressing, TCP/UDP, and the common higher-layer protocols), so a capture that drops below the radio layer stays in one screen.
+A vendor-neutral, offline reference that compares professional Wi-Fi survey, design, spectrum-analysis, and troubleshooting toolkits, grouped by the activity each one serves. Each config lists its vendor, product, license model, up-front cost, and 3-year total cost of ownership, with a neutral note on what the bundle does and does not include. A per-vendor summary and a typical-toolkit roll-up ride alongside.
 
-**Why it's here.** You have a capture open and need the exact display-filter field to isolate deauths, beacons, a specific BSSID, or a security cipher, without guessing field names from memory. Then, once the deauth is on screen, you need to know what reason code 15 actually means without leaving the tool.
+**Why it's here.** There is no neutral, capability-level map of the professional Wi-Fi tooling landscape. This is that map, built from Keith's vendor-interviewed workbook, so a leveling-up engineer can see the four activities and which tools serve which job without a vendor sales pitch.
 
 **How to use**
-1. Filters are grouped; filter the list by syntax or task, and a group-label match surfaces the whole group.
-2. The syntax is selectable for copy.
-3. Below the filters, the status-code and reason-code tables list the highest-frequency 802.11 codes: status codes appear in Auth/Assoc responses; reason codes appear in Deauth/Disassoc frames.
-
-**Example.** Filters as shipped. Frame type/subtype (display): wlan.fc.type == 0 (all management), == 1 (all control), == 2 (all data); wlan.fc.type_subtype == 0 (Assoc req), 1 (Assoc resp), 2 (Reassoc req), 3 (Reassoc resp), 4 (Probe req), 5 (Probe resp), 8 (Beacon), 9 (ATIM), 10 (Disassoc), 11 (Auth), 12 (Deauth), 13 (Action), 24 (Block Ack Req), 25 (Block Ack), 26 (PS-Poll), 27 (RTS), 28 (CTS), 29 (Ack), 36 (Null data), 40 (QoS data), 44 (QoS Null). Address (display): wlan.addr == aa:bb:cc:dd:ee:ff (any field), wlan.ta, wlan.ra, wlan.sa, wlan.da. BSSID/SSID: wlan.bssid == ..., wlan.ssid == "MyNetwork", wlan.ssid contains "Guest". RadioTap: radiotap.channel.freq == 2412, radiotap.datarate >= 6, radiotap.dbm_antsignal > -70, radiotap.dbm_antnoise < -90, radiotap.channel.freq >= 2400 && < 2500 (2.4 GHz), >= 5000 && < 5900 (5 GHz), >= 5925 && <= 7125 (6 GHz). Capture filter (BPF): type mgt, type ctl, type data, type mgt subtype beacon, type mgt subtype probe-req, type mgt subtype deauth, type ctl subtype rts, type ctl subtype ack, wlan host aa:bb:cc:dd:ee:ff. RSN cipher (display): wlan.rsn.pcs.type == 4 (CCMP-128, 00-0F-AC:4), == 8 (GCMP-128, 00-0F-AC:8), == 9 (GCMP-256, 00-0F-AC:9), wlan.rsn.gcs.type == 2 (group cipher TKIP, 00-0F-AC:2). RSN AKM (display): wlan.rsn.akms.type == 1 (802.1X, 00-0F-AC:1), == 2 (PSK, 00-0F-AC:2), == 8 (SAE / WPA3-Personal, 00-0F-AC:8), == 18 (OWE, 00-0F-AC:18). TCP/IP display filters. IP addressing: ip.addr == 10.0.0.5 (source or destination), ip.src == 10.0.0.5, ip.dst == 10.0.0.5, ip.addr == 192.168.1.0/24 (any address in a subnet, CIDR), !(ip.addr == 10.0.0.5) (exclude an address), ipv6.addr == 2001:db8::1, ipv6.src == 2001:db8::1, ipv6.dst == 2001:db8::1, ip.ttl < 5 (low TTL, near a routing loop or a traceroute). TCP / UDP: tcp.port == 443 (source or destination port), tcp.dstport == 22 (destination only), udp.port == 53, tcp.flags.syn == 1 && tcp.flags.ack == 0 (connection attempts), tcp.flags.reset == 1 (resets), tcp.flags.fin == 1 (graceful close), tcp.analysis.retransmission, tcp.analysis.zero_window (receiver told the sender to stop), tcp.analysis.flags (all of Wireshark's TCP expert findings), tcp.stream eq 0 (every packet of one conversation), tcp.len > 0 (segments carrying payload, excluding pure ACKs). Higher-layer protocols: icmp, icmpv6, arp, dns, dns.flags.response == 1 (responses only), http, http.request, http.response.code == 404, tls, tls.handshake.type == 1 (Client Hello), dhcp (was bootp in older Wireshark).
+1. Browse by activity: Design, Validation, Spectrum Analysis, then Troubleshooting. Within each activity, configs are listed alphabetically by vendor.
+2. Search by vendor (e.g. Ekahau), product, activity (e.g. spectrum), capability (e.g. survey), or license model (e.g. perpetual). The match is a case-insensitive substring and narrows the activities in place.
+3. Read the up-front and 3-year TCO figures as planning estimates, not quotes. Use the vendor Website and Docs links to confirm current pricing and product details before you buy.
+4. A query that matches nothing shows an honest "No match" card; it never fabricates a tool. The typical-toolkit roll-up and the per-vendor summaries are always available below the activities.
 
 **Field notes**
-- The groups above are a representative selection. The tool also ships a Retries / QoS / weak-signal group, an 802.11k / v / r roaming group, a Security / EAPOL (4-way-handshake) group, and an Operators reference group, alongside the frame-type, address, BSSID/SSID, RadioTap, capture-BPF, and RSN cipher/AKM groups shown here. It also ships three general TCP/IP display-filter groups: IP addressing, TCP / UDP, and higher-layer protocols.
-- The TCP/IP display filters use Wireshark dfref field names (ip, ipv6, tcp, udp, icmp, arp, dns, http, tls). For the Layer 3-4 header fields those filters match on (the byte offsets and flags behind ip.ttl, tcp.flags, an ICMP type/code), see the Packet Decode reference.
-- Caveat: display-filter field names match Wireshark's dfref; capture filters use libpcap/BPF "type/subtype" syntax and only work when capturing with a RadioTap/PPI header.
-- Footnote: type_subtype is the combined value (type in the high bits, subtype in the low bits) matching IEEE 802.11 frame type/subtype assignments; capture filters require capturing with a RadioTap header (monitor mode); for the full RSN cipher/AKM number-to-name map, see the RSN groups or the WPA Security reference tool. The bundled status-code and reason-code tables list the highest-frequency 802.11 codes only (the full tables live in the 802.11 Reason Codes reference tool).
-- Two deliberate corrections are baked in. (1) The RSN cipher-suite vs AKM tables were rebuilt from IEEE 802.11-2020 Tables 9-149 (cipher = wlan.rsn.pcs.type / wlan.rsn.gcs.type) and 9-151 (AKM = wlan.rsn.akms.type) because the original source card mislabeled cipher values as AKM. (2) The 5 GHz/2.4 GHz/6 GHz band filters ship a deliberate safe fallback using documented radiotap.channel.freq ranges instead of the unverified radiotap.channel.flags.5ghz child-token. Band-edge detail: the 5 GHz range stops at < 5900 and the 6 GHz range starts at >= 5925, so center frequencies in the 5900 to 5924 MHz gap fall into neither band filter. This is intentional.
-- Source / basis: targets Wireshark display-filter (dfref) and libpcap/BPF capture-filter conventions, sourced from the Wireshark dfref, the RadioTap dfref, pcap-filter(7), and IEEE 802.11-2020.
+- The figures are still being confirmed with vendors, and a few may change before the final release.
+- Pricing is dated. The figures are as of July 2026; confirm current pricing with each vendor, because prices, bundles, and product names change often.
+- Cost figures are MODELED ESTIMATES assembled by WLAN Pros from vendor-supplied numbers and list pricing, not vendor-published quotes. Treat every dollar amount as a planning estimate, never a binding price.
+- This is NOT a ranking. There is no score and no "best". Tools are listed alphabetically and the same vendor can appear under more than one activity, because real toolkits are assembled across vendors. The set reflects vendors interviewed by WLAN Pros, not every tool that exists, so an omitted tool is not a snub.
+- No vendor logos or product photos appear here. Those are trademarks and copyrighted images that need each vendor's written permission, which is still being gathered. The reference is text and data only for now.
+- Fully offline: the comparison is bundled in the app and works with no connection.
+- Source: the Wi-Fi Design, Validation, Spectrum Analysis & Troubleshooting Tools V6 workbook (Keith Parsons, vendor-interviewed, last revised 2026-02-16).
 
-## Networking & Protocols (14)
+## Networking and IP (13)
 
 ### DHCP Options
 
@@ -2715,27 +2730,6 @@ The 7-layer OSI reference model: layer number, name, one-word function, PDU, exa
 - The function column is a neutral keyword (no custom mnemonic). Standard reference, not region-specific.
 - Data source / standard: ISO/IEC 7498-1:1994 plus standard IETF/IEEE protocol-to-layer mappings.
 
-### Packet Decode
-
-A byte-level Layer 3-4 reference for the headers a capture shows beneath 802.11: IPv4, IPv6, TCP, UDP, and ICMP, each as a field / bit-offset / bit-length / meaning table. Adds the TCP control bits, the TCP connection states with the three-way handshake and teardown, a common IP-protocol-numbers table, and the ICMP and ICMPv6 type and code tables.
-
-**Why it's here.** You have a packet open in Wireshark and need to confirm which field sits at which offset, what a TCP flag combination means, or what an ICMP type and code is telling you, without leaving the app or going online. This is the companion to the Wireshark filters above: those surface the frame, this decodes the bytes inside it.
-
-**How to use**
-1. Scroll to the header you are decoding. Each table lists the field, its bit offset (counted from bit 0, the first / most-significant bit), its bit length, and a plain-language meaning; variable-length fields (Options, padding, payload) read "variable".
-2. The IPv4 Type-of-Service octet is shown the modern way, DSCP (6 bits) plus ECN (2 bits); the legacy RFC 791 precedence reading is footnoted, not led with.
-3. The IPv4 Protocol and IPv6 Next Header fields point at the IP-protocol-numbers table sitting between the two IP headers. For TCP and UDP port numbers, use the Well-Known Ports reference instead.
-4. Copy any table from the toolbar as tab-separated text, one section per header.
-
-**Example.** Tables as shipped. IPv4 header (field, bit offset, bit length): Version (0, 4), IHL (4, 4), ToS / DiffServ (8, 8), Total Length (16, 16), Identification (32, 16), Flags (48, 3), Fragment Offset (51, 13), Time to Live (64, 8), Protocol (72, 8), Header Checksum (80, 16), Source Address (96, 32), Destination Address (128, 32), Options (160, variable), Padding (variable). IPv6 header: a fixed 320 bits (40 octets) with no header checksum and no in-header fragmentation. TCP control bits (bits 104-111, MSB to LSB): CWR, ECE, URG, ACK, PSH, RST, SYN, FIN. TCP connection states: CLOSED, LISTEN, SYN-SENT, SYN-RECEIVED, ESTABLISHED, FIN-WAIT-1, FIN-WAIT-2, CLOSE-WAIT, CLOSING, LAST-ACK, TIME-WAIT. Common IP protocol numbers: 1 = ICMP, 6 = TCP, 17 = UDP, 47 = GRE, 50 = ESP, 51 = AH, 58 = ICMPv6, 88 = EIGRP, 89 = OSPF, 132 = SCTP. ICMP types: 0 Echo Reply, 3 Destination Unreachable (16-code table, 0-15), 4 Source Quench (deprecated), 5 Redirect, 8 Echo Request, 11 Time Exceeded, 12 Parameter Problem, 13 Timestamp, 14 Timestamp Reply. ICMPv6: error types 1-4, Echo Request / Reply 128 / 129, and Neighbor Discovery 133-137 (Router and Neighbor Solicitation and Advertisement, plus Redirect).
-
-**Field notes**
-- Bit offsets count from bit 0 of each header (bit 0 = first / most-significant bit); bit lengths are exact, never approximate.
-- The TCP flags table uses RFC 9293's canonical layout: a 4-bit reserved field plus 8 control bits (CWR through FIN). The bit at position 103 that Wireshark still labels NS is Reserved in RFC 9293. It was NS (Nonce Sum, RFC 3540), which RFC 8311 made Historic, and RFC 9768 reassigns it as AE (Accurate ECN). It ships flagged historic in text, not as a current flag.
-- ICMP type 4 (Source Quench) is kept in the table but marked deprecated per RFC 6633.
-- Ports are not duplicated here; the app already ships a Well-Known Ports reference.
-- Source / basis: every field offset, width, flag, state, type, and code is transcribed from the primary RFC or IANA registry and cited per table: IPv4 (RFC 791, DSCP / ECN per RFC 2474 and RFC 3168), IPv6 (RFC 8200), TCP (RFC 9293), UDP (RFC 768), ICMP (RFC 792 plus the IANA ICMP Parameters registry), and ICMPv6 (RFC 4443, NDP per RFC 4861). Nothing is invented or approximated.
-
 ### PLMN ID Reference
 
 An offline, searchable, grouped lookup of US Public Land Mobile Network identifiers. Each row pairs a carrier or operator with its MCC, MNC, full PLMN ID, and operational status, covering MCCs 310-316 (US mainland plus Puerto Rico, Guam, the US Virgin Islands, and American Samoa).
@@ -2819,7 +2813,7 @@ Searchable, offline reference of 89 curated TCP/UDP ports a network or Wi-Fi pro
 - This is a curated subset of the IANA Service Name and Transport Protocol Port Number Registry, trimmed to field-relevant ports, not the full ~49,000-entry registry. Absence means "not in our curated set," which the screen states plainly rather than inventing a row.
 - Fully offline: the table is a bundled asset loaded and indexed once at startup; numeric lookups are instant via a port index. Works on every platform.
 
-## Cabling, Connectors & Hardware (12)
+## Cabling and Connectors (8)
 
 ### Antenna Connectors
 
@@ -2948,6 +2942,63 @@ The APC ferrule is polished to an 8 degree angle that reflects back-reflection i
 
 _Sources: TIA-598-D, IEC 61754 (FOA, Cisco, Fluke corroboration)._
 
+### Optical Transceivers
+
+Searchable, offline reference of 35 optical Ethernet transceiver variants (1G to 400G) grouped by speed tier, plus the 9-row SFP-to-OSFP form-factor ladder. Each variant lists its designation, data rate, reach, fiber type, wavelength, and connector, with reach as the lead, trust-first column.
+
+**Why it's here.** Picking an optic, the field's first question is "which module, and how far will it go on this fiber?" This answers it without leaving the app or going online, and keeps the IEEE-vs-vendor line visible so you never quote a vendor reach as a standard guarantee.
+
+**How to use**
+1. Browse by speed tier. The commonly-ordered tiers (10G / 25G / 100G) surface first and are flagged "Commonly ordered"; 1G / 40G / 200G / 400G follow.
+2. Search by designation (e.g. LR4), reach, fiber (SMF / MMF / OM4), wavelength (e.g. 850 nm), connector (LC / MPO), or tier (e.g. 100G). The match is a case-insensitive substring across all of those, and it narrows the tiers in place.
+3. Read the REACH line first: it is the IEEE maximum on the listed fiber. The fiber type (MMF / SMF) and connector (LC / MPO) give the physical-layer specifics at a glance.
+4. A query that matches nothing shows an honest "No match" card; it never fabricates a module. The form-factor table is always available below the variants.
+
+**Field notes**
+- IEEE vs VENDOR: variants standardized in IEEE 802.3 carry a neutral IEEE label. Vendor / coherent variants (1000BASE-EX, 1000BASE-ZX, 10GBASE-ZR, and 400GBASE-ZR) carry a VENDOR label and a "loss-budget dependent" caveat. Their reach is real and widely sold but NOT an IEEE guarantee: it depends on the link's loss budget. Never quote a vendor reach as a standard figure.
+- 400GBASE-ZR is coherent DWDM (OIF 400ZR), beyond base IEEE 802.3: a metro / data-center-interconnect optic, not a base Ethernet PHY. Its 80-120 km reach is loss-budget and DWDM-line-system dependent.
+- Reach figures are IEEE-standard maximums on the listed fiber; real vendor modules may differ. Multimode reach is grade-dependent (OM3 vs OM4 vs OM5), so those rows give per-grade numbers rather than one figure.
+- What it contains: 35 verified variants spanning 1G to 400G across SFP, SFP+, SFP28, QSFP+, QSFP28, QSFP56, and QSFP-DD / OSFP, plus a 9-row form-factor ladder (max rate, lane count, typical power envelope). Power figures are typical vendor ranges, not a single standard: treat as guidance.
+- Fully offline: the reference is bundled in the app and works with no connection.
+- Verified against IEEE 802.3 standards tables and Cisco / FS.com vendor datasheets. Out-of-scope bleeding edge (800G / 1.6T, CPO / LPO, SFP-DD) was deliberately excluded as not yet stable or field-relevant.
+
+### RJ Connectors
+
+A reference to the registered-jack connector form factors (RJ9/RJ22, RJ11, RJ14, RJ25, RJ45/8P8C, RJ48, RJ48C, RJ48X): positions, conductors, the modular body each uses, and its typical use. This is about the connector body, not the wiring.
+
+**Why it's here.** In the field you meet the same modular bodies for very different jobs: RJ11 carries one phone line, RJ45 (8P8C) carries Ethernet, and RJ48 reuses the 8P8C body for T1/E1 with a different pin assignment. Telling them apart keeps you from cabling the wrong jack.
+
+**How to use**
+1. Read each connector card: the name, its modular notation (e.g. 8P8C), positions, conductors, and typical use.
+2. For T568A / T568B pin-to-pair-color wiring on the RJ45 (8P8C) connector, see the Ethernet Cable & Connector tool.
+
+**Field notes**
+- Accuracy: "RJ45" is the colloquial name for the 8-position 8-conductor (8P8C) modular connector used for Ethernet. Strictly, RJ45 was a telephone wiring standard; the data connector is properly the 8P8C modular jack.
+- The PnCm notation means an n-position body with m conductors populated, e.g. 4P4C is the RJ9/RJ22 handset coil-cord body, 6P2C is a 6-position body with 2 conductors (RJ11), 8P8C is fully populated (RJ45/RJ48).
+- This table does NOT duplicate the T568A/T568B pin colors: that wiring lives in the Ethernet Cable & Connector tool.
+- Data source / standard: the registered-jack (USOC) interface standards and the modular-connector form-factor conventions.
+
+### Structured Cabling
+
+The TIA and BICSI structured-cabling standards that decide where an AP can go and what feeds it: the TIA-568 family, the 90 m permanent link plus 10 m of cords for a 100 m channel, the cable-category ladder (Cat 5e through Cat 8), and the MDF-IDF topology that ties AP locations to telecom rooms.
+
+**Why it's here.** The 90 m rule and the Cat 6A bar shape real WLAN decisions: they set the outer edge of where you can place an AP and what uplink it can carry, which quietly drives IDF placement, switch selection, and the whole coverage plan. The physical grounding-as-safety side lives in the NEC codes reference; this is the TIA and BICSI infrastructure side.
+
+**How to use**
+1. Use the TIA family to know who owns what: 568 is cabling, 569 pathways and spaces, 606 labeling and administration, 607 telecom bonding and grounding.
+2. Apply the 90 plus 10 m channel rule as an AP-cable-run reality check: an AP more than about 90 m of cable-path from the IDF needs an intermediate closet, a different topology, or fiber.
+3. Read the cable-category table for the multi-gig bar: Cat 6A carries 10 Gbps to 100 m and is the practical minimum for Wi-Fi 6, 6E, and 7 APs with multi-gig uplinks.
+4. Coordinate with the RCDD (BICSI's cabling-design credential) whose 90 m constraint ties AP locations to IDF locations.
+
+**Field notes**
+- The 90 m permanent link is solid horizontal cable from the telecom room to the outlet; add up to 10 m of stranded patch and equipment cords for a 100 m channel maximum. Exceed it and you are outside TIA.
+- T568A and T568B are the two pin-out standards; a jack is wired to one, so be consistent end to end.
+- AP count and placement drive IDF count and PoE-switch port budgeting, so the WLAN design and the cabling design have to talk to each other.
+- Reference only. Confirm cabling design and standards currency with the RCDD, the architect of record, and your contract for the specific project.
+- Data source: standards per ANSI/TIA-568/569/606/607 and BICSI; confirm the current edition.
+
+## AP and Rack Hardware (5)
+
 ### LED Decoder
 
 An interactive cross-vendor decoder for an access point's status LED. Pick the vendor, pick the model line when the vendor forks (Cisco Catalyst vs Meraki, Aruba Campus vs Instant On, Extreme IQ Engine vs WiNG), then read that line's own color-and-blink state table: booting, needs adoption, healthy, upgrading, fault, locate, and factory reset. Each state carries a literal colored indicator, a green, amber, red, blue, white, purple, or magenta dot, solid or gently flashing, beside the verbatim signal text. A master cross-vendor comparison chart rides at the top of the vendor picker with the whole color matrix on one plate.
@@ -2969,26 +3020,6 @@ An interactive cross-vendor decoder for an access point's status LED. Pick the v
 - LED behavior can change with a firmware or dashboard release on cloud-managed lines. Reference only; confirm on the vendor's own documentation.
 - Data source: per-line vendor docs, cited on the lines that have a published source (the Cisco Catalyst Getting Started Guides, the Meraki MR46 Installation Guide, the Aruba AP-635 and AP22 installation guides, the Extreme Networks documentation portal, help.ui.com, and Ruckus KB 000001629). A few lines carry a descriptive read rather than a formal per-line citation, notably the consumer-mesh lines (Orbi, Eero) and Juniper Mist.
 
-### Optical Transceivers
-
-Searchable, offline reference of 35 optical Ethernet transceiver variants (1G to 400G) grouped by speed tier, plus the 9-row SFP-to-OSFP form-factor ladder. Each variant lists its designation, data rate, reach, fiber type, wavelength, and connector, with reach as the lead, trust-first column.
-
-**Why it's here.** Picking an optic, the field's first question is "which module, and how far will it go on this fiber?" This answers it without leaving the app or going online, and keeps the IEEE-vs-vendor line visible so you never quote a vendor reach as a standard guarantee.
-
-**How to use**
-1. Browse by speed tier. The commonly-ordered tiers (10G / 25G / 100G) surface first and are flagged "Commonly ordered"; 1G / 40G / 200G / 400G follow.
-2. Search by designation (e.g. LR4), reach, fiber (SMF / MMF / OM4), wavelength (e.g. 850 nm), connector (LC / MPO), or tier (e.g. 100G). The match is a case-insensitive substring across all of those, and it narrows the tiers in place.
-3. Read the REACH line first: it is the IEEE maximum on the listed fiber. The fiber type (MMF / SMF) and connector (LC / MPO) give the physical-layer specifics at a glance.
-4. A query that matches nothing shows an honest "No match" card; it never fabricates a module. The form-factor table is always available below the variants.
-
-**Field notes**
-- IEEE vs VENDOR: variants standardized in IEEE 802.3 carry a neutral IEEE label. Vendor / coherent variants (1000BASE-EX, 1000BASE-ZX, 10GBASE-ZR, and 400GBASE-ZR) carry a VENDOR label and a "loss-budget dependent" caveat. Their reach is real and widely sold but NOT an IEEE guarantee: it depends on the link's loss budget. Never quote a vendor reach as a standard figure.
-- 400GBASE-ZR is coherent DWDM (OIF 400ZR), beyond base IEEE 802.3: a metro / data-center-interconnect optic, not a base Ethernet PHY. Its 80-120 km reach is loss-budget and DWDM-line-system dependent.
-- Reach figures are IEEE-standard maximums on the listed fiber; real vendor modules may differ. Multimode reach is grade-dependent (OM3 vs OM4 vs OM5), so those rows give per-grade numbers rather than one figure.
-- What it contains: 35 verified variants spanning 1G to 400G across SFP, SFP+, SFP28, QSFP+, QSFP28, QSFP56, and QSFP-DD / OSFP, plus a 9-row form-factor ladder (max rate, lane count, typical power envelope). Power figures are typical vendor ranges, not a single standard: treat as guidance.
-- Fully offline: the reference is bundled in the app and works with no connection.
-- Verified against IEEE 802.3 standards tables and Cisco / FS.com vendor datasheets. Out-of-scope bleeding edge (800G / 1.6T, CPO / LPO, SFP-DD) was deliberately excluded as not yet stable or field-relevant.
-
 ### Rack Units
 
 Rack dimensions and mounting hardware: U-to-inches-to-mm conversions, the EIA-310 hole pattern, and 10-32 vs 12-24 vs M6 thread compatibility.
@@ -3004,22 +3035,6 @@ Rack dimensions and mounting hardware: U-to-inches-to-mm conversions, the EIA-31
 **Field notes**
 - Many racks ship as bare square holes and need cage nuts; few come tapped.
 - Vendor thread guides such as Dell's or HP's are a convention, not a rule.
-
-### RJ Connectors
-
-A reference to the registered-jack connector form factors (RJ9/RJ22, RJ11, RJ14, RJ25, RJ45/8P8C, RJ48, RJ48C, RJ48X): positions, conductors, the modular body each uses, and its typical use. This is about the connector body, not the wiring.
-
-**Why it's here.** In the field you meet the same modular bodies for very different jobs: RJ11 carries one phone line, RJ45 (8P8C) carries Ethernet, and RJ48 reuses the 8P8C body for T1/E1 with a different pin assignment. Telling them apart keeps you from cabling the wrong jack.
-
-**How to use**
-1. Read each connector card: the name, its modular notation (e.g. 8P8C), positions, conductors, and typical use.
-2. For T568A / T568B pin-to-pair-color wiring on the RJ45 (8P8C) connector, see the Ethernet Cable & Connector tool.
-
-**Field notes**
-- Accuracy: "RJ45" is the colloquial name for the 8-position 8-conductor (8P8C) modular connector used for Ethernet. Strictly, RJ45 was a telephone wiring standard; the data connector is properly the 8P8C modular jack.
-- The PnCm notation means an n-position body with m conductors populated, e.g. 4P4C is the RJ9/RJ22 handset coil-cord body, 6P2C is a 6-position body with 2 conductors (RJ11), 8P8C is fully populated (RJ45/RJ48).
-- This table does NOT duplicate the T568A/T568B pin colors: that wiring lives in the Ethernet Cable & Connector tool.
-- Data source / standard: the registered-jack (USOC) interface standards and the modular-connector form-factor conventions.
 
 ### Screw Drives
 
@@ -3078,7 +3093,7 @@ A per-vendor reference for reading an enterprise AP model number. Pick the vendo
 - Reference only. A decode is a heuristic; confirm against the exact model's datasheet or ordering guide before you spec, order, or troubleshoot on it.
 - Data source: per-vendor field reference compiled by Keith Parsons / WLAN Pros; sources include the Cisco Catalyst 9130AX datasheet and Getting Started Guide, the Aruba 310 Series datasheet, UniFi Tech Specs, the Ruckus product guide, and Extreme Networks product pages.
 
-## Power & Cooling (7)
+## Power, PoE and Cooling (7)
 
 ### Batteries
 
@@ -3214,7 +3229,7 @@ Reference for the three power topologies a field tech meets in IT spaces: US sin
 - Written "Access Point" not "router". Nominal voltages per NEC Article 100/210.
 - Data source: NEC Article 100/210, split-phase and three-phase electrical-engineering references, and the line-to-line = square root of 3 times line-to-neutral relationship.
 
-## Codes, Safety & Compliance (8)
+## Regulatory and Compliance (5)
 
 ### Cloud Tool Trust
 
@@ -3253,6 +3268,62 @@ The portable IDs and licenses a WLAN pro carries from job to job, and the lead-t
 - CAC versus DBIDS is the military-base question: the CAC needs a sponsor and an investigation that can run many months, while DBIDS is the lighter get-on-base path.
 - Reference only. The issuing authority sets and grants every credential; the Toolbox certifies nothing and clears no one.
 - Data source: FCC license scope per Parts 15, 97, and 101; credential detail per TSA, USCG, DoD, and OSHA 29 CFR 1910.120(e).
+
+### NEC Gotchas
+
+A recognize-and-defer reference for the six NEC articles that actually bite a WLAN installer: elevator hoistways (620), plenum air spaces (300.22), PoE bundle heat (725.144), antenna and mast grounding (810), firestopping fire-rated assemblies (300.21), and abandoned cable (800.25). The Article 800 communications-cable rating ladder is deliberately held out of the six and shown as a separate "Supporting reference" band (which jacket fire-rating goes where), not counted as a peer article.
+
+**Why it's here.** These are the code articles most likely to surface on an everyday install. Recognizing each one on site, then handing it to the AHJ, a licensed electrician, or the equipment listing, keeps you out of trouble. Recognize-and-defer, never how-to-comply.
+
+**How to use**
+1. Use it to recognize a code issue on site: the hoistway you cannot put an AP in, the plenum that dictates your cable jacket, the PoE bundle that can overheat, the antenna that needs grounding, the fire wall you must not breach, and the dead cable you must pull.
+2. Read the cable-rating ladder as a jacket fire-rating only (CMP plenum, CMR riser, CM/CMG general, CMX limited); substitution runs downhill only.
+3. On the two STOP items (PoE ampacity, firestop assembly), do not eyeball a number or pick an assembly yourself; hand it to the licensed electrician or the listed system.
+4. Then defer to the right authority for the actual requirement.
+
+**Field notes**
+- STOP on PoE bundle heat (725.144): the exact ampacity and bundle-count numbers come from the code table and the specific install conditions. Do not eyeball them. Size the bundle with a licensed electrician or the cabling designer against the adopted NEC.
+- STOP on firestopping (300.21): the approved firestop is a specific listed assembly matched to the wall type, penetrant, and opening. Never improvise it and never pick the assembly yourself.
+- Grounding (810) caveat: nothing survives a direct strike. Bonding and surge protection mitigate nearby strikes and static, not a direct hit. Conductor sizing is an electrician's call.
+- This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician.
+- Data source: article numbers per the NEC (NFPA 70); confirm against the locally adopted edition.
+
+### Network in Scope
+
+The regulatory frameworks that reach the WLAN itself: PCI DSS (cardholder data), HIPAA (electronic health information), SOX (public-company financial systems), and GDPR (EU personal data). Each entry names the trigger, what the framework generally asks of the network, and the owner to route the specifics to.
+
+**Why it's here.** When the Wi-Fi carries cardholder data, ePHI, or sits inside a public company's financial systems, the design inherits requirements long before anyone audits it. Recognizing the scope lets you quote honestly and design toward the requirement instead of retrofitting after the auditor shows up.
+
+**How to use**
+1. Recognize the trigger: card-present retail and hospitality (PCI), covered entities and business associates (HIPAA), US public companies (SOX), EU personal data on the network (GDPR).
+2. Read the general asks: segmentation and strong crypto for PCI, the section 164.312 technical safeguards for HIPAA, access and change controls for SOX.
+3. Route the specifics to the owner: the QSA for PCI, the privacy or security officer for HIPAA and GDPR, internal audit and the external auditor for SOX.
+4. Never tell a client the design "meets PCI" or "is HIPAA compliant"; you recognize the framework, and the assessor rules on it.
+
+**Field notes**
+- PCI DSS v4.0.1 makes WPA2-PSK inadequate for the Cardholder Data Environment; WEP and WPA/TKIP are prohibited, and quarterly rogue-AP scanning is required even at a site with no Wi-Fi at all.
+- HIPAA encryption is currently "addressable," meaning you implement it or document a defensible reason not to; a January 2025 proposed rule would make it mandatory.
+- SOX is the narrowest fit: the network shows up as the access-and-change-control substrate under the financial systems, which is why an AP config change can suddenly need a ticket and an approver.
+- Reference only. Whether a network is in scope, and whether a design is sufficient, is determined by the client's compliance officer and a qualified auditor, not by this tool.
+- Data source: framework requirements per PCI DSS v4.0.1, HIPAA 45 CFR 164.312, SOX Section 404, and the EU GDPR.
+
+### Regulatory Domains
+
+The radio regulator that governs Wi-Fi in each market: name, official website, governing docs, and 2.4/5/6 GHz band and power notes for 43 jurisdictions, as a dated snapshot.
+
+**Why it's here.** Working a market you do not know? Find its regulator, the governing rule, and a starting band and power note, then confirm against the official site.
+
+**How to use**
+1. Search by jurisdiction or regulator abbreviation. Shared abbreviations (NCC, TRA, CRA) carry the jurisdiction so they stay unambiguous.
+2. The page leads with a snapshot date: the band and power notes are a dated snapshot, not settled constants.
+3. Tap a regulator's website to confirm any value against the current rule text before relying on it.
+
+**Field notes**
+- What it shows: a per-jurisdiction directory of 43 jurisdictions, each with its regulator (name, abbreviation, logo), the governing regulation, official website, and a 2.4/5/6 GHz bands note. The structural rules (band edges, DFS/TPC, which power classes exist) are high confidence; the exact dBm figures are a dated snapshot to verify against the regulator.
+- Regulatory-volatility caveat: the screen leads with a persistent snapshot banner ("Snapshot verified <date>. Regulations change; confirm against the regulator before relying on a value."). The band and power figures (the 6 GHz dBm values especially) are a dated snapshot, never a settled constant: verify before deploying or certifying.
+- Provenance: the entries are compiled and cross-checked from official regulator documents and vendor regulatory white papers, current as of the on-screen snapshot date. Offline, read-only.
+
+## Site Safety and Access (4)
 
 ### Enclosure Ratings
 
@@ -3293,44 +3364,6 @@ A recognize-and-defer reference for classified (hazardous) areas: the NEC Class 
 - This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician.
 - Data source: Class/Division per NEC Article 500; Zone per NEC 505/506, ATEX, and IECEx.
 
-### NEC Gotchas
-
-A recognize-and-defer reference for the six NEC articles that actually bite a WLAN installer: elevator hoistways (620), plenum air spaces (300.22), PoE bundle heat (725.144), antenna and mast grounding (810), firestopping fire-rated assemblies (300.21), and abandoned cable (800.25). The Article 800 communications-cable rating ladder is deliberately held out of the six and shown as a separate "Supporting reference" band (which jacket fire-rating goes where), not counted as a peer article.
-
-**Why it's here.** These are the code articles most likely to surface on an everyday install. Recognizing each one on site, then handing it to the AHJ, a licensed electrician, or the equipment listing, keeps you out of trouble. Recognize-and-defer, never how-to-comply.
-
-**How to use**
-1. Use it to recognize a code issue on site: the hoistway you cannot put an AP in, the plenum that dictates your cable jacket, the PoE bundle that can overheat, the antenna that needs grounding, the fire wall you must not breach, and the dead cable you must pull.
-2. Read the cable-rating ladder as a jacket fire-rating only (CMP plenum, CMR riser, CM/CMG general, CMX limited); substitution runs downhill only.
-3. On the two STOP items (PoE ampacity, firestop assembly), do not eyeball a number or pick an assembly yourself; hand it to the licensed electrician or the listed system.
-4. Then defer to the right authority for the actual requirement.
-
-**Field notes**
-- STOP on PoE bundle heat (725.144): the exact ampacity and bundle-count numbers come from the code table and the specific install conditions. Do not eyeball them. Size the bundle with a licensed electrician or the cabling designer against the adopted NEC.
-- STOP on firestopping (300.21): the approved firestop is a specific listed assembly matched to the wall type, penetrant, and opening. Never improvise it and never pick the assembly yourself.
-- Grounding (810) caveat: nothing survives a direct strike. Bonding and surge protection mitigate nearby strikes and static, not a direct hit. Conductor sizing is an electrician's call.
-- This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician.
-- Data source: article numbers per the NEC (NFPA 70); confirm against the locally adopted edition.
-
-### Network in Scope
-
-The regulatory frameworks that reach the WLAN itself: PCI DSS (cardholder data), HIPAA (electronic health information), SOX (public-company financial systems), and GDPR (EU personal data). Each entry names the trigger, what the framework generally asks of the network, and the owner to route the specifics to.
-
-**Why it's here.** When the Wi-Fi carries cardholder data, ePHI, or sits inside a public company's financial systems, the design inherits requirements long before anyone audits it. Recognizing the scope lets you quote honestly and design toward the requirement instead of retrofitting after the auditor shows up.
-
-**How to use**
-1. Recognize the trigger: card-present retail and hospitality (PCI), covered entities and business associates (HIPAA), US public companies (SOX), EU personal data on the network (GDPR).
-2. Read the general asks: segmentation and strong crypto for PCI, the section 164.312 technical safeguards for HIPAA, access and change controls for SOX.
-3. Route the specifics to the owner: the QSA for PCI, the privacy or security officer for HIPAA and GDPR, internal audit and the external auditor for SOX.
-4. Never tell a client the design "meets PCI" or "is HIPAA compliant"; you recognize the framework, and the assessor rules on it.
-
-**Field notes**
-- PCI DSS v4.0.1 makes WPA2-PSK inadequate for the Cardholder Data Environment; WEP and WPA/TKIP are prohibited, and quarterly rogue-AP scanning is required even at a site with no Wi-Fi at all.
-- HIPAA encryption is currently "addressable," meaning you implement it or document a defensible reason not to; a January 2025 proposed rule would make it mandatory.
-- SOX is the narrowest fit: the network shows up as the access-and-change-control substrate under the financial systems, which is why an AP config change can suddenly need a ticket and an approver.
-- Reference only. Whether a network is in scope, and whether a design is sufficient, is determined by the client's compliance officer and a qualified auditor, not by this tool.
-- Data source: framework requirements per PCI DSS v4.0.1, HIPAA 45 CFR 164.312, SOX Section 404, and the EU GDPR.
-
 ### Safety Basics
 
 A field-awareness reference for the personal protective equipment a general contractor expects before badging you onto an active site, a short note on ESD (protecting the electronics you install, not the person), and the recognize-and-STOP hazards you must hand off rather than work.
@@ -3368,7 +3401,7 @@ A "Know Before You Go" checklist: eight site types (aerial and man-lifts, rail, 
 - There is no OSHA-issued "lift license"; the employer trains and certifies lift operators, and GCs demand documented proof.
 - This is a field reference, not code or design guidance. The site, general contractor, and authority set every requirement; the Toolbox certifies nothing and clears no one.
 
-## Buildings & Verticals (8)
+## Buildings and Verticals (7)
 
 ### AEC Process & Glossary
 
@@ -3465,25 +3498,6 @@ A reference for reading an architectural drawing set: how a sheet number is buil
 - Reference only. Confirm drawing conventions, revisions, and responsibility with the architect of record and your contract for the specific project.
 - Data source: conventions per the US National CAD Standard; sheet-numbering practice varies on smaller jobs.
 
-### Structured Cabling
-
-The TIA and BICSI structured-cabling standards that decide where an AP can go and what feeds it: the TIA-568 family, the 90 m permanent link plus 10 m of cords for a 100 m channel, the cable-category ladder (Cat 5e through Cat 8), and the MDF-IDF topology that ties AP locations to telecom rooms.
-
-**Why it's here.** The 90 m rule and the Cat 6A bar shape real WLAN decisions: they set the outer edge of where you can place an AP and what uplink it can carry, which quietly drives IDF placement, switch selection, and the whole coverage plan. The physical grounding-as-safety side lives in the NEC codes reference; this is the TIA and BICSI infrastructure side.
-
-**How to use**
-1. Use the TIA family to know who owns what: 568 is cabling, 569 pathways and spaces, 606 labeling and administration, 607 telecom bonding and grounding.
-2. Apply the 90 plus 10 m channel rule as an AP-cable-run reality check: an AP more than about 90 m of cable-path from the IDF needs an intermediate closet, a different topology, or fiber.
-3. Read the cable-category table for the multi-gig bar: Cat 6A carries 10 Gbps to 100 m and is the practical minimum for Wi-Fi 6, 6E, and 7 APs with multi-gig uplinks.
-4. Coordinate with the RCDD (BICSI's cabling-design credential) whose 90 m constraint ties AP locations to IDF locations.
-
-**Field notes**
-- The 90 m permanent link is solid horizontal cable from the telecom room to the outlet; add up to 10 m of stranded patch and equipment cords for a 100 m channel maximum. Exceed it and you are outside TIA.
-- T568A and T568B are the two pin-out standards; a jack is wired to one, so be consistent end to end.
-- AP count and placement drive IDF count and PoE-switch port budgeting, so the WLAN design and the cabling design have to talk to each other.
-- Reference only. Confirm cabling design and standards currency with the RCDD, the architect of record, and your contract for the specific project.
-- Data source: standards per ANSI/TIA-568/569/606/607 and BICSI; confirm the current edition.
-
 ### Telecom Spaces
 
 A decoder for the telecom room names that get used interchangeably and are not interchangeable: Entrance Facility, Equipment Room, Telecommunications Room (the current TIA-569 term), MDF and IDF (legacy distribution-frame terms the field still uses), and "data closet" (slang), plus the hierarchical-star topology that ties them together.
@@ -3522,9 +3536,10 @@ A plain-language index of the industries you quote and what each one tends to tr
 - This is a field reference, not code, design, or compliance guidance; confirm every requirement with the client, the AHJ, and the relevant assessor.
 - Data source: this entry is the index that points at the other Field & Trade Reference entries.
 
-## Ham Radio (6)
 
 The band-dependent amateur-radio references, grouped so all the ham material is findable in one place. Every numeric value traces to FCC Part 97 (eCFR Title 47), the FCC Online Table of Frequency Allocations, ARRL, or NCVEC, current as of June 2026, with the corrected figures used throughout: never an older chart. The pure-math ham tools (Antenna Length, Maidenhead Grid) live under Calculators & Tools → Ham Radio.
+
+## Ham Radio (6)
 
 ### Band Names & Wavelengths
 
@@ -3630,7 +3645,7 @@ The US amateur bands from HF to SHF, by license class: each band's frequency ran
 - Data source: FCC Part 97, the FCC frequency-allocation table, ARRL, and NCVEC. The Toolbox renders its own band plan from FCC data rather than reproducing ARRL's copyrighted chart.
 - ASCII hyphen-minus throughout for ranges; a privilege absence reads as a sentence ("No Technician privileges"), never a bare dash. Offline, read-only.
 
-## Encoding & Formats (8)
+## Encoding and Formats (8)
 
 ### ASCII / Hex / Binary
 
@@ -3754,7 +3769,7 @@ The 30 most-used emoji, ranked 1 to 30, with the official Unicode CLDR name and 
 - The literal/codepoint fields are intentionally omitted. The glyph renders via the platform color-emoji font (Apple Color Emoji on iOS/macOS).
 - Data source / standard: Unicode CLDR for the names; ranking is messaging-weighted (private-messaging keyboard frequency, not social-listening-weighted).
 
-## Travel & International (4)
+## Travel and International (4)
 
 ### Date / Time Standards
 

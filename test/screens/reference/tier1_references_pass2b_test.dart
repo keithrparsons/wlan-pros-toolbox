@@ -188,14 +188,14 @@ void main() {
     const Map<String, String> subgroupById = <String, String>{
       // Subgroups renamed 2026-09-16 by the Quick Reference reorg (19 -> 13).
       // The tools did not move; the sections they sit in were renamed or split.
-      'keyboard-shortcuts': 'Encoding & Formats',
-      'time-zone-maps': 'Travel & International',
-      'phonetic-alphabet': 'Encoding & Formats',
-      'diffie-hellman': 'Security & Auth',
+      'keyboard-shortcuts': 'Encoding and Formats',
+      'time-zone-maps': 'Travel and International',
+      'phonetic-alphabet': 'Encoding and Formats',
+      'diffie-hellman': 'Security and Authentication',
       // Integration batch (2026-06-12): RF Bands + Wi-Fi HaLow, both now under
       // Radio & Spectrum, which is where the old Wi-Fi & RF spectrum half went.
-      'rf-bands': 'Radio & Spectrum',
-      'wifi-halow': 'Radio & Spectrum',
+      'rf-bands': 'Channels and Spectrum',
+      'wifi-halow': '802.11 Standards and Rates',
     };
 
     test(

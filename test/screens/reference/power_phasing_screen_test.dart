@@ -1,11 +1,11 @@
 // Tests for the Power Phasing reference screen — pilot page for the new
-// Power & Cooling category.
+// Power, PoE and Cooling category.
 //
 // Three layers:
 //   1. Data fidelity (GL-005): the typed const datasets match Pax's verified
 //      research brief (Topic 2) — the load-bearing 208-vs-240 facts a future
 //      edit must not silently drift, plus the no-em-dash / ASCII-glyph rules.
-//   2. Catalog + help registration: the catalog carries the new Power & Cooling
+//   2. Catalog + help registration: the catalog carries the new Power, PoE and Cooling
 //      category with a live power-phasing tool whose route is registered, and
 //      the help store has a matching power-phasing entry.
 //   3. Widget render: the read-only screen renders title + both tables across
@@ -125,7 +125,7 @@ void main() {
 
   group('catalog + router + help registration', () {
     test(
-        'Quick Reference / Power & Cooling subgroup carries the live '
+        'Quick Reference / Power, PoE and Cooling subgroup carries the live '
         'power-phasing tool', () {
       final ToolCategory cat = kToolCategories
           .firstWhere((ToolCategory c) => c.id == 'quick-reference');
@@ -133,7 +133,7 @@ void main() {
           cat.tools.firstWhere((ToolEntry t) => t.id == 'power-phasing');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/power-phasing');
-      expect(tool.subgroup, 'Power & Cooling');
+      expect(tool.subgroup, 'Power, PoE and Cooling');
     });
 
     test('power-phasing route resolves to a registered builder', () {

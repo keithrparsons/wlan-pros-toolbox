@@ -63,7 +63,7 @@ void main() {
       expect(entry.title, 'Wi-Fi Authentication Glossary');
       expect(entry.routeName, '/tools/wifi-auth-glossary');
       expect(entry.isLive, isTrue);
-      expect(entry.subgroup, 'Security & Auth');
+      expect(entry.subgroup, 'Security and Authentication');
 
       // It lives in the same category as the Wireless Glossary (Quick
       // Reference).

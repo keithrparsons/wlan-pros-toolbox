@@ -7097,6 +7097,26 @@
         }
       ]
     },
+    "quick-reference": {
+      "name": "Quick Reference",
+      "category": "Quick Reference",
+      "purpose": "The offline cheat sheets: more than 100 lookup tables, cards, cheat sheets and checklists, grouped by the job you are doing, with your Favorites and Recents at the top.",
+      "whyHere": "In the field you open the same few references over and over. Star the ones you use and they wait at the top in Favorites; the last ten you opened are in Recents, so getting back to a table takes one tap instead of a search.",
+      "howToUse": [
+        "Scroll the groups, tap a group chip to show just that group, or type in the search box to filter every item at once.",
+        "Tap the star at the right of any item to add it to Favorites. Tap it again to remove it. The Favorites group appears at the top once it holds at least one item.",
+        "Recents lists the last 10 items you opened from this screen, most recent first. Tap Clear beside the Recents heading to empty it.",
+        "Tap an item to open it."
+      ],
+      "inputs": [],
+      "algorithm": "Favorites and Recents are saved on this device only, using the platform's standard app storage (the browser's local storage on web and WLAN Pi web). Nothing is sent anywhere, and they do not sync between devices. Clearing the browser's site data or uninstalling the app clears them.",
+      "example": null,
+      "fieldNotes": [
+        "Opening the same item again moves it to the top of Recents rather than listing it twice.",
+        "An item stays in its own group when you star it; Favorites is a shortcut, not a move."
+      ],
+      "source": "Stored with the shared_preferences Flutter plugin (BSD-3-Clause), which uses NSUserDefaults on iOS and macOS, SharedPreferences on Android, and localStorage in a browser."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",

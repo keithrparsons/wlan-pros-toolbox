@@ -1,6 +1,6 @@
 // CategoryScreen — grouped listing for a single category.
 //
-// Quick Reference (37) and Calculators & Tools (24) render as ordered SECTIONS
+// Quick Reference and Calculators & Tools render as ordered SECTIONS
 // (section headers + per-section count chip) in ONE scroll (mockup 02), plus an
 // in-category search field that filters the rendered rows live and a row of
 // section filter chips (selected = lime §8.3, unselected = neutral §8.17).
@@ -9,6 +9,10 @@
 // stays on the orderedCategoryTools path via groupedCategoryTools).
 // NETWORKING TOOLS LEFT THIS LIST ON 2026-09-13 and is now grouped into five
 // sections; this comment named it as flat for one commit after it stopped being.
+//
+// Quick Reference also carries Favorites (a star on every row) and Recents (the
+// last 10 opened, with Clear), shown above the sections and stored on the
+// device by QuickReferencePrefs (Keith, 2026-11-01).
 //
 // Live tools route via Navigator.pushNamed (default in ToolRow). Non-live tools
 // render as a disabled "Coming soon" row.
@@ -22,11 +26,13 @@ import '../data/tool_search.dart';
 import '../data/tool_subgroups.dart';
 import '../router/app_router.dart';
 import '../services/network/wifi_details_bridge.dart';
+import '../services/quick_reference_prefs.dart';
 import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import '../widgets/section_header.dart';
+import '../widgets/tool_help_footer.dart';
 import '../widgets/tool_row.dart';
 import 'tools/network/install_shortcut_sheet.dart';
 import 'tools/network/live_setup_card.dart';
@@ -73,8 +79,29 @@ class _CategoryScreenState extends State<CategoryScreen> {
   /// Whether this category renders as grouped sections (has a subgroup order).
   bool get _grouped => kCategorySubgroupOrder.containsKey(widget.category.id);
 
+  /// Favorites and Recents are a Quick Reference feature only.
+  bool get _quickRef => widget.category.id == 'quick-reference';
+
+  final QuickReferencePrefs _prefs = QuickReferencePrefs();
+
+  @override
+  void initState() {
+    super.initState();
+    if (_quickRef) {
+      _prefs.addListener(_onPrefsChanged);
+      _prefs.load();
+    }
+  }
+
+  void _onPrefsChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _prefs
+      ..removeListener(_onPrefsChanged)
+      ..dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -164,6 +191,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
     children.add(const SizedBox(height: AppSpacing.sm));
     children.addAll(_resultsChildren(text));
+    if (_quickRef) {
+      children
+        ..add(const SizedBox(height: AppSpacing.md))
+        ..add(const ToolHelpFooter(toolId: 'quick-reference'));
+    }
     return children;
   }
 
@@ -220,6 +252,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
       return out;
     }
 
+    if (_quickRef) out.addAll(_favoritesAndRecents());
+
     for (int i = 0; i < sections.length; i++) {
       final ToolSection s = sections[i];
       out.add(SectionHeader(title: s.header, count: s.count));
@@ -234,11 +268,56 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return out;
   }
 
+  /// The Favorites group (when not empty) then the Recents group (when not
+  /// empty, with a Clear button). Ids no longer in the category are skipped.
+  List<Widget> _favoritesAndRecents() {
+    final Map<String, ToolEntry> byId = <String, ToolEntry>{
+      for (final ToolEntry t in widget.category.tools) t.id: t,
+    };
+    List<ToolEntry> resolve(List<String> ids) => <ToolEntry>[
+      for (final String id in ids)
+        if (byId[id] != null) byId[id]!,
+    ];
+    final List<ToolEntry> favorites = resolve(_prefs.favorites);
+    final List<ToolEntry> recents = resolve(_prefs.recents);
+
+    final List<Widget> out = <Widget>[];
+    if (favorites.isNotEmpty) {
+      out
+        ..add(SectionHeader(title: 'Favorites', count: favorites.length))
+        ..add(const SizedBox(height: AppSpacing.xs))
+        ..addAll(_interleaveRows(favorites, keyPrefix: 'favorite-'));
+    }
+    if (recents.isNotEmpty) {
+      out
+        ..add(
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: SectionHeader(title: 'Recents', count: recents.length),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.md),
+                child: TextButton(
+                  key: const ValueKey<String>('clear-recents'),
+                  onPressed: _prefs.clearRecents,
+                  child: const Text('Clear'),
+                ),
+              ),
+            ],
+          ),
+        )
+        ..add(const SizedBox(height: AppSpacing.xs))
+        ..addAll(_interleaveRows(recents, keyPrefix: 'recent-'));
+    }
+    return out;
+  }
+
   /// Rows separated by sm gaps (the original ListView.separated spacing).
-  List<Widget> _interleaveRows(List<ToolEntry> tools) {
+  List<Widget> _interleaveRows(List<ToolEntry> tools, {String keyPrefix = ''}) {
     final List<Widget> out = <Widget>[];
     for (int i = 0; i < tools.length; i++) {
-      out.add(_row(tools[i]));
+      out.add(_row(tools[i], keyPrefix: keyPrefix));
       if (i < tools.length - 1) out.add(const SizedBox(height: AppSpacing.sm));
     }
     return out;
@@ -246,11 +325,38 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   /// A single tool row. Grouped categories show the neutral §8.17 content-type
   /// chip (mockup 02); flat categories keep the plain description row.
-  Widget _row(ToolEntry tool) {
-    return ToolRow(
-      key: ValueKey<String>(tool.id),
+  /// Quick Reference rows carry a Favorites star and record the open in
+  /// Recents. [keyPrefix] keeps the row key unique when a tool also shows in
+  /// the Favorites or Recents group.
+  Widget _row(ToolEntry tool, {String keyPrefix = ''}) {
+    final Widget row = ToolRow(
+      key: ValueKey<String>('$keyPrefix${tool.id}'),
       tool: tool,
       contentType: _grouped ? contentTypeFor(tool, widget.category.id) : null,
+      onTap: _quickRef
+          ? () {
+              _prefs.recordOpened(tool.id);
+              Navigator.of(context).pushNamed(tool.routeName);
+            }
+          : null,
+    );
+    if (!_quickRef) return row;
+
+    final bool starred = _prefs.isFavorite(tool.id);
+    return Row(
+      children: <Widget>[
+        Expanded(child: row),
+        IconButton(
+          key: ValueKey<String>('${keyPrefix}star-${tool.id}'),
+          tooltip: starred
+              ? 'Remove ${tool.title} from Favorites'
+              : 'Add ${tool.title} to Favorites',
+          isSelected: starred,
+          icon: Icon(Icons.star_border, color: context.colors.textTertiary),
+          selectedIcon: Icon(Icons.star, color: context.colors.textAccent),
+          onPressed: () => _prefs.toggleFavorite(tool.id),
+        ),
+      ],
     );
   }
 }
@@ -557,10 +663,9 @@ class _NoMatchState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             TextButton.icon(
-              onPressed: () => Navigator.of(context).pushNamed(
-                AppRouter.search,
-                arguments: query,
-              ),
+              onPressed: () => Navigator.of(
+                context,
+              ).pushNamed(AppRouter.search, arguments: query),
               icon: const Icon(Icons.search),
               label: const Text('Search all tools'),
             ),

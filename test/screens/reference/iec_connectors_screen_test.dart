@@ -1,5 +1,5 @@
 // Tests for the IEC Power Connectors reference screen — page 3 of the
-// Power & Cooling category.
+// Power, PoE and Cooling category.
 //
 // Three layers, mirroring power_phasing_screen_test:
 //   1. Data fidelity (GL-005): the typed const datasets match Pax's verified
@@ -9,7 +9,7 @@
 //      cord"; IEC 60309 red = 380-480V not a single 415V; plus the no-em-dash /
 //      ASCII-glyph rules.
 //   2. Catalog + help registration: the catalog carries the iec-connectors tool
-//      under Power & Cooling with a registered route, and the help store has a
+//      under Power, PoE and Cooling with a registered route, and the help store has a
 //      matching iec-connectors entry. (Larry wires these in at integration; the
 //      assertions document the contract.)
 //   3. Widget render: the read-only screen renders title + both tables across
@@ -153,7 +153,7 @@ void main() {
 
   group('catalog + router + help registration', () {
     test(
-        'Quick Reference / Power & Cooling subgroup carries the live '
+        'Quick Reference / Power, PoE and Cooling subgroup carries the live '
         'iec-connectors tool', () {
       final ToolCategory cat = kToolCategories
           .firstWhere((ToolCategory c) => c.id == 'quick-reference');
@@ -161,7 +161,7 @@ void main() {
           cat.tools.firstWhere((ToolEntry t) => t.id == 'iec-connectors');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/iec-connectors');
-      expect(tool.subgroup, 'Power & Cooling');
+      expect(tool.subgroup, 'Power, PoE and Cooling');
     });
 
     test('iec-connectors route resolves to a registered builder', () {

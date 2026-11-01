@@ -1,5 +1,5 @@
 // Tests for the Ohm's Law & Power Wheel reference screen — page 2 of the
-// Power & Cooling category. Mirrors power_phasing_screen_test.dart.
+// Power, PoE and Cooling category. Mirrors power_phasing_screen_test.dart.
 //
 // Three layers:
 //   1. Data fidelity (GL-005): the typed const datasets match Pax's verified
@@ -8,7 +8,7 @@
 //      power-factor caveat the brief flags. Plus the no-em-dash / ASCII-glyph
 //      rules and the cheat-sheet error guard (the page must NOT present
 //      P = V x I as universally giving watts in AC).
-//   2. Catalog + help registration: the Power & Cooling category carries a live
+//   2. Catalog + help registration: the Power, PoE and Cooling category carries a live
 //      ohms-law tool whose route is registered, and the help store has a
 //      matching ohms-law entry.
 //   3. Widget render: the read-only screen renders title + all three tables
@@ -152,7 +152,7 @@ void main() {
 
   group('catalog + router + help registration', () {
     test(
-        'Quick Reference / Power & Cooling subgroup carries the live '
+        'Quick Reference / Power, PoE and Cooling subgroup carries the live '
         'ohms-law tool', () {
       final ToolCategory cat = kToolCategories
           .firstWhere((ToolCategory c) => c.id == 'quick-reference');
@@ -160,7 +160,7 @@ void main() {
           cat.tools.firstWhere((ToolEntry t) => t.id == 'ohms-law');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/ohms-law');
-      expect(tool.subgroup, 'Power & Cooling');
+      expect(tool.subgroup, 'Power, PoE and Cooling');
     });
 
     test('ohms-law route resolves to a registered builder', () {

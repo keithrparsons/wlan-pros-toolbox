@@ -79,7 +79,7 @@ void main() {
       expect(entry.title, 'Wi-Fi Tools Comparison');
       expect(entry.routeName, '/tools/wifi-tools-comparison');
       expect(entry.isLive, isTrue);
-      expect(entry.subgroup, 'Clients & Field Wi-Fi');
+      expect(entry.subgroup, 'Field Checklists and CLI');
 
       final ToolCategory cat = kToolCategories.firstWhere(
         (ToolCategory c) =>
