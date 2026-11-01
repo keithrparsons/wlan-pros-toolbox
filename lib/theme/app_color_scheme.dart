@@ -112,7 +112,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   final Color primary;
 
   /// The dark text/icon that sits ON the lime [primary] fill. #1A1A1A in dark;
-  /// #30302F in light (§8.20.2, 8.9:1 on lime).
+  /// #30302F in light (§8.20.2, 7.05:1 on lime #A1CC3A, WCAG 2.x
+  /// relative luminance).
   final Color onPrimary;
 
   /// Hover companion fill for the primary button (darker lime).
@@ -197,8 +198,8 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       ), // 4.29:1 on disabledFill #ECEBEC (GL-003 §8.3, §8.20.1)
       // Foreground lime substitute — darkened lime, 4.8:1 white / 4.6:1 canvas.
       textAccent: Color(0xFF5A7A1C),
-      primary: Color(0xFFA2CC3A), // brand lime, FILL ONLY on light
-      onPrimary: Color(0xFF30302F), // 8.9:1 dark text on the lime fill
+      primary: Color(0xFFA1CC3A), // brand lime, FILL ONLY on light
+      onPrimary: Color(0xFF30302F), // 7.05:1 dark text on the lime fill
       accent: Color(0xFF7A9E26), // hover fill (darker lime)
       pressed: Color(0xFF6B8C20), // pressed fill (darker still)
       statusSuccess: Color(0xFF1B7340), // 5.9:1 / 5.4:1 — nudged darker so the

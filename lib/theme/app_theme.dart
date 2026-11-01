@@ -194,10 +194,10 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: c.surface1,
         surfaceTintColor: Colors.transparent,
-        // §8.20.2 surface1 = hairline only / no shadow even in light; shadow
-        // scales up for surface2/3 (sheets/dialogs/modals) where it does the
-        // load-bearing elevation work.
-        elevation: 0,
+        // §8.20.3-B resting card: 1.5px `border` #E2E1E2 + the §8.20.2 shadow
+        // (y2 / blur8 / black 0.08). CardTheme only takes a Material
+        // elevation, so this uses ~3 as the dialogs do. Dark stays flat.
+        elevation: light ? 3 : 0,
         shadowColor: Colors.black,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
