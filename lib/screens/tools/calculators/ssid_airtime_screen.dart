@@ -52,6 +52,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/brand_card_surface.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -306,7 +307,7 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
     final AppColorScheme colors = context.colors;
-    return Card(
+    return BrandCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Column(
@@ -484,7 +485,7 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
     final SsidAirtimeResult? r = _resultFor(band);
     final String rate = _rateLabel(_rates[band]!);
 
-    return Card(
+    return BrandCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Column(
@@ -591,7 +592,7 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
   /// where the app cannot answer, it says what it did not count and why.
   Widget _honestyCard(TextTheme text) {
     final AppColorScheme colors = context.colors;
-    return Card(
+    return BrandCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Column(
@@ -625,7 +626,7 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
   /// Attribution in the UI, not a credits screen (Keith, 2026-08-30).
   Widget _attributionCard(TextTheme text) {
     final AppColorScheme colors = context.colors;
-    return Card(
+    return BrandCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Column(

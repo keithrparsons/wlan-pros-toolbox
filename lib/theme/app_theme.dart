@@ -194,10 +194,12 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: c.surface1,
         surfaceTintColor: Colors.transparent,
-        // §8.20.3-B resting card: 1.5px `border` #E2E1E2 + the §8.20.2 shadow
-        // (y2 / blur8 / black 0.08). CardTheme only takes a Material
-        // elevation, so this uses ~3 as the dialogs do. Dark stays flat.
-        elevation: light ? 3 : 0,
+        // §8.20.3-B resting card: 1.5px `border` #E2E1E2. The exact GL-003
+        // "shadow primary" (y2 / blur8 / 0x14000000) cannot be expressed as a
+        // Material elevation, so elevation is 0 and BrandCard /
+        // BrandCardSurface (lib/widgets/brand_card_surface.dart) paints it in
+        // light mode. Dark stays flat.
+        elevation: 0,
         shadowColor: Colors.black,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(

@@ -35,6 +35,7 @@ import 'package:flutter/material.dart';
 import '../../data/tool_catalog.dart';
 import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
+import '../brand_card_surface.dart';
 import 'present_button.dart' show presenterAvailable;
 
 /// The catalog category that holds the simulators.
@@ -187,7 +188,7 @@ class LargeScreenNotice extends StatelessWidget {
               constraints: const BoxConstraints(
                 maxWidth: AppSpacing.contentMaxWidth,
               ),
-              child: Card(
+              child: BrandCard(
                 margin: EdgeInsets.zero,
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.sm),
