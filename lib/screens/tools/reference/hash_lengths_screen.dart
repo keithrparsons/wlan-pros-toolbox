@@ -29,7 +29,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
@@ -291,17 +291,17 @@ class HashLengthsScreen extends StatelessWidget {
   }
 
   Widget _algoCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'Hash output lengths',
       footnote: footnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Algorithm', width: 120),
-          _HeaderCell('Bits', width: 52),
-          _HeaderCell('Bytes', width: 56),
-          _HeaderCell('Hex', width: 48),
-          _HeaderCell('Family', width: 200),
-          _HeaderCell('Status', width: 124),
+          ReferenceHeaderCell('Algorithm', width: 120),
+          ReferenceHeaderCell('Bits', width: 52),
+          ReferenceHeaderCell('Bytes', width: 56),
+          ReferenceHeaderCell('Hex', width: 48),
+          ReferenceHeaderCell('Family', width: 200),
+          ReferenceHeaderCell('Status', width: 124),
         ],
       ),
       rows: algorithms.map((HashAlgo a) {
@@ -426,91 +426,6 @@ class _StatusChip extends StatelessWidget {
         style: t.labelSmall?.copyWith(
           color: colors.textPrimary,
           fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-/// Card surface wrapping a wide table - verbatim from the poe_reference idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
-
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
         ),
       ),
     );

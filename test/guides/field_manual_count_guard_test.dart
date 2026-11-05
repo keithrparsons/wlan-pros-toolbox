@@ -85,6 +85,33 @@ void main() {
     }
   });
 
+  test('the user guide tells people every way to add to My Tools', () async {
+    // Keith, 2026-10-04 (My Tools SPEC 7): the My Tools section names
+    // press and hold, right-click, and the context-menu key with Shift-F10,
+    // and keeps the device-only storage sentences word for word. The star on
+    // each tool row joined it on 2026-10-31.
+    final String md = await rootBundle.loadString(
+      'assets/guides/user-guide.md',
+    );
+    final int start = md.indexOf('## My Tools');
+    expect(start, isNot(-1), reason: 'the guide has a My Tools section');
+    final int end = md.indexOf('\n## ', start + 1);
+    final String section = md.substring(start, end < 0 ? md.length : end);
+
+    for (final String phrase in <String>[
+      'Press and hold any tool',
+      'tap the star beside any tool',
+      'right-click the tool',
+      'context-menu key (Shift-F10 on Windows)',
+      'Your list is saved on this device and nowhere else. Each phone, '
+          'tablet and computer keeps its own list. It is not synced between '
+          'your devices and it is never sent anywhere. If you delete the app, '
+          'the list is deleted with it.',
+    ]) {
+      expect(section, contains(phrase));
+    }
+  });
+
   test(
     'both guides carry the app-version placeholder, not a frozen number',
     () async {

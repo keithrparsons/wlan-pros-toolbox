@@ -26,6 +26,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/message_card.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -278,14 +279,14 @@ class _WhoisScreenState extends State<WhoisScreen> {
     final WhoisResult? r = _result;
     if (r == null) return const SizedBox.shrink();
     if (r.isError) {
-      return _MessageCard(
+      return MessageCard(
         icon: Icons.error_outline,
         title: 'Lookup failed',
         body: r.errorMessage!,
       );
     }
     if (r.isEmpty) {
-      return _MessageCard(
+      return MessageCard(
         icon: Icons.search_off,
         title: 'No record',
         body:
@@ -434,58 +435,6 @@ class _RawRecordCard extends StatelessWidget {
                 color: colors.textPrimary,
                 fontSize: AppTextSize.caption,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MessageCard extends StatelessWidget {
-  const _MessageCard({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: colors.textTertiary),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: text.bodyLarge?.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  body,
-                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
-                ),
-              ],
             ),
           ),
         ],

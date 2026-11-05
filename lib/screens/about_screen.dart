@@ -605,25 +605,20 @@ class _LiveSetupAboutSectionState extends State<_LiveSetupAboutSection> {
 }
 
 /// GL-003 §8.21 — the WLAN Pros brand lockup ("wirelessLAN PROFESSIONALS" +
-/// the lime #A1CC3A Wi-Fi arc) on a containment plate, centered at the top of
-/// the About column.
+/// the lime Wi-Fi arc), centered at the top of the About column.
 ///
-/// Theme-aware plate, mirroring the sibling [_Section] / [_AppearanceSection]
-/// cards in this file:
-///   - Dark mode: a bare white (#FFFFFF) plate with no border — the deliberate
-///     §8.21 light brand inset on the dark canvas (the §8.19 white-tile-on-dark
-///     pattern). The charcoal wordmark would compute ~1.1:1 on the #1A1A1A
-///     canvas (effectively invisible — the §8.21 broken-brand failure), so the
-///     white plate carries it.
-///   - Light mode: the plate switches to `surface1` + the §8.20.3-B 1.5px
-///     hairline border, so it reads as a normal white card consistent with the
-///     sibling section cards (the bare white-on-#F7F6F7 plate was invisible —
-///     Vera's MEDIUM finding). The charcoal wordmark reads fine on light
-///     surfaces, so no inset is needed.
+/// Theme-aware, per Keith (18 OCT 2026), matching the Wi-Fi Planner:
+///   - Dark mode: the reversed white lockup, BARE on the #1A1A1A canvas (white
+///     wordmark, lime arc, no plate), placed as delivered and never recolored.
+///   - Light mode: the colour lockup (charcoal wordmark) on a `surface1` card
+///     with the §8.20.3-B 1.5px hairline border, consistent with the sibling
+///     section cards (the bare white-on-#F7F6F7 plate was invisible — Vera's
+///     MEDIUM finding). The charcoal wordmark would compute ~1.1:1 on the dark
+///     canvas, which is why it is light-mode only.
 ///
-/// The 24px plate padding IS the logo's protected clear-space; the asset is the
-/// transparent, tight-bbox-trimmed PNG, rendered at its native aspect ratio
-/// (never stretched or recolored).
+/// The 24px padding IS the logo's protected clear-space; both assets are
+/// transparent PNGs rendered at their native aspect ratio (never stretched or
+/// recolored).
 class _LogoHeader extends StatelessWidget {
   const _LogoHeader();
 
@@ -640,23 +635,19 @@ class _LogoHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Align(
         child: Container(
-          // §8.21 plate: §8.11 card radius, §4 --space-md padding that doubles
-          // as the protected clear-space. Fill + border are theme-aware:
-          //   - Light: surface1 + §8.20.3-B 1.5px hairline (a normal white card,
-          //     consistent with the sibling section cards).
-          //   - Dark: bare white (#FFFFFF) inset, no border (the §8.21 light
-          //     brand plate on the dark canvas).
+          // §8.11 card radius, §4 --space-md padding that doubles as the
+          // protected clear-space. Dark mode has no plate: no fill, no border.
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: isLight ? colors.surface1 : AppColors.neutral0,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: isLight
-                ? Border.all(
+          decoration: isLight
+              ? BoxDecoration(
+                  color: colors.surface1,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(
                     color: colors.border,
                     width: 1.5, // §8.20.3-B card border
-                  )
-                : null,
-          ),
+                  ),
+                )
+              : null,
           child: Semantics(
             label: 'WLAN Pros, Wireless LAN Professionals',
             image: true,
@@ -664,7 +655,9 @@ class _LogoHeader extends StatelessWidget {
             // accessible name, so the bare Image is hidden from the a11y tree.
             child: ExcludeSemantics(
               child: Image.asset(
-                'assets/brand/wlan_pros_logo.png',
+                isLight
+                    ? 'assets/brand/wlan_pros_logo.png'
+                    : 'assets/brand/wlan_pros_logo_white.png',
                 width: _lockupWidth,
                 fit: BoxFit.contain,
               ),

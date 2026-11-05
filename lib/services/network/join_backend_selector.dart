@@ -51,10 +51,12 @@ bool get deviceCanJoinNatively {
 /// which is what every platform did before native join existed.
 JoinBackend selectJoinBackend(PiBackendClient client) {
   if (kIsWeb) return PiJoinBackend(client);
-  if (defaultTargetPlatform == TargetPlatform.windows)
+  if (defaultTargetPlatform == TargetPlatform.windows) {
     return const WindowsNativeJoinBackend();
-  if (defaultTargetPlatform == TargetPlatform.macOS)
+  }
+  if (defaultTargetPlatform == TargetPlatform.macOS) {
     return MacNativeJoinBackend();
+  }
   // iOS, Android and anything else: the WLAN Pi, which is what every platform
   // did before a native path existed.
   return PiJoinBackend(client);

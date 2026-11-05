@@ -1,3 +1,6 @@
+@Tags(['golden'])
+library;
+
 // A real render of the Link Info screen, so there is something to LOOK at.
 //
 // Keith has asked repeatedly to SEE the Ethernet work. The data below is his

@@ -1,3 +1,5 @@
+// CLI proof script: printing to stdout is its whole job.
+// ignore_for_file: avoid_print
 // Live check: parse THIS machine's link table and print it.
 // Run with: dart run tool/link_table_check.dart
 import 'dart:io';

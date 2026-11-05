@@ -50,6 +50,20 @@ WifiVsInternetResult result(
 }
 
 void main() {
+  group('AxisStatusThresholds.closeEnoughForSameTier — within 2x', () {
+    // Keith, 30 OCT 2026: "Within 2x only". A same-tier sentence ("both sides
+    // are strong, Wi-Fi slightly ahead") is only honest when the faster side
+    // is at most twice the slower one.
+    test('exactly 2x either way is close enough', () {
+      expect(AxisStatusThresholds.closeEnoughForSameTier(300, 150), isTrue);
+      expect(AxisStatusThresholds.closeEnoughForSameTier(150, 300), isTrue);
+    });
+    test('more than 2x is not', () {
+      expect(AxisStatusThresholds.closeEnoughForSameTier(600, 150), isFalse);
+      expect(AxisStatusThresholds.closeEnoughForSameTier(150, 600), isFalse);
+    });
+  });
+
   group('AxisStatusThresholds.tierFor — absolute 3-tier boundaries', () {
     // One scale (Keith, 13 OCT 2026): Strong = Excellent (100+), Moderate =
     // Good (25 to under 100), Weak = Fair or Poor (under 25), null Unknown.

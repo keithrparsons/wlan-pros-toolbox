@@ -1,3 +1,5 @@
+// CLI proof script: printing to stdout is its whole job.
+// ignore_for_file: avoid_print
 // LIVE PROOF: does choosing a transport actually move traffic on this machine?
 //
 // Run with: dart run tool/transport_proof.dart

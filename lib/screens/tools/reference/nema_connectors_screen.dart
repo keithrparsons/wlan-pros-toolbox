@@ -49,6 +49,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
@@ -489,11 +490,11 @@ class NemaConnectorsScreen extends StatelessWidget {
                   // Every face degrades to nothing when its SVG is not yet
                   // bundled, so each card reads as title + specs + note alone
                   // until Charta's faces land.
-                  _SectionHeading(label: '125V single-phase'),
+                  ReferenceSectionHeading(label: '125V single-phase'),
                   const SizedBox(height: AppSpacing.sm),
                   ..._faceCards(group125v, isDesktop),
                   const SizedBox(height: AppSpacing.sm),
-                  _SectionHeading(label: '208 / 240 / 250V'),
+                  ReferenceSectionHeading(label: '208 / 240 / 250V'),
                   const SizedBox(height: AppSpacing.sm),
                   ..._faceCards(group208v, isDesktop),
                   // The load-bearing 14-50 split / L21 wye callout, kept
@@ -505,7 +506,7 @@ class NemaConnectorsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _SectionHeading(
+                  ReferenceSectionHeading(
                     label: 'California Standard 3-phase (Non-NEMA)',
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -582,9 +583,9 @@ class NemaConnectorsScreen extends StatelessWidget {
       note: decoderExample,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Token', width: 64),
-          _HeaderCell('Meaning', width: 168),
-          _HeaderCell('Detail', width: 280),
+          ReferenceHeaderCell('Token', width: 64),
+          ReferenceHeaderCell('Meaning', width: 168),
+          ReferenceHeaderCell('Detail', width: 280),
         ],
       ),
       rows: decoder.map((NemaDecodePart p) {
@@ -628,30 +629,6 @@ class NemaConnectorsScreen extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-/// A section heading inside the NEMA reference (e.g. "125V single-phase").
-/// Title-styled, secondary ink, matching the register the IEC page uses for its
-/// section labels — standing on the page background above a stack of
-/// [LargeFaceCard]s rather than inside one card.
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Text(
-      label,
-      style: text.titleSmall?.copyWith(
-        color: colors.textSecondary,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.4,
-      ),
     );
   }
 }
@@ -715,30 +692,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

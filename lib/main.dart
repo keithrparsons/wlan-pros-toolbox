@@ -42,6 +42,9 @@ import 'services/help/tool_help_loader.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'services/network/pi_backend.dart';
 import 'services/network/wifi_details_bridge.dart';
+import 'favorites/my_tools_controller.dart';
+import 'favorites/my_tools_item.dart';
+import 'favorites/my_tools_tip.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'units/unit_system.dart';
@@ -361,10 +364,28 @@ Future<void> main() async {
   // lines load before the first frame, the same way. load() never throws.
   await FsplTargetStore.instance.load();
 
+  // My Tools, the user's own top ten (Keith, 2026-10-03). Device-only
+  // shared_preferences; ids the catalog no longer carries are dropped here.
+  // load() never throws. The Educational Resources list loads first so a
+  // saved resource resolves (2026-10-09); if it cannot be read, saved
+  // resources are kept, not dropped.
+  await MyToolsResources.instance.load();
+  final MyToolsController myToolsController = MyToolsController();
+  await myToolsController.load();
+
+  // The one-time "press and hold" tip (Keith, 2026-10-04): counts tool opens
+  // on this device. load() never throws.
+  final MyToolsTipController myToolsTip = MyToolsTipController(
+    myTools: myToolsController,
+  );
+  await myToolsTip.load();
+
   runApp(
     ToolboxApp(
       themeController: themeController,
       unitsController: unitsController,
+      myToolsController: myToolsController,
+      myToolsTip: myToolsTip,
     ),
   );
 }
@@ -374,6 +395,8 @@ class ToolboxApp extends StatelessWidget {
     super.key,
     required this.themeController,
     this.unitsController,
+    this.myToolsController,
+    this.myToolsTip,
   });
 
   /// Owns the §8.20.5 ThemeMode (System / Light / Dark). Exposed via the
@@ -387,17 +410,31 @@ class ToolboxApp extends StatelessWidget {
 
   static final UnitSystemController _fallbackUnits = UnitSystemController();
 
+  /// The user's My Tools list, exposed through [MyToolsScope]. Optional for
+  /// the same reason as [unitsController]; a bare ToolboxApp gets an empty,
+  /// unloaded controller of its own.
+  final MyToolsController? myToolsController;
+
+  static final MyToolsController _fallbackMyTools = MyToolsController();
+
+  /// Counts tool opens for the one-time My Tools tip. Optional: a bare
+  /// ToolboxApp in a test has no tip and no extra observer.
+  final MyToolsTipController? myToolsTip;
+
   @override
   Widget build(BuildContext context) {
-    return UnitSystemScope(
-      controller: unitsController ?? _fallbackUnits,
-      child: ThemeControllerScope(
-        controller: themeController,
-        child: ListenableBuilder(
-          listenable: themeController,
-          builder: (BuildContext context, Widget? _) {
-            return _buildApp(themeController.mode);
-          },
+    return MyToolsScope(
+      controller: myToolsController ?? _fallbackMyTools,
+      child: UnitSystemScope(
+        controller: unitsController ?? _fallbackUnits,
+        child: ThemeControllerScope(
+          controller: themeController,
+          child: ListenableBuilder(
+            listenable: themeController,
+            builder: (BuildContext context, Widget? _) {
+              return _buildApp(themeController.mode);
+            },
+          ),
         ),
       ),
     );
@@ -419,7 +456,10 @@ class ToolboxApp extends StatelessWidget {
       navigatorKey: AppRouter.navigatorKey,
       // Tracks the current route so the x-error recovery gate can tell a cold
       // relaunch-to-home from a warm return already on the origin tool.
-      navigatorObservers: <NavigatorObserver>[appRouteObserver],
+      navigatorObservers: <NavigatorObserver>[
+        appRouteObserver,
+        if (myToolsTip != null) myToolsTip!.observer,
+      ],
       initialRoute: AppRouter.home,
       routes: AppRouter.routes,
       onUnknownRoute: AppRouter.onUnknownRoute,

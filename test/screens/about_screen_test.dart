@@ -134,15 +134,57 @@ void main() {
     expect(find.text('Send feedback'), findsNWidgets(2));
   });
 
-  testWidgets('Brand lockup renders on its §8.21 white plate at the top', (
+  testWidgets('Dark mode: the bare white lockup, no white plate behind it', (
     tester,
   ) async {
     await _pumpAboutTall(tester);
 
-    // The §8.21 lockup image is bundled and surfaced with an accessible name.
+    // Keith, 18 OCT 2026: in dark mode the About header carries the reversed
+    // white lockup bare on the canvas, as in the Wi-Fi Planner. The colour
+    // lockup and its white plate are light-mode only.
+    final Finder white = find.image(
+      const AssetImage('assets/brand/wlan_pros_logo_white.png'),
+    );
+    expect(white, findsOneWidget);
+    expect(
+      find.image(const AssetImage('assets/brand/wlan_pros_logo.png')),
+      findsNothing,
+    );
+    final Iterable<Container> plates = tester.widgetList<Container>(
+      find.ancestor(of: white, matching: find.byType(Container)),
+    );
+    for (final Container c in plates) {
+      final Decoration? d = c.decoration;
+      final Color? fill = d is BoxDecoration ? d.color : null;
+      expect(fill, isNot(const Color(0xFFFFFFFF)));
+    }
+    expect(
+      find.bySemanticsLabel('WLAN Pros, Wireless LAN Professionals'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Light mode: the colour lockup on its card, unchanged', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(420, 6000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.light(), home: const AboutScreen()),
+    );
+    await tester.pumpAndSettle();
+
     expect(
       find.image(const AssetImage('assets/brand/wlan_pros_logo.png')),
       findsOneWidget,
+    );
+    expect(
+      find.image(const AssetImage('assets/brand/wlan_pros_logo_white.png')),
+      findsNothing,
     );
     expect(
       find.bySemanticsLabel('WLAN Pros, Wireless LAN Professionals'),

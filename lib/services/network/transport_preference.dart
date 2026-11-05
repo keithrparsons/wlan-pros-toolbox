@@ -118,8 +118,9 @@ String measurementAttribution({
   final String? name = (ssid != null && ssid.trim().isNotEmpty)
       ? ssid.trim()
       : null;
-  if (name != null && iface != null)
+  if (name != null && iface != null) {
     return 'Measured over Wi-Fi: $name ($iface).';
+  }
   if (name != null) return 'Measured over Wi-Fi: $name.';
   if (iface != null) return 'Measured over Wi-Fi ($iface).';
   return 'Measured over Wi-Fi.';

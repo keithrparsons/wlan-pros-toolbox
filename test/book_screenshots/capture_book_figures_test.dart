@@ -999,6 +999,7 @@ void main() {
       height: 2200,
       build: () => const LinkBudgetScreen(),
       drive: (t) async {
+        // Fields 3 and 4 (frequency, distance) stay blank: FSPL is typed.
         final fields = find.byType(TextField);
         await t.enterText(fields.at(0), '23'); // TX Power (dBm)
         await t.pump();
@@ -1006,15 +1007,15 @@ void main() {
         await t.pump();
         await t.enterText(fields.at(2), '1.5'); // TX Cable Loss (dB)
         await t.pump();
-        await t.enterText(fields.at(3), '120'); // Free Space Path Loss (dB)
+        await t.enterText(fields.at(5), '120'); // Free Space Path Loss (dB), typed: manual
         await t.pump();
-        await t.enterText(fields.at(4), '0'); // Other Losses (dB)
+        await t.enterText(fields.at(6), '0'); // Other Losses (dB)
         await t.pump();
-        await t.enterText(fields.at(5), '1.5'); // RX Cable Loss (dB)
+        await t.enterText(fields.at(7), '1.5'); // RX Cable Loss (dB)
         await t.pump();
-        await t.enterText(fields.at(6), '14'); // RX Antenna Gain (dBi)
+        await t.enterText(fields.at(8), '14'); // RX Antenna Gain (dBi)
         await t.pump();
-        await t.enterText(fields.at(7), '-82'); // RX Sensitivity (dBm)
+        await t.enterText(fields.at(9), '-82'); // RX Sensitivity (dBm)
         await t.pump();
       },
       verify: (t) {

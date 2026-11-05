@@ -93,6 +93,21 @@ void main() {
       expect(r.verdict, PoeVerdict.caution);
     });
 
+    test('exactly full: 90.8 W budget, 90.8 W draw is caution, not over', () {
+      // 15.4 + 30.0 + 30.0 + 15.4 sums to 90.80000000000001 in doubles.
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        90.8,
+        const [
+          PoeDeviceRow.ofClass(3, 1),
+          PoeDeviceRow.ofClass(4, 1),
+          PoeDeviceRow.ofClass(4, 1),
+          PoeDeviceRow.ofClass(3, 1),
+        ],
+      )!;
+      expect(r.overBudget, isFalse);
+      expect(r.verdict, PoeVerdict.caution);
+    });
+
     test('over budget: 100 W budget, 135 W draw → pct capped at 100', () {
       final PoeBudgetResult r = PoeBudgetScreen.compute(
         100,
@@ -724,6 +739,27 @@ void main() {
       });
     });
 
+    testWidgets('reserve starts at 0%, so the default matches the RF Tools PWA', (
+      tester,
+    ) async {
+      await _withViewport(tester, const Size(390, 844), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+
+        final Finder fields = find.byType(TextField);
+        // Fields: 0 budget, 1 ports, 2 reserve.
+        expect(tester.widget<TextField>(fields.at(2)).controller!.text, '0');
+
+        // With a 370 W budget and no devices, nothing is held back: the
+        // result reads 0% (0.0 W), not 10% (37.0 W).
+        await tester.enterText(fields.at(0), '370');
+        await tester.pump();
+        expect(find.textContaining('0% (0.0 W)'), findsWidgets);
+        expect(find.textContaining('37.0 W'), findsNothing);
+      });
+    });
+
     testWidgets('typing budget + device renders the verdict', (tester) async {
       await _withViewport(tester, const Size(390, 844), () async {
         await tester.pumpWidget(
@@ -914,6 +950,7 @@ void main() {
         );
         final Finder fields = find.byType(TextField);
         await tester.enterText(fields.at(0), '370');
+        await tester.enterText(fields.at(2), '10');
         await tester.enterText(fields.at(3), '25.5');
         await tester.enterText(fields.at(4), '10'); // 300 W PSE of 333 usable
         await tester.pump();
@@ -951,6 +988,7 @@ void main() {
           );
           final Finder fields = find.byType(TextField);
           await tester.enterText(fields.at(0), '370');
+          await tester.enterText(fields.at(2), '10');
           await tester.enterText(fields.at(3), '25.5');
           await tester.pump();
 
@@ -979,7 +1017,15 @@ void main() {
         await tester.enterText(fields.at(0), '370');
         await tester.enterText(fields.at(3), '25.5');
         await tester.pump();
-        // A fresh screen still starts at 10%.
+        // A fresh screen starts at 0%; a typed 10 holds back 37.0 W.
+        expect(
+          find.byWidgetPredicate(
+            (Widget w) => w is SelectableText && w.data == '0% (0.0 W)',
+          ),
+          findsOneWidget,
+        );
+        await tester.enterText(fields.at(2), '10');
+        await tester.pump();
         expect(
           find.byWidgetPredicate(
             (Widget w) => w is SelectableText && w.data == '10% (37.0 W)',
@@ -1028,6 +1074,7 @@ void main() {
         final Finder fields = find.byType(TextField);
         await tester.enterText(fields.at(0), '370');
         await tester.enterText(fields.at(1), '24');
+        await tester.enterText(fields.at(2), '10');
         await tester.enterText(fields.at(3), '12');
         await tester.pump();
 

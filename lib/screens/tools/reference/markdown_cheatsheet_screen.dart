@@ -30,7 +30,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
@@ -159,14 +159,14 @@ class MarkdownCheatsheetScreen extends StatelessWidget {
     AppMonoText mono,
   ) {
     final Color gfmTone = colors.statusToneColor(StatusTone.info);
-    return _TableCard(
+    return ReferenceTableCard(
       title: section.title,
       footnote: section.footnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Element', width: 160),
-          _HeaderCell('You type', width: 300),
-          _HeaderCell('Renders as', width: 320),
+          ReferenceHeaderCell('Element', width: 160),
+          ReferenceHeaderCell('You type', width: 300),
+          ReferenceHeaderCell('Renders as', width: 320),
         ],
       ),
       rows: section.rows.map((MarkdownRow r) {
@@ -395,91 +395,6 @@ class _GotchasCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// Card surface wrapping a wide table — verbatim from the regex/poe idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
-
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

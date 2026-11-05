@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import 'calc_parts.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kAntennaPatternToolId = 'antenna-pattern';
@@ -47,27 +48,7 @@ String fmtPolarizationLoss(double db) {
 AppMonoText patternMono(BuildContext context) =>
     Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
-class PatternCard extends StatelessWidget {
-  const PatternCard({super.key, required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
+typedef PatternCard = CalcCard;
 
 class PatternSectionLabel extends StatelessWidget {
   const PatternSectionLabel(this.label, {super.key});
@@ -148,31 +129,7 @@ class PatternReadoutRow extends StatelessWidget {
 }
 
 /// Icon plus a sentence.
-class PatternNote extends StatelessWidget {
-  const PatternNote({super.key, required this.icon, required this.message});
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 16, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-}
+typedef PatternNote = CalcIconNoteBare;
 
 /// A labeled slider with its value in mono on the right.
 class PatternSlider extends StatelessWidget {

@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.12.0+26093001
+version: 1.13.0+26103102
 environment:
   sdk: ^3.12.0
 
@@ -377,7 +377,7 @@ msix_config:
   # at 1.8.5.0 through the 1.8.6 bump (1884cef) and the 1.8.7 bump (9bfdfea) — so a
   # Store package built any time in that window would have carried an
   # already-published identity. Bump both together, in the same commit.
-  msix_version: 1.12.0.0
+  msix_version: 1.13.0.0
   logo_path: assets/branding/app-icon-1024.png
   # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
   # internetClientServer for the inbound side of the LAN/socket tools (port
@@ -714,9 +714,13 @@ flutter:
     # WLAN Pros brand lockup (GL-003 §8.21). The transparent-background
     # "wirelessLAN PROFESSIONALS" wordmark + lime #A1CC3A Wi-Fi arc, trimmed to
     # its tight bounding box from the canonical `WLANProsLogo black.png` source.
-    # Rendered on a white containment plate (the §8.19 white-tile-on-dark
-    # pattern) in the About-screen header; never placed bare on a dark surface.
+    # Rendered on a card in the About-screen header in light mode only; the
+    # charcoal wordmark is never placed bare on a dark surface.
     - assets/brand/wlan_pros_logo.png
+    # The reversed white lockup (white wordmark, lime #A2CD3B arc, no plate),
+    # as delivered: Keith, 18 OCT 2026, the bare white logo on dark surfaces
+    # (GL-003 §8.21). About-screen header in dark mode.
+    - assets/brand/wlan_pros_logo_white.png
     # Keith Parsons headshot — the founder portrait shown in the About screen's
     # "About the founder" section as a circular avatar (~96px display, ~288px 2x
     # asset, face-centered square crop). PNG, no executable content (90035-safe).

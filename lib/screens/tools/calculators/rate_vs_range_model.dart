@@ -86,13 +86,15 @@ abstract final class RvrFormat {
   static String dist(double d, [UnitSystem u = UnitSystem.metric]) {
     if (u.isMetric) {
       if (d < 1) return 'under 1 m';
-      if (d < 10) return '${d.toStringAsFixed(1)} m';
+      // One decimal below 100 m, so a ring edge and the client reading
+      // never round to the same whole number on either side of a boundary.
+      if (d < 100) return '${d.toStringAsFixed(1)} m';
       if (d < 1000) return '${d.round()} m';
       return '${(d / 1000).toStringAsFixed(2)} km';
     }
     final double ft = LengthUnits.metresToFeet(d);
     if (ft < 3) return 'under 3 ft';
-    if (ft < 10) return '${ft.toStringAsFixed(1)} ft';
+    if (ft < 100) return '${ft.toStringAsFixed(1)} ft';
     if (d < LengthUnits.metresPerMile) return '${ft.round()} ft';
     return '${(d / LengthUnits.metresPerMile).toStringAsFixed(2)} mi';
   }

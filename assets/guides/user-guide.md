@@ -8,7 +8,7 @@ I built the WLAN Pros Toolbox so that the next time your video call freezes or a
 
 ## What this app is, and who it's for
 
-The WLAN Pros Toolbox is free. It runs on iPhone and iPad, Mac, Windows, and Android, and in a web browser. It is packed with more than 100 small tools that read your connection, run quick tests, and look things up. Some of those tools are for full-time Wi-Fi professionals, and they are deep. Some of them, though, are for anyone who has ever stared at a spinning loading wheel and wondered why.
+The WLAN Pros Toolbox is free. It runs on iPhone and iPad, Mac, Windows, and Android, and in a web browser. It is packed with more than 250 small tools that read your connection, run quick tests, and look things up. Some of those tools are for full-time Wi-Fi professionals, and they are deep. Some of them, though, are for anyone who has ever stared at a spinning loading wheel and wondered why.
 
 This guide is written for the rest of us. The teacher whose classroom Wi-Fi drops every afternoon. The office manager fielding "the internet is down again" for the third time today. The small-business owner whose card reader keeps timing out. The curious person who just wants to know where to tap. If that's you, you're in the right place.
 
@@ -203,6 +203,16 @@ This is our own teaching material, built for a class or for one curious person. 
 In between are the simulators. Each one takes a single idea and lets you move it: push an access point farther away and watch the signal fall, add noise and watch bits turn into errors, add clients and watch them take turns for the air. They are in teaching order, starting with the radio wave and ending with the finished network.
 
 The simulators are designed for a tablet or a computer screen. On a phone they still work, but the app will tell you some views are cramped before it opens one.
+
+## My Tools: your own short list
+
+If you keep coming back to the same few tools, put them on the front page. Press and hold any tool in a section list or in search results, or any entry in Educational Resources, and it is added to My Tools, a list that appears just under Check My Connection. Press and hold it again to take it off. Or tap the star beside any tool in a section list or in search results; tap it again to take it off.
+
+On a Mac or PC you can right-click the tool instead. Or select it with the Tab key and press the context-menu key (Shift-F10 on Windows). A small menu opens with Add to My Tools, or Remove from My Tools if it is already there.
+
+My Tools holds up to ten. When it is full and you add another, the app asks which one to swap out, and you can cancel instead. Tap Edit on the list to put the tools in the order you want: drag them by the handle, or use the up and down arrows. Edit is also where you remove one tool, or tap Clear all to empty the list and start over. Once the list is empty, it disappears and the front page looks the way it did at the start.
+
+Your list is saved on this device and nowhere else. Each phone, tablet and computer keeps its own list. It is not synced between your devices and it is never sent anywhere. If you delete the app, the list is deleted with it.
 
 ## Where to go next
 

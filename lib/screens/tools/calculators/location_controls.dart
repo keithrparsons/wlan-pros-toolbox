@@ -478,7 +478,7 @@ class _TimingCard extends StatelessWidget {
           bias,
           const LocNote(
             'With the direct path blocked, the first signal to arrive is a '
-            'reflection. It travelled farther, so that AP\'s distance reads '
+            'reflection. It traveled farther, so that AP\'s distance reads '
             'long and its circle is drawn dashed.',
           ),
           const SizedBox(height: AppSpacing.xs),

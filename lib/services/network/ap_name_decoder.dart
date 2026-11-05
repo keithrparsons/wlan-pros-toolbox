@@ -263,8 +263,9 @@ bool tag221OffsetVerified(ApNameVendor vendor) {
 /// not clean printable ASCII.
 String? _decodeAironetName(Uint8List value) {
   const int end = _kAironetNameOffset + _kAironetNameLen;
-  if (value.length < end)
+  if (value.length < end) {
     return null; // truncated field — honest null, no throw
+  }
   return _decodeAsciiName(
     value.sublist(_kAironetNameOffset, end),
     maxChars: _kAironetNameLen,
@@ -285,8 +286,9 @@ String? _decodeTag221Name(Uint8List value) {
     return null;
   }
   final int? offset = spec.nameOffset;
-  if (offset == null)
+  if (offset == null) {
     return null; // recognized, but offset UNVERIFIED → honest null
+  }
   if (value.length <= offset) return null; // payload too short for the name
   return _decodeAsciiName(value.sublist(offset), maxChars: spec.maxNameChars);
 }
@@ -307,8 +309,9 @@ String? _decodeAsciiName(List<int> raw, {int? maxChars}) {
     slice = slice.sublist(0, maxChars);
   }
   for (final int b in slice) {
-    if (b < 0x20 || b > 0x7e)
+    if (b < 0x20 || b > 0x7e) {
       return null; // non-printable → reject, never mojibake
+    }
   }
   final String name = String.fromCharCodes(slice).trim();
   return name.isEmpty ? null : name;
