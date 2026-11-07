@@ -21,6 +21,7 @@ import '../data/tool_ordering.dart';
 import '../data/tool_search.dart';
 import '../data/tool_subgroups.dart';
 import '../router/app_router.dart';
+import '../router/live_error_nav_gate.dart';
 import '../services/device/fold_state.dart';
 import '../services/network/wifi_details_bridge.dart';
 import '../services/network/wifi_info_adapter.dart';
@@ -73,10 +74,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
   /// categories; flat categories show no filter row.
   String? _selectedSection;
 
-  /// Whether a tap on a row opens the tool in the pane (wide) rather than
-  /// pushing it full screen. Set by [_listScaffold] before the rows build.
-  bool _rowsOpenInPane = false;
-
   /// Whether this category renders as grouped sections (has a subgroup order).
   bool get _grouped => kCategorySubgroupOrder.containsKey(widget.category.id);
 
@@ -92,6 +89,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
   /// The Wi-Fi Classroom's simulators are built for the whole window, so that
   /// category keeps opening tools full screen.
   bool get _splits => widget.category.id != kWifiClassroomCategoryId;
+
+  /// Whether the window shows the list beside the tool pane.
+  bool get _wide =>
+      _splits &&
+      MediaQuery.sizeOf(context).width >= AppSpacing.wideLayoutMinWidth;
 
   @override
   void dispose() {
@@ -111,10 +113,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   Widget build(BuildContext context) {
     final Size window = MediaQuery.sizeOf(context);
-    final bool wide =
-        _splits && window.width >= AppSpacing.wideLayoutMinWidth;
-    if (!wide) {
-      return _openRoute == null ? _listScaffold(wide: false) : _pane(window);
+    if (!_wide) {
+      return _openRoute == null ? _listScaffold() : _pane(window);
     }
 
     return ValueListenableBuilder<FoldState>(
@@ -141,7 +141,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           child: MediaQuery.removePadding(
             context: context,
             removeRight: true,
-            child: _listScaffold(wide: true),
+            child: _listScaffold(),
           ),
         ),
         const VerticalDivider(width: kPaneDividerWidth),
@@ -180,7 +180,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           child: MediaQuery.removePadding(
             context: context,
             removeTop: true,
-            child: _listScaffold(wide: true),
+            child: _listScaffold(),
           ),
         ),
       ],
@@ -218,9 +218,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return MaterialPageRoute<void>(builder: builder, settings: settings);
   }
 
-  Widget _listScaffold({required bool wide}) {
+  Widget _listScaffold() {
     final TextTheme text = Theme.of(context).textTheme;
-    _rowsOpenInPane = wide;
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.category.title), toolbarHeight: 64),
@@ -389,7 +388,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return ToolRow(
       key: ValueKey<String>(tool.id),
       tool: tool,
-      onTap: _rowsOpenInPane ? () => _openInPane(tool.routeName) : null,
+      // Live tools stay on the root navigator, where LiveErrorNavGate finds
+      // them to restore a Shortcut run.
+      onTap: _wide && !LiveErrorNavGate.liveRoutes.contains(tool.routeName)
+          ? () => _openInPane(tool.routeName)
+          : null,
       contentType: _grouped ? contentTypeFor(tool, widget.category.id) : null,
     );
   }

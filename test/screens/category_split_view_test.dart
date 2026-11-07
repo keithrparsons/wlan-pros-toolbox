@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
+import 'package:wlan_pros_toolbox/router/live_error_nav_gate.dart';
 import 'package:wlan_pros_toolbox/screens/category_screen.dart';
 import 'package:wlan_pros_toolbox/services/device/fold_state.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
@@ -120,17 +121,36 @@ void main() {
   testWidgets('wide: the Wi-Fi Classroom opens its simulators full screen', (
     tester,
   ) async {
-    final ToolEntry simulator = _cat(kWifiClassroomCategoryId).tools
-        .firstWhere(
-          (ToolEntry t) =>
-              t.isLive && kWifiClassroomSimulatorSubgroups.contains(t.subgroup),
-        );
+    final ToolEntry simulator = _cat(kWifiClassroomCategoryId).tools.firstWhere(
+      (ToolEntry t) =>
+          t.isLive && kWifiClassroomSimulatorSubgroups.contains(t.subgroup),
+    );
     await _pumpCategory(tester, _duoOpenTurned, kWifiClassroomCategoryId);
     expect(find.text('Choose a tool'), findsNothing);
     await _openTool(tester, simulator.id);
 
     expect(_rootCanPop(tester), isTrue);
   });
+
+  // A Live tool must stay on the root navigator: LiveErrorNavGate restores a
+  // Shortcut run by route name from the root's CurrentRouteObserver, and a
+  // tool hidden in the pane would be torn down and re-pushed fresh.
+  for (final String route in LiveErrorNavGate.liveRoutes) {
+    final ToolEntry? tool = kToolCategories
+        .expand((ToolCategory c) => c.tools)
+        .where((ToolEntry t) => t.routeName == route)
+        .firstOrNull;
+    if (tool == null) continue;
+    final String categoryId = kToolCategories
+        .firstWhere((ToolCategory c) => c.tools.contains(tool))
+        .id;
+    testWidgets('wide: Live tool ${tool.id} opens full screen', (tester) async {
+      await _pumpCategory(tester, _duoOpenTurned, categoryId);
+      await _openTool(tester, tool.id);
+
+      expect(_rootCanPop(tester), isTrue);
+    });
+  }
 
   testWidgets('folding with a tool open keeps the tool and its input', (
     tester,
@@ -175,7 +195,6 @@ void main() {
     testWidgets('book pose: the divider moves onto the fold', (tester) async {
       foldState.value = const FoldState(
         status: HingeStatus.partiallyOpen,
-        angle: 95,
         folds: <Rect>[Rect.fromLTWH(475, 0, 0, 669)],
       );
       await _pumpCategory(tester, _duoOpenTurned, 'rf-calculators');
@@ -190,16 +209,12 @@ void main() {
       await _openTool(tester, 'eirp');
       foldState.value = const FoldState(
         status: HingeStatus.partiallyOpen,
-        angle: 100,
         folds: <Rect>[Rect.fromLTWH(0, 470, 669, 10)],
       );
       await tester.pumpAndSettle();
 
       expect(find.text('TX Power'), findsOneWidget);
-      expect(
-        tester.getTopLeft(find.text('TX Power')).dy,
-        lessThan(470),
-      );
+      expect(tester.getTopLeft(find.text('TX Power')).dy, lessThan(470));
       expect(
         tester.getTopLeft(find.byType(ToolRow).first).dy,
         greaterThan(480),
@@ -214,7 +229,6 @@ void main() {
       await tester.enterText(find.byType(TextField).first, '17');
       foldState.value = const FoldState(
         status: HingeStatus.partiallyOpen,
-        angle: 100,
         folds: <Rect>[Rect.fromLTWH(0, 470, 669, 10)],
       );
       await tester.pumpAndSettle();

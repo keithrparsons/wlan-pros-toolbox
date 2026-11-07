@@ -43,9 +43,6 @@ import 'tools/reference/pdf_reference_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  /// Breakpoint for switching from mobile-edge to desktop-edge padding.
-  static const double _desktopBreakpoint = AppSpacing.wideLayoutMinWidth;
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -103,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 : constraints.maxWidth;
             // Edge padding still keys off the raw viewport (desktop vs mobile).
             final bool isDesktop =
-                constraints.maxWidth >= HomeScreen._desktopBreakpoint;
+                constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
             final double edge = isDesktop
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;

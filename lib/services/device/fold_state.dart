@@ -16,16 +16,11 @@ enum HingeStatus { unknown, closed, partiallyOpen, fullyOpen }
 
 @immutable
 class FoldState {
-  const FoldState({
-    required this.status,
-    required this.angle,
-    required this.folds,
-  });
+  const FoldState({required this.status, required this.folds});
 
   /// No hinge reported: the plain layout.
   static const FoldState none = FoldState(
     status: HingeStatus.unknown,
-    angle: 0,
     folds: <Rect>[],
   );
 
@@ -34,9 +29,8 @@ class FoldState {
   factory FoldState.fromEvent(Object? event) {
     if (event is! Map) return none;
     final Object? status = event['status'];
-    final Object? angle = event['angle'];
     final Object? folds = event['folds'];
-    if (status is! String || angle is! num || folds is! List) return none;
+    if (status is! String || folds is! List) return none;
     final List<Rect> rects = <Rect>[];
     for (final Object? f in folds) {
       if (f is! List || f.length != 4 || f.any((Object? v) => v is! num)) {
@@ -53,15 +47,11 @@ class FoldState {
         (HingeStatus s) => s.name == status,
         orElse: () => HingeStatus.unknown,
       ),
-      angle: angle.toDouble(),
       folds: rects,
     );
   }
 
   final HingeStatus status;
-
-  /// Hinge angle in degrees, as Apple reports it.
-  final double angle;
 
   /// Active fold regions in the app's logical pixels (a flat fold may be zero
   /// wide).
@@ -71,14 +61,13 @@ class FoldState {
   bool operator ==(Object other) =>
       other is FoldState &&
       other.status == status &&
-      other.angle == angle &&
       listEquals(other.folds, folds);
 
   @override
-  int get hashCode => Object.hash(status, angle, Object.hashAll(folds));
+  int get hashCode => Object.hash(status, Object.hashAll(folds));
 
   @override
-  String toString() => 'FoldState($status, $angle°, $folds)';
+  String toString() => 'FoldState($status, $folds)';
 }
 
 /// The current fold state. Screens listen to it; tests set it directly.

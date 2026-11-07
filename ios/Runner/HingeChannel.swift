@@ -7,14 +7,16 @@ import UIKit
 /// Flutter does not report the Duo's fold on iOS (`MediaQuery.displayFeatures`
 /// is filled only on Android; flutter/flutter#192515 is open), so this reads
 /// Apple's iOS 27.1 APIs directly:
-///   * `UIHingeInteraction` for the hinge status and angle;
+///   * `UIHingeInteraction` for the hinge status;
 ///   * `UIView.reservedRegions(kind: .division)` for where the fold crosses
 ///     the app, in the Flutter view's own points (= Flutter logical pixels).
 ///
 /// EventChannel `com.wlanpros.toolbox/hinge`. Each event is
-/// `{status: String, angle: Double, folds: [[x, y, width, height]]}`, sent on
+/// `{status: String, folds: [[x, y, width, height]]}`, sent on
 /// listen, on every hinge update and whenever the view lays out (fold, unfold,
 /// rotation, Split View), and only when it differs from the last one sent.
+/// The hinge angle is left out on purpose: it changes every frame while the
+/// phone opens, and the layout needs only the status and where the fold is.
 /// Before iOS 27.1, or on a device without a hinge, it sends nothing and the
 /// app keeps its plain layout.
 final class HingeChannel: NSObject, FlutterStreamHandler {
@@ -23,7 +25,7 @@ final class HingeChannel: NSObject, FlutterStreamHandler {
   private let channel: FlutterEventChannel
   private var sink: FlutterEventSink?
   private var probe: UIView?
-  private var hinge: (status: String, angle: Double) = ("unknown", 0)
+  private var hingeStatus = "unknown"
   private var lastSent: [String: Any]?
 
   init(messenger: FlutterBinaryMessenger) {
@@ -43,7 +45,7 @@ final class HingeChannel: NSObject, FlutterStreamHandler {
     probe.addInteraction(
       UIHingeInteraction { [weak self] _, update in
         guard let self, let h = update.hinge else { return }
-        self.hinge = (Self.name(h.status), Double(h.angle))
+        self.hingeStatus = Self.name(h.status)
         self.send()
       })
     host.addSubview(probe)
@@ -67,7 +69,7 @@ final class HingeChannel: NSObject, FlutterStreamHandler {
       .map { r in
         [Double(r.frame.minX), Double(r.frame.minY), Double(r.frame.width), Double(r.frame.height)]
       }
-    let event: [String: Any] = ["status": hinge.status, "angle": hinge.angle, "folds": folds]
+    let event: [String: Any] = ["status": hingeStatus, "folds": folds]
     if let last = lastSent, NSDictionary(dictionary: last).isEqual(to: event) { return }
     lastSent = event
     sink(event)

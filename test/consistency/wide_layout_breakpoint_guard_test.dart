@@ -12,8 +12,12 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+// A width compared to 719/720 either way round, or a const holding 720 as a
+// breakpoint.
 final RegExp _literalWidthBreakpoint = RegExp(
-  r'(maxWidth|width)\s*(>=|<)\s*720\b',
+  r'(maxWidth|width)\s*(>=|<=|>|<)\s*(719|720)(\.0)?\b'
+  r'|\b(719|720)(\.0)?\s*(>=|<=|>|<)\s*\w*(maxWidth|width)'
+  r'|const double \w*([Bb]reakpoint|[Dd]esktop|[Ww]ide)\w*\s*=\s*720',
 );
 
 void main() {

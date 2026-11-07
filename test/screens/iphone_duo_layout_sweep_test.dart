@@ -27,6 +27,9 @@ const List<Size> _duoSizes = <Size>[
   // Half open (pane_split.dart): beside a book fold, above a laptop fold.
   Size(475, 669), // pane, book pose
   Size(669, 470), // pane, laptop pose
+  // Not a Duo: the narrowest phone landscape the 600 breakpoint newly treats
+  // as wide (iPhone SE, 667 x 375).
+  Size(667, 375),
 ];
 
 void main() {

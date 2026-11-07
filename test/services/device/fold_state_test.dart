@@ -1,6 +1,7 @@
 // The iPhone Duo hinge event, as the native HingeChannel sends it
 // (ios/Runner/HingeChannel.swift): status, angle in degrees, and the active
 // fold ("division") regions in the app's own points as [x, y, width, height].
+// The native side also sends the hinge angle; the layout does not use it.
 
 import 'dart:ui';
 
@@ -17,7 +18,6 @@ void main() {
       ],
     });
     expect(s.status, HingeStatus.partiallyOpen);
-    expect(s.angle, 95.0);
     expect(s.folds, <Rect>[const Rect.fromLTWH(475, 0, 0, 669)]);
   });
 

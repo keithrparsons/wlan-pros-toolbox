@@ -17,6 +17,11 @@ import '../services/device/fold_state.dart';
 /// Narrowest the list or the tool pane may get beside each other.
 const double kMinPaneWidth = 260;
 
+/// Shortest the tool or the list may get above and below a laptop fold. A
+/// fold closer to an edge than this (or outside the window, in a top/bottom
+/// Split View) leaves the plain side-by-side split.
+const double kMinStackedPaneHeight = 200;
+
 /// Width of the divider between the panes.
 const double kPaneDividerWidth = 1;
 
@@ -63,10 +68,12 @@ PaneSplit paneSplitFor(Size window, FoldState fold) {
         listWidth: f.left.clamp(kMinPaneWidth, maxList),
       );
     }
-    return PaneSplit.stacked(
-      toolHeight: f.top,
-      listHeight: window.height - f.bottom,
-    );
+    final double toolHeight = f.top;
+    final double listHeight = window.height - f.bottom;
+    if (toolHeight >= kMinStackedPaneHeight &&
+        listHeight >= kMinStackedPaneHeight) {
+      return PaneSplit.stacked(toolHeight: toolHeight, listHeight: listHeight);
+    }
   }
   return PaneSplit.sideBySide(
     listWidth: (window.width * 0.38).clamp(kMinPaneWidth, 340),
