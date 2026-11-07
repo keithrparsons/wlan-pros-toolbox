@@ -359,7 +359,13 @@ void main() {
     for (final (Size size, bool shown) in <(Size, bool)>[
       (const Size(390, 844), false), // phone, portrait
       (const Size(932, 430), false), // large phone, landscape
-      (const Size(700, 900), false), // narrow window
+      (const Size(599, 900), false), // narrow window, just under 600
+      (const Size(466, 678), false), // iPhone Duo closed
+      (
+        const Size(669, 951),
+        true,
+      ), // iPhone Duo open, upright (was hidden at 720)
+      (const Size(951, 669), true), // iPhone Duo open, turned
       (const Size(800, 600), true), // the macOS default window
       (const Size(1024, 768), true),
       (const Size(1920, 1080), true),

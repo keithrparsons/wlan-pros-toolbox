@@ -19,7 +19,7 @@ import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
 
 /// Narrowest window that offers Present: `--app-bp-desktop` (GL-003 §8.7.1).
-const double kPresentMinWidth = AppSpacing.gridThreeColBreakpoint;
+const double kPresentMinWidth = AppSpacing.wideLayoutMinWidth;
 
 /// Shortest window that offers Present: the landscape-phone band.
 const double kPresentMinHeight = AppSpacing.shortViewportHeight;

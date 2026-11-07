@@ -88,6 +88,16 @@ class LiveErrorNavGate extends StatefulWidget {
   /// channel has no handler and [consumeLiveErrorNav] returns null (no-op).
   final WiFiDetailsBridge? bridge;
 
+  /// The live tools the x-error recovery can route to. Any unrecognized origin
+  /// falls back to the consumer front door (Test My Connection). The two-pane
+  /// category view opens these full screen, on the root navigator this gate
+  /// watches (iPhone Duo, 2026-11-07).
+  static const Set<String> liveRoutes = <String>{
+    AppRouter.wifiInfo,
+    AppRouter.testMyConnection,
+    AppRouter.cellularInfo,
+  };
+
   @override
   State<LiveErrorNavGate> createState() => _LiveErrorNavGateState();
 }
@@ -95,14 +105,6 @@ class LiveErrorNavGate extends StatefulWidget {
 class _LiveErrorNavGateState extends State<LiveErrorNavGate>
     with WidgetsBindingObserver {
   late final WiFiDetailsBridge _bridge;
-
-  /// The live tools the x-error recovery can route to. Any unrecognized origin
-  /// falls back to the consumer front door (Test My Connection).
-  static const Set<String> _liveRoutes = <String>{
-    AppRouter.wifiInfo,
-    AppRouter.testMyConnection,
-    AppRouter.cellularInfo,
-  };
 
   @override
   void initState() {
@@ -130,7 +132,7 @@ class _LiveErrorNavGateState extends State<LiveErrorNavGate>
     final String? origin = await _bridge.consumeLiveErrorNav();
     if (origin != null) {
       if (!mounted) return;
-      final String target = _liveRoutes.contains(origin)
+      final String target = LiveErrorNavGate.liveRoutes.contains(origin)
           ? origin
           : AppRouter.testMyConnection;
       // The tool's own load() consumes the missing-Shortcut marker and renders
@@ -186,7 +188,7 @@ class _LiveErrorNavGateState extends State<LiveErrorNavGate>
     // door because it has a recovery card to show there. A RESTORE has nothing to
     // restore on a screen that never armed a run, so it navigates NOWHERE rather
     // than guessing.
-    if (!_liveRoutes.contains(pending.route)) return;
+    if (!LiveErrorNavGate.liveRoutes.contains(pending.route)) return;
 
     _routeTo(pending.route);
     // NOTE: THE GATE DOES NOT CONSUME THE ARM. The tool does, once it has actually

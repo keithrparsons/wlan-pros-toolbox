@@ -37,6 +37,7 @@ import 'data/speedtest_logos.dart';
 import 'data/throughput_where_diagram.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
+import 'services/device/fold_state.dart';
 import 'router/live_error_nav_gate.dart';
 import 'services/help/tool_help_loader.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
@@ -388,6 +389,10 @@ Future<void> main() async {
       myToolsTip: myToolsTip,
     ),
   );
+
+  // iPhone Duo fold updates (Keith, 2026-11-07). Started after the first frame
+  // so the native side finds the Flutter view to watch.
+  WidgetsBinding.instance.addPostFrameCallback((_) => startFoldUpdates());
 }
 
 class ToolboxApp extends StatelessWidget {

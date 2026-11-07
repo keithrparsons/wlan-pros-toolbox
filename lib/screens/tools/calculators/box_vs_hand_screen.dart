@@ -106,7 +106,9 @@ class _BoxVsHandScreenState extends State<BoxVsHandScreen>
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) {
-            if (c.maxWidth >= 720) return _desktop();
+            if (c.maxWidth >= AppSpacing.twoPanelSimulatorMinWidth) {
+              return _desktop();
+            }
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(

@@ -92,7 +92,7 @@ class _DbRulesScreenState extends State<DbRulesScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) {
-            if (c.maxWidth >= 720) return _desktop(c);
+            if (c.maxWidth >= AppSpacing.wideLayoutMinWidth) return _desktop(c);
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(

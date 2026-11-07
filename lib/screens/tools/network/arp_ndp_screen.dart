@@ -297,7 +297,8 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     if (_piBacked) return _piBody();
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 720;
+        final bool isDesktop =
+            constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
@@ -355,7 +356,8 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   Widget _piBody() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 720;
+        final bool isDesktop =
+            constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;

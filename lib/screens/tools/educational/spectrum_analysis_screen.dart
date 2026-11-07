@@ -128,7 +128,8 @@ class SpectrumAnalysisScreen extends StatelessWidget {
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final double edge = constraints.maxWidth >= 720
+            final double edge =
+                constraints.maxWidth >= AppSpacing.wideLayoutMinWidth
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
             return Center(
@@ -346,7 +347,8 @@ class _TeachingScreen extends StatelessWidget {
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final double edge = constraints.maxWidth >= 720
+            final double edge =
+                constraints.maxWidth >= AppSpacing.wideLayoutMinWidth
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
             return Center(

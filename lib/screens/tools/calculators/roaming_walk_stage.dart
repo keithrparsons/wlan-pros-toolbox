@@ -204,7 +204,8 @@ class _FloorCardState extends State<_FloorCard> {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final RoamWalkConfig cfg = c.config;
-    final bool wide = MediaQuery.sizeOf(context).width >= 720;
+    final bool wide =
+        MediaQuery.sizeOf(context).width >= AppSpacing.wideLayoutMinWidth;
     final bool fill = widget.fill;
     final Widget floor = Semantics(
       label: _semantic(),
@@ -496,7 +497,8 @@ class _PlotCard extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final RoamingWalkController c = controller;
-    final bool wide = MediaQuery.sizeOf(context).width >= 720;
+    final bool wide =
+        MediaQuery.sizeOf(context).width >= AppSpacing.wideLayoutMinWidth;
     final int k = c.sample;
     final RoamWalkResult r = c.result;
     final int? s = r.servingAt(k);

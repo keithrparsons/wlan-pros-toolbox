@@ -21,11 +21,15 @@ import '../data/tool_ordering.dart';
 import '../data/tool_search.dart';
 import '../data/tool_subgroups.dart';
 import '../router/app_router.dart';
+import '../router/live_error_nav_gate.dart';
+import '../services/device/fold_state.dart';
 import '../services/network/wifi_details_bridge.dart';
 import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
+import '../widgets/pane_split.dart';
+import '../widgets/presenter/large_screen_gate.dart' show kWifiClassroomCategoryId;
 import '../widgets/section_header.dart';
 import '../widgets/tool_row.dart';
 import 'tools/network/install_shortcut_sheet.dart';
@@ -73,14 +77,148 @@ class _CategoryScreenState extends State<CategoryScreen> {
   /// Whether this category renders as grouped sections (has a subgroup order).
   bool get _grouped => kCategorySubgroupOrder.containsKey(widget.category.id);
 
+  /// The route of the tool open in the tool pane, or null for none. Set only
+  /// on a wide window; it survives a fold to a narrow one.
+  String? _openRoute;
+
+  /// Key of the tool pane's navigator. A GlobalKey so the open tool keeps its
+  /// state when a fold or unfold moves the pane between layouts; replaced when
+  /// a different tool opens, so that tool starts fresh.
+  GlobalKey<NavigatorState> _paneKey = GlobalKey<NavigatorState>();
+
+  /// The Wi-Fi Classroom's simulators are built for the whole window, so that
+  /// category keeps opening tools full screen.
+  bool get _splits => widget.category.id != kWifiClassroomCategoryId;
+
+  /// Whether the window shows the list beside the tool pane.
+  bool get _wide =>
+      _splits &&
+      MediaQuery.sizeOf(context).width >= AppSpacing.wideLayoutMinWidth;
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
+  void _openInPane(String route) {
+    setState(() {
+      _openRoute = route;
+      _paneKey = GlobalKey<NavigatorState>();
+    });
+  }
+
+  void _closePane() => setState(() => _openRoute = null);
+
   @override
   Widget build(BuildContext context) {
+    final Size window = MediaQuery.sizeOf(context);
+    if (!_wide) {
+      return _openRoute == null ? _listScaffold() : _pane(window);
+    }
+
+    return ValueListenableBuilder<FoldState>(
+      valueListenable: foldState,
+      builder: (BuildContext context, FoldState fold, _) {
+        final PaneSplit split = paneSplitFor(window, fold);
+        return Scaffold(
+          body: split.stacked
+              ? _stacked(window, split)
+              : _sideBySide(window, split),
+        );
+      },
+    );
+  }
+
+  Widget _toolSide(Size size) =>
+      _openRoute == null ? const _ChooseAToolPlaceholder() : _pane(size);
+
+  Widget _sideBySide(Size window, PaneSplit split) {
+    return Row(
+      children: <Widget>[
+        SizedBox(
+          width: split.listWidth,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeRight: true,
+            child: _listScaffold(),
+          ),
+        ),
+        const VerticalDivider(width: kPaneDividerWidth),
+        Expanded(
+          child: MediaQuery.removePadding(
+            context: context,
+            removeLeft: true,
+            child: _toolSide(
+              Size(
+                window.width - split.listWidth - kPaneDividerWidth,
+                window.height,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Half open like a laptop: the tool above the fold, the list below it,
+  /// nothing on the fold itself.
+  Widget _stacked(Size window, PaneSplit split) {
+    return Column(
+      children: <Widget>[
+        SizedBox(
+          height: split.toolHeight,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeBottom: true,
+            child: _toolSide(Size(window.width, split.toolHeight)),
+          ),
+        ),
+        const Spacer(),
+        SizedBox(
+          height: split.listHeight,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: _listScaffold(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The open tool in its own navigator, told its own size so it lays out
+  /// for the pane, not the window. Its root is an empty page, so the tool's
+  /// app bar shows Back, and popping to that root closes the pane.
+  Widget _pane(Size size) {
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(size: size),
+      child: NavigatorPopHandler(
+        onPopWithResult: (_) => _paneKey.currentState?.maybePop(),
+        child: Navigator(
+          key: _paneKey,
+          observers: <NavigatorObserver>[_PaneObserver(onRootReached: _closePane)],
+          onGenerateInitialRoutes: (NavigatorState _, String _) => <Route<void>>[
+            PageRouteBuilder<void>(
+              pageBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+            _toolRoute(RouteSettings(name: _openRoute)),
+          ],
+          onGenerateRoute: _toolRoute,
+        ),
+      ),
+    );
+  }
+
+  Route<void> _toolRoute(RouteSettings settings) {
+    final WidgetBuilder? builder = AppRouter.routes[settings.name];
+    if (builder == null) {
+      return AppRouter.onUnknownRoute(settings) as Route<void>;
+    }
+    return MaterialPageRoute<void>(builder: builder, settings: settings);
+  }
+
+  Widget _listScaffold() {
     final TextTheme text = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -89,7 +227,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final double edge = constraints.maxWidth >= 720
+            final double edge = constraints.maxWidth >= AppSpacing.wideLayoutMinWidth
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
 
@@ -250,7 +388,41 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return ToolRow(
       key: ValueKey<String>(tool.id),
       tool: tool,
+      // Live tools stay on the root navigator, where LiveErrorNavGate finds
+      // them to restore a Shortcut run.
+      onTap: _wide && !LiveErrorNavGate.liveRoutes.contains(tool.routeName)
+          ? () => _openInPane(tool.routeName)
+          : null,
       contentType: _grouped ? contentTypeFor(tool, widget.category.id) : null,
+    );
+  }
+}
+
+/// Calls [onRootReached] when a pop leaves the tool pane on its empty root.
+class _PaneObserver extends NavigatorObserver {
+  _PaneObserver({required this.onRootReached});
+
+  final VoidCallback onRootReached;
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (previousRoute?.isFirst ?? false) onRootReached();
+  }
+}
+
+/// The tool pane before a tool is chosen.
+class _ChooseAToolPlaceholder extends StatelessWidget {
+  const _ChooseAToolPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        'Choose a tool',
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(color: context.colors.textSecondary),
+      ),
     );
   }
 }

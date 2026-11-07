@@ -109,7 +109,7 @@ class _MeasureWallScreenState extends State<MeasureWallScreen>
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) {
-            if (c.maxWidth >= 720) return _desktop(c);
+            if (c.maxWidth >= AppSpacing.wideLayoutMinWidth) return _desktop(c);
             final double stageH = ((c.maxWidth - 2 * AppSpacing.lg) * 0.7)
                 .clamp(240.0, 380.0);
             return Center(

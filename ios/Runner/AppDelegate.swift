@@ -24,6 +24,10 @@ import UIKit
   // channel handler stays live for the engine's lifetime.
   private var wifiSecurityChannel: WifiSecurityChannel?
 
+  // iPhone Duo (Keith, 2026-11-07): hinge status and fold position for the
+  // two-pane category view; Flutter does not report the fold on iOS.
+  private var hingeChannel: HingeChannel?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -47,6 +51,7 @@ import UIKit
     // Reads the connected network's (coarse) security type and BSSID directly,
     // gated by the Access Wi-Fi Information entitlement + Location permission.
     wifiSecurityChannel = WifiSecurityChannel(messenger: messenger)
+    hingeChannel = HingeChannel(messenger: messenger)
   }
 
   // MARK: - Shortcuts bridge (TICKET-01 spike)

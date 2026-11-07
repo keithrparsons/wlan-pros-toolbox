@@ -195,7 +195,8 @@ class _FloorCard extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final SurveyWalkController c = controller;
-    final bool wide = MediaQuery.sizeOf(context).width >= 720;
+    final bool wide =
+        MediaQuery.sizeOf(context).width >= AppSpacing.wideLayoutMinWidth;
     final Widget plan = LayoutBuilder(
       builder: (BuildContext context, BoxConstraints bc) {
         final Size size = Size(bc.maxWidth, bc.maxHeight);

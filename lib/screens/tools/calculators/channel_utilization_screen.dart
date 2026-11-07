@@ -102,7 +102,8 @@ class _ChannelUtilizationScreenState extends State<ChannelUtilizationScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final bool isDesktop = constraints.maxWidth >= 720;
+            final bool isDesktop =
+                constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
             final double edge = isDesktop
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;

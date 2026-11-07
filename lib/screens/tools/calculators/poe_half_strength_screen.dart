@@ -106,7 +106,7 @@ class _PoeHalfStrengthScreenState extends State<PoeHalfStrengthScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) {
-            if (c.maxWidth >= 720) return _desktop(c);
+            if (c.maxWidth >= AppSpacing.wideLayoutMinWidth) return _desktop(c);
             final double stageH = ((c.maxWidth - 2 * AppSpacing.lg) * 1.1)
                 .clamp(320.0, 460.0);
             return Center(

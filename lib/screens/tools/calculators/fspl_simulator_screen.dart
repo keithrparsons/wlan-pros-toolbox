@@ -122,7 +122,9 @@ class _FsplSimulatorScreenState extends State<FsplSimulatorScreen>
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) {
-            if (c.maxWidth >= 720) return _desktop(c);
+            if (c.maxWidth >= AppSpacing.twoPanelSimulatorMinWidth) {
+              return _desktop(c);
+            }
             final double chartH = (c.maxHeight * 0.46).clamp(240.0, 420.0);
             return Column(
               children: <Widget>[

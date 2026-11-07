@@ -132,7 +132,11 @@ final Finder _notice = find.text(kLargeScreenNoticeTitle);
 
 void main() {
   group('threshold (the Present button\'s)', () {
-    for (final Size size in const <Size>[Size(390, 844), Size(480, 320)]) {
+    for (final Size size in const <Size>[
+      Size(390, 844),
+      Size(480, 320),
+      Size(466, 678), // iPhone Duo closed
+    ]) {
       testWidgets('notice shows at ${size.width}x${size.height}', (
         WidgetTester tester,
       ) async {
@@ -147,7 +151,12 @@ void main() {
       });
     }
 
-    for (final Size size in const <Size>[Size(800, 600), Size(1470, 923)]) {
+    for (final Size size in const <Size>[
+      Size(800, 600),
+      Size(1470, 923),
+      Size(669, 951), // iPhone Duo open, upright
+      Size(951, 669), // iPhone Duo open, turned
+    ]) {
       testWidgets('no notice at ${size.width}x${size.height}', (
         WidgetTester tester,
       ) async {

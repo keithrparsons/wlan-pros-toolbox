@@ -267,13 +267,20 @@ void main() {
 
   // The tile grid must use WIDTH-BASED breakpoints (not platform detection) so a
   // Mac window resized narrow reflows back to 2/1 columns exactly like a phone.
-  // gridCrossAxisCountFor: <440 → 1, ≥440 → 2, ≥720 → 3, ≥1100 → 4.
+  // gridCrossAxisCountFor: <440 → 1, ≥440 → 2, ≥600 → 3, ≥1100 → 4.
+  // 600 (was 720): the iPhone Duo's open screen is 669pt wide upright and must
+  // get the same big-screen grid as when it is turned (Keith, 2026-11-07).
   for (final ({double width, int columns}) c in <({double width, int columns})>[
     (width: 320, columns: 1), // phone (single column)
     (width: 390, columns: 1), // phone (single column)
     (width: 440, columns: 2), // 2-column lower bound
-    (width: 680, columns: 2), // old content cap — still 2-up
-    (width: 720, columns: 3), // 3-column lower bound (was unreachable pre-fix)
+    (width: 466, columns: 2), // iPhone Duo closed (outer screen)
+    (width: 599, columns: 2), // just under the big-screen breakpoint
+    (width: 600, columns: 3), // 3-column lower bound
+    (width: 669, columns: 3), // iPhone Duo open, upright
+    (width: 680, columns: 3), // content-cap width
+    (width: 720, columns: 3),
+    (width: 951, columns: 3), // iPhone Duo open, turned
     (width: 820, columns: 3), // mid desktop / large iPad — 3-up
     (width: 1100, columns: 4), // 4-column lower bound
     (width: 1280, columns: 4), // wide desktop — 4-up (grid cap)
@@ -306,7 +313,11 @@ void main() {
     const Size(375, 900),
     const Size(390, 900),
     const Size(440, 900), // 2-column lower bound (IA-redesign density gate)
-    const Size(680, 900), // content-cap width, 2-column
+    const Size(466, 678), // iPhone Duo closed (outer screen)
+    const Size(600, 900), // 3-column lower bound, narrowest 3-up tiles
+    const Size(669, 951), // iPhone Duo open, upright
+    const Size(680, 900), // content-cap width
+    const Size(951, 669), // iPhone Duo open, turned
     const Size(768, 1100),
     const Size(820, 1100), // 3-column desktop / large iPad
     const Size(1280, 1100), // 4-column wide desktop

@@ -278,7 +278,8 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
     // every other app surface (CenteredContent contract).
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final double edge = constraints.maxWidth >= 720
+        final double edge =
+            constraints.maxWidth >= AppSpacing.wideLayoutMinWidth
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
         return Center(
@@ -549,7 +550,7 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     final String alt = attributes['alt'] ?? '';
     final Size size = MediaQuery.of(context).size;
-    final double edge = size.width >= 720
+    final double edge = size.width >= AppSpacing.wideLayoutMinWidth
         ? AppSpacing.screenEdgeDesktop
         : AppSpacing.screenEdgeMobile;
     final double maxWidth =

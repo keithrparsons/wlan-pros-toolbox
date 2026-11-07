@@ -240,7 +240,8 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final bool isDesktop = constraints.maxWidth >= 720;
+            final bool isDesktop =
+                constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
             final double edge = isDesktop
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;

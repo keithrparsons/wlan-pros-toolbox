@@ -184,7 +184,9 @@ class _LadderCard extends StatelessWidget {
             LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 final double w = constraints.maxWidth;
-                final bool wide = MediaQuery.sizeOf(context).width >= 720;
+                final bool wide =
+                    MediaQuery.sizeOf(context).width >=
+                    AppSpacing.wideLayoutMinWidth;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
