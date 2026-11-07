@@ -301,16 +301,19 @@ void main() {
     });
   });
 
-  // iPhone Duo (Keith, 2026-11-07): the open screen, 669pt wide upright, gets
-  // the same big-screen edge padding as the home grid; the closed screen
-  // (466pt) keeps phone padding.
-  for (final ({double width, double edge}) c in <({double width, double edge})>[
-    (width: 466, edge: AppSpacing.screenEdgeMobile),
-    (width: 669, edge: AppSpacing.screenEdgeDesktop),
-  ]) {
-    testWidgets('list edge padding at ${c.width.toInt()}pt is ${c.edge}', (
-      tester,
-    ) async {
+  // iPhone Duo (Keith, 2026-11-07): a full-width list on the open screen
+  // (669pt upright) gets big-screen edge padding; the closed screen (466pt)
+  // keeps phone padding. Most categories show their list as a 260pt pane
+  // beside the tool at 669, and a pane that narrow keeps phone padding. The
+  // Wi-Fi Classroom never splits, so it shows the full-width case.
+  for (final ({String category, double width, double edge}) c
+      in <({String category, double width, double edge})>[
+        (category: 'rf-calculators', width: 466, edge: AppSpacing.screenEdgeMobile),
+        (category: 'wifi-classroom', width: 669, edge: AppSpacing.screenEdgeDesktop),
+        (category: 'rf-calculators', width: 669, edge: AppSpacing.screenEdgeMobile),
+      ]) {
+    testWidgets('${c.category} list edge padding at ${c.width.toInt()}pt is '
+        '${c.edge}', (tester) async {
       tester.view.physicalSize = Size(c.width, 951);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -318,7 +321,7 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      await tester.pumpWidget(_harness(_cat('rf-calculators')));
+      await tester.pumpWidget(_harness(_cat(c.category)));
       await tester.pump();
 
       final SliverPadding padding = tester.widget<SliverPadding>(
