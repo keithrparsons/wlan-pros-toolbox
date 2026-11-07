@@ -20,6 +20,10 @@ const List<Size> _duoSizes = <Size>[
   Size(600, 900), // narrowest big-screen width
   Size(669, 951), // open, upright
   Size(951, 669), // open, turned
+  // The tool pane beside the list (CategoryScreen, list 38% clamped 260-340,
+  // 1pt divider): what a tool gets when it opens beside its list.
+  Size(408, 951), // pane, open upright
+  Size(610, 669), // pane, open turned
 ];
 
 void main() {

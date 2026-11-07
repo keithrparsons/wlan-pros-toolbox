@@ -26,6 +26,7 @@ import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
+import '../widgets/presenter/large_screen_gate.dart' show kWifiClassroomCategoryId;
 import '../widgets/section_header.dart';
 import '../widgets/tool_row.dart';
 import 'tools/network/install_shortcut_sheet.dart';
@@ -70,8 +71,25 @@ class _CategoryScreenState extends State<CategoryScreen> {
   /// categories; flat categories show no filter row.
   String? _selectedSection;
 
+  /// Whether a tap on a row opens the tool in the pane (wide) rather than
+  /// pushing it full screen. Set by [_listScaffold] before the rows build.
+  bool _rowsOpenInPane = false;
+
   /// Whether this category renders as grouped sections (has a subgroup order).
   bool get _grouped => kCategorySubgroupOrder.containsKey(widget.category.id);
+
+  /// The route of the tool open in the tool pane, or null for none. Set only
+  /// on a wide window; it survives a fold to a narrow one.
+  String? _openRoute;
+
+  /// Key of the tool pane's navigator. A GlobalKey so the open tool keeps its
+  /// state when a fold or unfold moves the pane between layouts; replaced when
+  /// a different tool opens, so that tool starts fresh.
+  GlobalKey<NavigatorState> _paneKey = GlobalKey<NavigatorState>();
+
+  /// The Wi-Fi Classroom's simulators are built for the whole window, so that
+  /// category keeps opening tools full screen.
+  bool get _splits => widget.category.id != kWifiClassroomCategoryId;
 
   @override
   void dispose() {
@@ -79,9 +97,86 @@ class _CategoryScreenState extends State<CategoryScreen> {
     super.dispose();
   }
 
+  void _openInPane(String route) {
+    setState(() {
+      _openRoute = route;
+      _paneKey = GlobalKey<NavigatorState>();
+    });
+  }
+
+  void _closePane() => setState(() => _openRoute = null);
+
   @override
   Widget build(BuildContext context) {
+    final Size window = MediaQuery.sizeOf(context);
+    final bool wide =
+        _splits && window.width >= AppSpacing.wideLayoutMinWidth;
+    if (!wide) {
+      return _openRoute == null ? _listScaffold(wide: false) : _pane(window);
+    }
+
+    final double listWidth = (window.width * 0.38).clamp(260.0, 340.0);
+    final Size paneSize = Size(window.width - listWidth - 1, window.height);
+    return Scaffold(
+      body: Row(
+        children: <Widget>[
+          SizedBox(
+            width: listWidth,
+            child: MediaQuery.removePadding(
+              context: context,
+              removeRight: true,
+              child: _listScaffold(wide: true),
+            ),
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(
+            child: MediaQuery.removePadding(
+              context: context,
+              removeLeft: true,
+              child: _openRoute == null
+                  ? const _ChooseAToolPlaceholder()
+                  : _pane(paneSize),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The open tool in its own navigator, told its own size so it lays out
+  /// for the pane, not the window. Its root is an empty page, so the tool's
+  /// app bar shows Back, and popping to that root closes the pane.
+  Widget _pane(Size size) {
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(size: size),
+      child: NavigatorPopHandler(
+        onPopWithResult: (_) => _paneKey.currentState?.maybePop(),
+        child: Navigator(
+          key: _paneKey,
+          observers: <NavigatorObserver>[_PaneObserver(onRootReached: _closePane)],
+          onGenerateInitialRoutes: (NavigatorState _, String _) => <Route<void>>[
+            PageRouteBuilder<void>(
+              pageBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+            _toolRoute(RouteSettings(name: _openRoute)),
+          ],
+          onGenerateRoute: _toolRoute,
+        ),
+      ),
+    );
+  }
+
+  Route<void> _toolRoute(RouteSettings settings) {
+    final WidgetBuilder? builder = AppRouter.routes[settings.name];
+    if (builder == null) {
+      return AppRouter.onUnknownRoute(settings) as Route<void>;
+    }
+    return MaterialPageRoute<void>(builder: builder, settings: settings);
+  }
+
+  Widget _listScaffold({required bool wide}) {
     final TextTheme text = Theme.of(context).textTheme;
+    _rowsOpenInPane = wide;
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.category.title), toolbarHeight: 64),
@@ -250,7 +345,37 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return ToolRow(
       key: ValueKey<String>(tool.id),
       tool: tool,
+      onTap: _rowsOpenInPane ? () => _openInPane(tool.routeName) : null,
       contentType: _grouped ? contentTypeFor(tool, widget.category.id) : null,
+    );
+  }
+}
+
+/// Calls [onRootReached] when a pop leaves the tool pane on its empty root.
+class _PaneObserver extends NavigatorObserver {
+  _PaneObserver({required this.onRootReached});
+
+  final VoidCallback onRootReached;
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (previousRoute?.isFirst ?? false) onRootReached();
+  }
+}
+
+/// The tool pane before a tool is chosen.
+class _ChooseAToolPlaceholder extends StatelessWidget {
+  const _ChooseAToolPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        'Choose a tool',
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(color: context.colors.textSecondary),
+      ),
     );
   }
 }
