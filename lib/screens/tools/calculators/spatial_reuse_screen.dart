@@ -102,7 +102,9 @@ class _SpatialReuseScreenState extends State<SpatialReuseScreen>
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) =>
-              c.maxWidth >= 720 ? _desktop() : _phone(c),
+              c.maxWidth >= AppSpacing.wideLayoutMinWidth
+              ? _desktop()
+              : _phone(c),
         ),
       ),
     );

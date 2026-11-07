@@ -13,6 +13,7 @@ import 'package:wlan_pros_toolbox/screens/category_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/theme/app_tokens.dart';
 import 'package:wlan_pros_toolbox/widgets/section_header.dart';
 import 'package:wlan_pros_toolbox/widgets/tool_row.dart';
 
@@ -299,4 +300,31 @@ void main() {
       expect(find.text('Add the Shortcut'), findsOneWidget);
     });
   });
+
+  // iPhone Duo (Keith, 2026-11-07): the open screen, 669pt wide upright, gets
+  // the same big-screen edge padding as the home grid; the closed screen
+  // (466pt) keeps phone padding.
+  for (final ({double width, double edge}) c in <({double width, double edge})>[
+    (width: 466, edge: AppSpacing.screenEdgeMobile),
+    (width: 669, edge: AppSpacing.screenEdgeDesktop),
+  ]) {
+    testWidgets('list edge padding at ${c.width.toInt()}pt is ${c.edge}', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(c.width, 951);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(_harness(_cat('rf-calculators')));
+      await tester.pump();
+
+      final SliverPadding padding = tester.widget<SliverPadding>(
+        find.byType(SliverPadding).first,
+      );
+      expect((padding.padding as EdgeInsets).left, c.edge);
+    });
+  }
 }

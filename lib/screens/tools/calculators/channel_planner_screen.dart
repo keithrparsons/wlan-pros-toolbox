@@ -114,7 +114,9 @@ class _ChannelPlannerScreenState extends State<ChannelPlannerScreen>
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) =>
-              c.maxWidth >= 720 ? _desktop(c) : _phone(c),
+              c.maxWidth >= AppSpacing.wideLayoutMinWidth
+              ? _desktop(c)
+              : _phone(c),
         ),
       ),
     );

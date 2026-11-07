@@ -124,7 +124,7 @@ class _InterfererCostScreenState extends State<InterfererCostScreen>
                   maxWidth: AppSpacing.calculatorMaxWidth,
                 ),
                 child: _main(
-                  edge: c.maxWidth >= 720
+                  edge: c.maxWidth >= AppSpacing.wideLayoutMinWidth
                       ? AppSpacing.screenEdgeDesktop
                       : AppSpacing.screenEdgeMobile,
                   withControls: true,

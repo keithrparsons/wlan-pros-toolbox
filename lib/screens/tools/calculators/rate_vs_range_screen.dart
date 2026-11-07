@@ -117,7 +117,9 @@ class _RateVsRangeScreenState extends State<RateVsRangeScreen>
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) {
-            if (c.maxWidth >= 720) return _desktop(c);
+            if (c.maxWidth >= AppSpacing.twoPanelSimulatorMinWidth) {
+              return _desktop(c);
+            }
             final double stageH = (c.maxWidth - 2 * AppSpacing.lg).clamp(
               240.0,
               420.0,

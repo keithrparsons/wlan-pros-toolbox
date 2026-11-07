@@ -238,7 +238,8 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
     if (_piBacked) return _piBody();
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 720;
+        final bool isDesktop =
+            constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
@@ -277,7 +278,8 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
   Widget _piBody() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 720;
+        final bool isDesktop =
+            constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;

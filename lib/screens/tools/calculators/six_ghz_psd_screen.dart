@@ -115,7 +115,7 @@ class _SixGhzPsdScreenState extends State<SixGhzPsdScreen>
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) {
-            if (c.maxWidth >= 720) return _desktop(c);
+            if (c.maxWidth >= AppSpacing.wideLayoutMinWidth) return _desktop(c);
             final double chartH = (c.maxHeight * 0.42).clamp(220.0, 380.0);
             return Center(
               child: ConstrainedBox(

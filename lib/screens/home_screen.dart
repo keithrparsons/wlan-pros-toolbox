@@ -44,7 +44,7 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   /// Breakpoint for switching from mobile-edge to desktop-edge padding.
-  static const double _desktopBreakpoint = 720;
+  static const double _desktopBreakpoint = AppSpacing.wideLayoutMinWidth;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();

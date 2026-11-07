@@ -113,7 +113,7 @@ class _Wpa2PasswordScreenState extends State<Wpa2PasswordScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) {
-            if (c.maxWidth >= 720) return _desktop(c);
+            if (c.maxWidth >= AppSpacing.wideLayoutMinWidth) return _desktop(c);
             final double stageH = ((c.maxWidth - 2 * AppSpacing.lg) * 0.8)
                 .clamp(260.0, 380.0);
             return Center(

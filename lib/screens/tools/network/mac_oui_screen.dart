@@ -226,7 +226,8 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
   Widget _body() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 720;
+        final bool isDesktop =
+            constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;

@@ -164,8 +164,27 @@ class AppSpacing {
   /// Width at and above which the tile grid shows 4 columns.
   static const double gridFourColBreakpoint = 1100;
 
+  /// Width at and above which the app uses its big-screen layout: desktop edge
+  /// padding, side-by-side panels, the Present button (which also gates the
+  /// Wi-Fi Classroom large-screen notice), and the 3-column tile grid. Every
+  /// screen reads it from here; a guard test forbids a literal copy.
+  ///
+  /// 600, not 720 (Keith, 2026-11-07): the iPhone Duo's open screen is 669pt
+  /// wide upright and 951pt turned. At 720 the same open phone looked like a
+  /// stretched phone one way and a tablet the other. 600 sits above every
+  /// phone held upright (440pt max) and the Duo's closed screen (466pt).
+  static const double wideLayoutMinWidth = 600;
+
   /// Width at and above which the tile grid shows 3 columns.
-  static const double gridThreeColBreakpoint = 720;
+  static const double gridThreeColBreakpoint = wideLayoutMinWidth;
+
+  /// Width at and above which a simulator whose two side-by-side panels hold
+  /// fixed-width tables and legends shows them side by side. Below it the
+  /// panels stack. These six tools overflowed between 600 and 720 in the
+  /// iPhone Duo layout sweep (`test/screens/iphone_duo_layout_sweep_test.dart`,
+  /// 2026-11-07), so they keep the old threshold; the other simulators go
+  /// two-column at [wideLayoutMinWidth].
+  static const double twoPanelSimulatorMinWidth = 720;
 
   /// Width below which the tile grid drops from 2 columns to a single column
   /// (phone). Above it (and below [gridThreeColBreakpoint]) the grid is 2-up.

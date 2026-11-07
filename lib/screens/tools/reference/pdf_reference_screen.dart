@@ -1040,7 +1040,7 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
           padding: const EdgeInsets.all(AppSpacing.sm),
           child: companion,
         );
-        if (c.maxWidth >= 720) {
+        if (c.maxWidth >= AppSpacing.wideLayoutMinWidth) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[

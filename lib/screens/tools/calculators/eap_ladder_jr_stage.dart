@@ -276,7 +276,9 @@ class _JrLadderCard extends StatelessWidget {
           else
             LayoutBuilder(
               builder: (BuildContext context, BoxConstraints box) {
-                final bool wide = MediaQuery.sizeOf(context).width >= 720;
+                final bool wide =
+                    MediaQuery.sizeOf(context).width >=
+                    AppSpacing.wideLayoutMinWidth;
                 return ladder(
                   box.maxWidth,
                   wide ? _kViewportWide : _kViewportPhone,

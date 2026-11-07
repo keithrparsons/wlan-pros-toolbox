@@ -98,7 +98,8 @@ class _OneTalkerScreenState extends State<OneTalkerScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final double edge = constraints.maxWidth >= 720
+            final double edge =
+                constraints.maxWidth >= AppSpacing.wideLayoutMinWidth
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
             return Center(

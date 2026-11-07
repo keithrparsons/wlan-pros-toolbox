@@ -118,7 +118,7 @@ class _DevicesDisagreeScreenState extends State<DevicesDisagreeScreen>
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints c) {
-            if (c.maxWidth >= 720) return _desktop();
+            if (c.maxWidth >= AppSpacing.wideLayoutMinWidth) return _desktop();
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(

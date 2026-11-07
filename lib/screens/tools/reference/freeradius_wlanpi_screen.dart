@@ -232,7 +232,8 @@ class _FreeradiusWlanpiScreenState extends State<FreeradiusWlanpiScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final bool isDesktop = constraints.maxWidth >= 720;
+            final bool isDesktop =
+                constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
             return SingleChildScrollView(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop

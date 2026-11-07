@@ -2441,7 +2441,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 720;
+        final bool isDesktop =
+            constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
@@ -6640,7 +6641,8 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
   Widget _content(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 720;
+        final bool isDesktop =
+            constraints.maxWidth >= AppSpacing.wideLayoutMinWidth;
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;

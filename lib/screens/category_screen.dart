@@ -89,7 +89,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final double edge = constraints.maxWidth >= 720
+            final double edge = constraints.maxWidth >= AppSpacing.wideLayoutMinWidth
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
 
