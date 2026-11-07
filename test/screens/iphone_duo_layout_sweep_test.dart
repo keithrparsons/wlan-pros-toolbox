@@ -24,6 +24,9 @@ const List<Size> _duoSizes = <Size>[
   // 1pt divider): what a tool gets when it opens beside its list.
   Size(408, 951), // pane, open upright
   Size(610, 669), // pane, open turned
+  // Half open (pane_split.dart): beside a book fold, above a laptop fold.
+  Size(475, 669), // pane, book pose
+  Size(669, 470), // pane, laptop pose
 ];
 
 void main() {

@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/category_screen.dart';
+import 'package:wlan_pros_toolbox/services/device/fold_state.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/presenter/large_screen_gate.dart';
 import 'package:wlan_pros_toolbox/widgets/tool_row.dart';
@@ -166,5 +167,62 @@ void main() {
     expect(find.byType(ToolRow), findsWidgets);
     expect(find.text('TX Power'), findsNothing);
     expect(_rootCanPop(tester), isFalse);
+  });
+
+  group('half-open Duo (approach C)', () {
+    tearDown(() => foldState.value = FoldState.none);
+
+    testWidgets('book pose: the divider moves onto the fold', (tester) async {
+      foldState.value = const FoldState(
+        status: HingeStatus.partiallyOpen,
+        angle: 95,
+        folds: <Rect>[Rect.fromLTWH(475, 0, 0, 669)],
+      );
+      await _pumpCategory(tester, _duoOpenTurned, 'rf-calculators');
+
+      expect(tester.getTopLeft(find.byType(VerticalDivider)).dx, 475);
+    });
+
+    testWidgets('laptop pose: the tool sits above the fold, the list below', (
+      tester,
+    ) async {
+      await _pumpCategory(tester, _duoOpenUpright, 'rf-calculators');
+      await _openTool(tester, 'eirp');
+      foldState.value = const FoldState(
+        status: HingeStatus.partiallyOpen,
+        angle: 100,
+        folds: <Rect>[Rect.fromLTWH(0, 470, 669, 10)],
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('TX Power'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('TX Power')).dy,
+        lessThan(470),
+      );
+      expect(
+        tester.getTopLeft(find.byType(ToolRow).first).dy,
+        greaterThan(480),
+      );
+    });
+
+    testWidgets('a pose change keeps what was typed in the tool', (
+      tester,
+    ) async {
+      await _pumpCategory(tester, _duoOpenUpright, 'rf-calculators');
+      await _openTool(tester, 'eirp');
+      await tester.enterText(find.byType(TextField).first, '17');
+      foldState.value = const FoldState(
+        status: HingeStatus.partiallyOpen,
+        angle: 100,
+        folds: <Rect>[Rect.fromLTWH(0, 470, 669, 10)],
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('17'), findsOneWidget);
+
+      foldState.value = FoldState.none;
+      await tester.pumpAndSettle();
+      expect(find.text('17'), findsOneWidget);
+    });
   });
 }

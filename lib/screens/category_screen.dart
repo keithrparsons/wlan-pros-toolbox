@@ -21,11 +21,13 @@ import '../data/tool_ordering.dart';
 import '../data/tool_search.dart';
 import '../data/tool_subgroups.dart';
 import '../router/app_router.dart';
+import '../services/device/fold_state.dart';
 import '../services/network/wifi_details_bridge.dart';
 import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
+import '../widgets/pane_split.dart';
 import '../widgets/presenter/large_screen_gate.dart' show kWifiClassroomCategoryId;
 import '../widgets/section_header.dart';
 import '../widgets/tool_row.dart';
@@ -115,31 +117,73 @@ class _CategoryScreenState extends State<CategoryScreen> {
       return _openRoute == null ? _listScaffold(wide: false) : _pane(window);
     }
 
-    final double listWidth = (window.width * 0.38).clamp(260.0, 340.0);
-    final Size paneSize = Size(window.width - listWidth - 1, window.height);
-    return Scaffold(
-      body: Row(
-        children: <Widget>[
-          SizedBox(
-            width: listWidth,
-            child: MediaQuery.removePadding(
-              context: context,
-              removeRight: true,
-              child: _listScaffold(wide: true),
+    return ValueListenableBuilder<FoldState>(
+      valueListenable: foldState,
+      builder: (BuildContext context, FoldState fold, _) {
+        final PaneSplit split = paneSplitFor(window, fold);
+        return Scaffold(
+          body: split.stacked
+              ? _stacked(window, split)
+              : _sideBySide(window, split),
+        );
+      },
+    );
+  }
+
+  Widget _toolSide(Size size) =>
+      _openRoute == null ? const _ChooseAToolPlaceholder() : _pane(size);
+
+  Widget _sideBySide(Size window, PaneSplit split) {
+    return Row(
+      children: <Widget>[
+        SizedBox(
+          width: split.listWidth,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeRight: true,
+            child: _listScaffold(wide: true),
+          ),
+        ),
+        const VerticalDivider(width: kPaneDividerWidth),
+        Expanded(
+          child: MediaQuery.removePadding(
+            context: context,
+            removeLeft: true,
+            child: _toolSide(
+              Size(
+                window.width - split.listWidth - kPaneDividerWidth,
+                window.height,
+              ),
             ),
           ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            child: MediaQuery.removePadding(
-              context: context,
-              removeLeft: true,
-              child: _openRoute == null
-                  ? const _ChooseAToolPlaceholder()
-                  : _pane(paneSize),
-            ),
+        ),
+      ],
+    );
+  }
+
+  /// Half open like a laptop: the tool above the fold, the list below it,
+  /// nothing on the fold itself.
+  Widget _stacked(Size window, PaneSplit split) {
+    return Column(
+      children: <Widget>[
+        SizedBox(
+          height: split.toolHeight,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeBottom: true,
+            child: _toolSide(Size(window.width, split.toolHeight)),
           ),
-        ],
-      ),
+        ),
+        const Spacer(),
+        SizedBox(
+          height: split.listHeight,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: _listScaffold(wide: true),
+          ),
+        ),
+      ],
     );
   }
 
