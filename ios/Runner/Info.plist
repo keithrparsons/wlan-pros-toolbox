@@ -4,6 +4,14 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Flutter deep linking OFF. The app uses no deep links, and with the
+	     engine default (on) the Shortcut's x-success return
+	     wlanprostoolbox://live-done became pushNamed('/'), the home screen,
+	     on top of the running live tool (Keith's iPhone Duo, 8 NOV 2026:
+	     Test My Connection dropped to home at 13 to 20%). SceneDelegate
+	     still handles live-done and live-error itself. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<!-- Export compliance: the app uses only standard HTTPS (TLS) for its
 	     network tools — DNS-over-HTTPS, keyless HTTPS API lookups, and TCP
 	     sockets. No proprietary or non-standard cryptography. Declaring this
