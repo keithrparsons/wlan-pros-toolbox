@@ -1,6 +1,7 @@
 // Where the two-pane category view splits (Keith, 2026-11-07, iPhone Duo).
 //
-// Side by side by default, the list 38% of the width clamped to 260-340. When
+// Side by side by default, the list 38% of the width clamped to 320-340
+// (320, not 260: at 260 the open Duo broke tool names mid-word, Keith 9 NOV). When
 // the Duo is half open, Apple's guidance is to keep content off the fold
 // (Deliverables/2026-11-07-toolbox-iphone-duo/toolbox-iphone-duo--RESEARCH.md,
 // section 3), so the split moves to it: a fold running top to bottom (a book)
@@ -8,6 +9,7 @@
 // it and the list below. Flat open, the fold is not in the way and the plain
 // split stands.
 
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -16,6 +18,16 @@ import '../services/device/fold_state.dart';
 
 /// Narrowest the list or the tool pane may get beside each other.
 const double kMinPaneWidth = 260;
+
+/// Narrowest the list gets beside the tool when no fold sets the divider.
+/// Below this, long tool names beside the star and a badge break mid-word.
+const double kMinListWidth = 320;
+
+/// Narrowest the tool gets beside the list when no fold sets the divider: the
+/// narrowest phone the tools are built for. Under 641 wide it and
+/// [kMinListWidth] cannot both fit, and the list gives way, since an
+/// overflowing tool is worse than a wrapped name. The open Duo (669) fits both.
+const double kMinToolWidth = 320;
 
 /// Shortest the tool or the list may get above and below a laptop fold. A
 /// fold closer to an edge than this (or outside the window, in a top/bottom
@@ -75,7 +87,8 @@ PaneSplit paneSplitFor(Size window, FoldState fold) {
       return PaneSplit.stacked(toolHeight: toolHeight, listHeight: listHeight);
     }
   }
-  return PaneSplit.sideBySide(
-    listWidth: (window.width * 0.38).clamp(kMinPaneWidth, 340),
-  );
+  final double listWidth = (window.width * 0.38).clamp(kMinListWidth, 340);
+  final double phoneWidthLeft =
+      window.width - kMinToolWidth - kPaneDividerWidth;
+  return PaneSplit.sideBySide(listWidth: math.min(listWidth, phoneWidthLeft));
 }

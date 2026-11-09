@@ -6,8 +6,10 @@
 // tool and what was typed into it; Back then returns to the list.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
+import 'package:wlan_pros_toolbox/favorites/my_tools_controller.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/router/live_error_nav_gate.dart';
 import 'package:wlan_pros_toolbox/screens/category_screen.dart';
@@ -45,6 +47,31 @@ Future<void> _pumpCategory(WidgetTester tester, Size size, String id) async {
   await tester.pump();
 }
 
+/// [_pumpCategory] with a My Tools scope, so every row shows its star.
+Future<void> _pumpCategoryWithStars(
+  WidgetTester tester,
+  Size size,
+  String id,
+) async {
+  _setWindow(tester, size);
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await tester.pumpWidget(
+    MyToolsScope(
+      controller: MyToolsController(),
+      child: MaterialApp(
+        theme: AppTheme.dark(),
+        routes: Map<String, WidgetBuilder>.of(AppRouter.routes)
+          ..remove(Navigator.defaultRouteName),
+        home: CategoryScreen(category: _cat(id)),
+      ),
+    ),
+  );
+  await tester.pump();
+}
+
 Future<void> _openTool(WidgetTester tester, String toolId) async {
   final Finder row = find.byKey(ValueKey<String>(toolId));
   // The tool list is the first vertical scroller; the tool pane follows it.
@@ -66,6 +93,43 @@ bool _rootCanPop(WidgetTester tester) =>
     tester.state<NavigatorState>(find.byType(Navigator).first).canPop();
 
 void main() {
+  // Keith, 9 NOV: with the Duo open upright the 260pt list broke tool names
+  // mid-word ("Earth Curvatur / e"). A name may wrap between words, never
+  // inside one. The window is tall so every row is built, not just the first
+  // screenful; only the width decides the split. The My Tools scope is there
+  // so each row shows its star, as in the app. Breaks at a space, hyphen or
+  // slash are fine.
+  // The Duo's open width only: under 641 the list gives way so the tool keeps
+  // its 320 phone width (pane_split.dart), and names there may still wrap.
+  for (final double width in <double>[669]) {
+    testWidgets('wide ${width.toInt()}: no tool name breaks inside a word', (
+      tester,
+    ) async {
+      final List<String> broken = <String>[];
+      for (final ToolCategory category in kToolCategories) {
+        if (category.id == kWifiClassroomCategoryId) continue;
+        await _pumpCategoryWithStars(tester, Size(width, 20000), category.id);
+        for (final ToolEntry tool in category.tools) {
+          final Finder title = find.descendant(
+            of: find.byType(ToolRow),
+            matching: find.text(tool.title),
+          );
+          if (title.evaluate().isEmpty) continue;
+          final RenderParagraph paragraph = tester.renderObject(title.first);
+          final RegExp word = RegExp(r'[^\s/-]+');
+          for (final RegExpMatch m in word.allMatches(tool.title)) {
+            final List<TextBox> boxes = paragraph.getBoxesForSelection(
+              TextSelection(baseOffset: m.start, extentOffset: m.end),
+            );
+            final Set<double> lines = boxes.map((TextBox b) => b.top).toSet();
+            if (lines.length > 1) broken.add('${category.id}: ${tool.title}');
+          }
+        }
+      }
+      expect(broken, isEmpty);
+    });
+  }
+
   testWidgets('wide: the list sits beside a "Choose a tool" placeholder', (
     tester,
   ) async {

@@ -200,10 +200,14 @@ class _ToolRowState extends State<ToolRow> {
   Widget _content(TextTheme text, bool live) {
     final AppColorScheme colors = context.colors;
     final List<Widget> children = <Widget>[
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      // A Wrap, not a Row: in the narrow Duo list pane a badge beside the
+      // title squeezed it until words broke mid-letter (Keith, 9 NOV). Now
+      // the badge drops below a title that needs the whole line.
+      Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        runSpacing: AppSpacing.xxs,
         children: <Widget>[
-          Expanded(child: _title(text, live)),
+          _title(text, live),
           if (!live)
             Padding(
               padding: const EdgeInsets.only(left: AppSpacing.xs),

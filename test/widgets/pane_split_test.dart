@@ -12,20 +12,30 @@ FoldState _halfOpen(Rect fold) =>
     FoldState(status: HingeStatus.partiallyOpen, folds: <Rect>[fold]);
 
 void main() {
-  test('no fold: list beside the tool, 38% clamped to 260-340', () {
+  test('no fold: list beside the tool, 38% clamped to 320-340', () {
     expect(
       paneSplitFor(const Size(951, 669), FoldState.none),
       const PaneSplit.sideBySide(listWidth: 340),
     );
     expect(
       paneSplitFor(const Size(669, 951), FoldState.none),
-      const PaneSplit.sideBySide(listWidth: 260),
+      const PaneSplit.sideBySide(listWidth: 320),
     );
     expect(
-      paneSplitFor(const Size(800, 600), FoldState.none),
-      const PaneSplit.sideBySide(listWidth: 304),
+      paneSplitFor(const Size(870, 600), FoldState.none),
+      const PaneSplit.sideBySide(listWidth: 870 * 0.38),
     );
   });
+
+  test(
+    'a window under 641 keeps the tool at phone width; the list gives way',
+    () {
+      expect(
+        paneSplitFor(const Size(600, 900), FoldState.none),
+        const PaneSplit.sideBySide(listWidth: 279),
+      );
+    },
+  );
 
   test('half open like a book: the divider sits on the fold', () {
     expect(
@@ -87,7 +97,7 @@ void main() {
     ]) {
       expect(
         paneSplitFor(const Size(669, 951), _halfOpen(fold)),
-        const PaneSplit.sideBySide(listWidth: 260),
+        const PaneSplit.sideBySide(listWidth: 320),
         reason: '$fold',
       );
     }
