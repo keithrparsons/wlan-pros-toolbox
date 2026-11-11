@@ -1,0 +1,1 @@
+New: a two-pane view. On a screen 600 dp wide or more (a tablet, an open foldable, or most phones held sideways), a category shows its tool list on the left and the open tool on the right. Tap another tool and the right side changes while the list stays put. Long tool names no longer break in the middle of a word in the narrow list.
