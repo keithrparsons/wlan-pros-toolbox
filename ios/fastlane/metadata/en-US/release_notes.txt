@@ -1,21 +1,9 @@
-New: My Tools. Press and hold any tool, or any entry in Educational Resources, and it is added to your own short list at the top of the front page. On a Mac or PC, right-click it instead. My Tools holds up to ten, in the order you choose, and it stays on this device.
+New: iPhone Duo. Open the Duo and the screen splits, with the tool list on the left and the open tool on the right. Tap another tool and the right side changes while the list stays put. Fold the phone shut and the tool you had open is still there.
 
-PoE Budget now works by PoE class. Pick each device's class, set the switch's PSE type, port count and a reserve to keep back, and see whether everything fits, with a check on every port.
+Half open, the split follows the fold. Held like a book, the divider sits on the fold. Held like a laptop, the tool sits above the fold and the list below.
 
-PoE Budget: a device you enter in watts is now counted at the power the switch must supply (PSE watts), so totals come out a little higher and closer to what the switch sees. Entries above 71.3 W are refused, since no PoE class delivers more.
+The same two-pane view appears on any screen 600 points wide or more: an iPad, a Mac window, and most phones held sideways.
 
-Test My Connection now grades download speed on one scale, the same one Network Quality's help describes: Strong is 100 Mbps or more, Moderate 25 to 99, Weak under 25.
+Long tool names no longer break in the middle of a word in the narrow list.
 
-Link Budget now works out free space path loss from frequency and distance, and shows the transmitter's EIRP.
-
-Fixed: in Rate vs Range, distances under 100 m or 100 ft now show one decimal, so the ring edges and the client readings agree.
-
-Signal Thresholds: -67 dBm is Good, and Fair now starts at -68, so no reading sits in two ranges.
-
-On a Mac, Wi-Fi Information now shows Enhanced Open (OWE) when the access point's beacon proves it. macOS reports an OWE network as open, so the tool used to say "Open (no encryption)" on an encrypted link. When the beacon shows the network really is open, the tool says that too.
-
-macOS Menu-Bar Wi-Fi lists the Option-click fields in the order macOS prints them, with the missing ones added. It also corrects the wdutil note: wdutil info needs sudo, and without it prints only its usage text.
-
-Help and the Field Manual are refreshed. Each tool now says what it does on each platform, Cable Loss, Noise Floor and Rain Fade describe the math the tool actually uses, and Network Quality's help describes its five parallel download streams.
-
-The WLAN Pros logo on the iPhone and iPad launch screen, and on the About screen in dark mode, is now the white version, with no white box behind it.
+Fixed: when a Shortcut finished a Test My Connection or Wi-Fi Information run, the app could jump back to the home screen instead of showing the results.
