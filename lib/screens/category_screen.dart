@@ -13,6 +13,8 @@
 // Live tools route via Navigator.pushNamed (default in ToolRow). Non-live tools
 // render as a disabled "Coming soon" row.
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../data/content_type.dart';
@@ -29,7 +31,8 @@ import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import '../widgets/pane_split.dart';
-import '../widgets/presenter/large_screen_gate.dart' show kWifiClassroomCategoryId;
+import '../widgets/presenter/large_screen_gate.dart'
+    show kWifiClassroomCategoryId;
 import '../widgets/section_header.dart';
 import '../widgets/tool_row.dart';
 import 'tools/network/install_shortcut_sheet.dart';
@@ -86,6 +89,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
   /// a different tool opens, so that tool starts fresh.
   GlobalKey<NavigatorState> _paneKey = GlobalKey<NavigatorState>();
 
+  /// Key of the pane's Back handler. It moves with the navigator, so after a
+  /// fold the handler still knows a tool is open and Back closes the tool
+  /// rather than leaving the category (code review of 1.14.0, finding 2).
+  GlobalKey _paneBackKey = GlobalKey();
+
   /// The Wi-Fi Classroom's simulators are built for the whole window, so that
   /// category keeps opening tools full screen.
   bool get _splits => widget.category.id != kWifiClassroomCategoryId;
@@ -105,6 +113,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     setState(() {
       _openRoute = route;
       _paneKey = GlobalKey<NavigatorState>();
+      _paneBackKey = GlobalKey();
     });
   }
 
@@ -121,7 +130,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
       valueListenable: foldState,
       builder: (BuildContext context, FoldState fold, _) {
         final PaneSplit split = paneSplitFor(window, fold);
+        // Each pane's own Scaffold makes room for the keyboard; doing it here
+        // as well counted the keyboard twice (code review of 1.14.0, finding 1).
         return Scaffold(
+          resizeToAvoidBottomInset: false,
           body: split.stacked
               ? _stacked(window, split)
               : _sideBySide(window, split),
@@ -163,14 +175,24 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   /// Half open like a laptop: the tool above the fold, the list below it,
   /// nothing on the fold itself.
+  /// The keyboard rises from the bottom, so the tool above the fold is told
+  /// only about the part of it that reaches past the list.
   Widget _stacked(Size window, PaneSplit split) {
+    final MediaQueryData media = MediaQuery.of(context);
+    final double keyboardOnTool = math.max(
+      0,
+      media.viewInsets.bottom - (window.height - split.toolHeight),
+    );
     return Column(
       children: <Widget>[
         SizedBox(
           height: split.toolHeight,
-          child: MediaQuery.removePadding(
-            context: context,
-            removeBottom: true,
+          child: MediaQuery(
+            data: media
+                .removePadding(removeBottom: true)
+                .copyWith(
+                  viewInsets: media.viewInsets.copyWith(bottom: keyboardOnTool),
+                ),
             child: _toolSide(Size(window.width, split.toolHeight)),
           ),
         ),
@@ -190,21 +212,29 @@ class _CategoryScreenState extends State<CategoryScreen> {
   /// The open tool in its own navigator, told its own size so it lays out
   /// for the pane, not the window. Its root is an empty page, so the tool's
   /// app bar shows Back, and popping to that root closes the pane.
+  /// It reads the insets from where it sits, so a side the layout already
+  /// took off (a notch, the home bar) stays off (finding 6).
   Widget _pane(Size size) {
-    return MediaQuery(
-      data: MediaQuery.of(context).copyWith(size: size),
-      child: NavigatorPopHandler(
-        onPopWithResult: (_) => _paneKey.currentState?.maybePop(),
-        child: Navigator(
-          key: _paneKey,
-          observers: <NavigatorObserver>[_PaneObserver(onRootReached: _closePane)],
-          onGenerateInitialRoutes: (NavigatorState _, String _) => <Route<void>>[
-            PageRouteBuilder<void>(
-              pageBuilder: (_, _, _) => const SizedBox.shrink(),
-            ),
-            _toolRoute(RouteSettings(name: _openRoute)),
-          ],
-          onGenerateRoute: _toolRoute,
+    return Builder(
+      builder: (BuildContext paneContext) => MediaQuery(
+        data: MediaQuery.of(paneContext).copyWith(size: size),
+        child: NavigatorPopHandler(
+          key: _paneBackKey,
+          onPopWithResult: (_) => _paneKey.currentState?.maybePop(),
+          child: Navigator(
+            key: _paneKey,
+            observers: <NavigatorObserver>[
+              _PaneObserver(onRootReached: _closePane),
+            ],
+            onGenerateInitialRoutes: (NavigatorState _, String _) =>
+                <Route<void>>[
+                  PageRouteBuilder<void>(
+                    pageBuilder: (_, _, _) => const SizedBox.shrink(),
+                  ),
+                  _toolRoute(RouteSettings(name: _openRoute)),
+                ],
+            onGenerateRoute: _toolRoute,
+          ),
         ),
       ),
     );
@@ -227,7 +257,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final double edge = constraints.maxWidth >= AppSpacing.wideLayoutMinWidth
+            final double edge =
+                constraints.maxWidth >= AppSpacing.wideLayoutMinWidth
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
 
@@ -729,10 +760,9 @@ class _NoMatchState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             TextButton.icon(
-              onPressed: () => Navigator.of(context).pushNamed(
-                AppRouter.search,
-                arguments: query,
-              ),
+              onPressed: () => Navigator.of(
+                context,
+              ).pushNamed(AppRouter.search, arguments: query),
               icon: const Icon(Icons.search),
               label: const Text('Search all tools'),
             ),
