@@ -89,6 +89,41 @@ Future<void> _openTool(WidgetTester tester, String toolId) async {
   await tester.pumpAndSettle();
 }
 
+/// The category pushed over a plain home page, so a system Back that escapes
+/// the category lands somewhere a test can see.
+Future<void> _pumpCategoryOverHome(
+  WidgetTester tester,
+  Size size,
+  String id,
+) async {
+  _setWindow(tester, size);
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await tester.pumpWidget(
+    MaterialApp(
+      theme: AppTheme.dark(),
+      routes: Map<String, WidgetBuilder>.of(AppRouter.routes)
+        ..remove(Navigator.defaultRouteName),
+      home: const Scaffold(body: Text('Home page')),
+    ),
+  );
+  tester
+      .state<NavigatorState>(find.byType(Navigator).first)
+      .push(
+        MaterialPageRoute<void>(
+          builder: (_) => CategoryScreen(category: _cat(id)),
+        ),
+      );
+  await tester.pumpAndSettle();
+}
+
+void _setKeyboard(WidgetTester tester, double height) {
+  tester.view.viewInsets = FakeViewPadding(bottom: height);
+  addTearDown(tester.view.resetViewInsets);
+}
+
 bool _rootCanPop(WidgetTester tester) =>
     tester.state<NavigatorState>(find.byType(Navigator).first).canPop();
 
@@ -253,6 +288,56 @@ void main() {
     expect(_rootCanPop(tester), isFalse);
   });
 
+  // Code review of 1.14.0, 9 NOV, finding 1: the panes counted the keyboard
+  // twice, once in the outer Scaffold and again in each pane's own Scaffold.
+  testWidgets('wide: the keyboard shortens the list once, not twice', (
+    tester,
+  ) async {
+    await _pumpCategory(tester, _duoOpenTurned, 'rf-calculators');
+    _setKeyboard(tester, 300);
+    await tester.pumpAndSettle();
+
+    final double listHeight = tester
+        .getSize(find.byType(CustomScrollView).first)
+        .height;
+    expect(listHeight, 669 - 64 - 300);
+  });
+
+  // Finding 6: the tool pane re-read the window's safe area, so a phone held
+  // sideways with the notch on the left padded the right-hand pane too.
+  testWidgets('wide: the tool pane gets no inset from a notch on the left', (
+    tester,
+  ) async {
+    tester.view.padding = const FakeViewPadding(left: 59);
+    addTearDown(tester.view.resetPadding);
+    await _pumpCategory(tester, _duoOpenTurned, 'rf-calculators');
+    await _openTool(tester, 'eirp');
+
+    // The pane's navigator is the last one; the tool's own SafeArea would
+    // hide the inset from anything deeper.
+    final MediaQueryData pane = MediaQuery.of(
+      tester.element(find.byType(Navigator).last),
+    );
+    expect(pane.padding.left, 0);
+  });
+
+  // Finding 2: the pane's Back handler was rebuilt when a fold moved the
+  // pane, forgot the tool was open, and let Back leave the category.
+  testWidgets('a fold with a tool open, then system Back, keeps the category', (
+    tester,
+  ) async {
+    await _pumpCategoryOverHome(tester, _duoOpenUpright, 'rf-calculators');
+    await _openTool(tester, 'eirp');
+    _setWindow(tester, _duoClosed);
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home page'), findsNothing);
+    expect(find.byType(ToolRow), findsWidgets);
+  });
+
   group('half-open Duo (approach C)', () {
     tearDown(() => foldState.value = FoldState.none);
 
@@ -284,6 +369,30 @@ void main() {
         greaterThan(480),
       );
     });
+
+    // Finding 3: in the laptop pose the keyboard squeezed the fixed-height
+    // panes and overflowed. The keyboard covers the list below the fold, so
+    // the tool above it is not told about it.
+    testWidgets(
+      'laptop pose: the keyboard neither overflows nor hits the tool',
+      (tester) async {
+        await _pumpCategory(tester, _duoOpenUpright, 'rf-calculators');
+        await _openTool(tester, 'eirp');
+        foldState.value = const FoldState(
+          status: HingeStatus.partiallyOpen,
+          folds: <Rect>[Rect.fromLTWH(0, 470, 669, 10)],
+        );
+        await tester.pumpAndSettle();
+        _setKeyboard(tester, 300);
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        final MediaQueryData pane = MediaQuery.of(
+          tester.element(find.text('TX Power')),
+        );
+        expect(pane.viewInsets.bottom, 0);
+      },
+    );
 
     testWidgets('a pose change keeps what was typed in the tool', (
       tester,
