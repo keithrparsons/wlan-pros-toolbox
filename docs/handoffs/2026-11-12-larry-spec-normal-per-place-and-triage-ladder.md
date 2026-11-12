@@ -25,6 +25,7 @@ Keith wants a build spec for two Check My Connection features, learned from Simo
 
 4. **Open questions:** Keith decides, unless noted.
 
+   - **Ship blocker:** the live privacy policy at https://wlanprofessionals.com/toolbox-privacy (effective June 8, 2026, fetched and confirmed 12 Nov 2026) says "The app stores no record of your activity once you close a tool" and "There is no history, no log file, and no database of your activity." A per-place history contradicts both. Those two sentences must be rewritten (Toolbox drafts, Keith approves) and published before this feature ships, as the policy itself promises: "If the app's data behavior ever changes, we will update this policy and the effective date above before the change ships." The page is on wlanprofessionals.com; who updates it is unknown.
    - Confirm the recommended place key and the first-time "Remember what's usual on [network]?" prompt (recommended in Recommendation 1).
    - How many completed checks at a place before the app says "usual" (recommended starting point: 3).
    - The numeric "slower than usual" thresholds (starting points are proposed below; they are not yet approved).
@@ -48,10 +49,11 @@ The feature stays inside the existing promise. Quote these as the bar, and updat
 - About screen (`lib/screens/about_screen.dart`, Privacy section): "We don't collect your data." and "This app measures your network on your device. It isn't built to track you, profile you, or ship your information off somewhere. Data not collected, exactly as stated on the App Store listing."
 - README (`README.md`, "Local-first and private"): "The Toolbox collects no personal data. There is no account, no login, and no analytics or telemetry in the build." and "Live network tools reach the network only to do their job (a ping reaches its target, a speed test reaches the throughput endpoint). The connection analyzer ("Analyze") runs on-device; nothing is uploaded." and "Location is used only to read the connected Wi-Fi SSID (a platform requirement on recent macOS and on Android) and for the optional GPS tools. It is never stored or shared."
 - User guide (`assets/guides/user-guide.md`): "It does not collect your personal data. It reads your own connection to answer your own questions, and that stays on your device."
-- Site (`toolbox.wlanpros.com`, checked from the local site tree): "No ads. No tracking. No account. No data collected." and "WLAN Pros runs no server that receives your data." Full policy: [wlanprofessionals.com/toolbox-privacy](https://wlanprofessionals.com/toolbox-privacy).
+- Live privacy policy ([wlanprofessionals.com/toolbox-privacy](https://wlanprofessionals.com/toolbox-privacy), effective June 8, 2026, fetched and confirmed 12 Nov 2026): "The app stores no record of your activity once you close a tool" and "There is no history, no log file, and no database of your activity." A per-place history contradicts both. This is a ship blocker (see Open questions, the fix-it-everywhere list, and acceptance criteria). Who updates that wlanprofessionals.com page is unknown.
+- Site (`toolbox.wlanpros.com`, checked from the local site tree): "No ads. No tracking. No account. No data collected." and "WLAN Pros runs no server that receives your data."
 - Store listing (`ios/fastlane/metadata/en-US/description.txt`): "Free. No account. No ads. No data collected."
 - Favorites already follow the same rule (`lib/favorites/my_tools_controller.dart`): "it lives on THIS DEVICE ONLY, in shared_preferences... No account, nothing synced, nothing sent."
-- Analyze already states (`lib/screens/tools/network/analyze_results_screen.dart`): "LOCALLY, no network call, nothing stored, nothing leaves the device."
+- Analyze footer on screen (`lib/screens/tools/network/analyze_results_screen.dart`, `_localOnlyNote`, line 287 on `cdcf29a4`): "Analyzed on your device. Nothing is sent or stored."
 
 Consequences for this work:
 
@@ -200,7 +202,8 @@ When the feature lands, Toolbox (not Larry) drafts copy on its own branch and se
 - `lib/screens/about_screen.dart` Privacy section, and the copied About text.
 - `README.md` "Local-first and private," especially the Location / "never stored" sentence.
 - The Copy payload builder in `test_my_connection_screen.dart`, and the Connection Report guide PDF on toolbox.wlanpros.com (`WLAN-Pros-Toolbox-Connection-Report-Guide.pdf`).
-- toolbox.wlanpros.com lead text and [the privacy policy](https://wlanprofessionals.com/toolbox-privacy) if it needs a "place history stays on the device" sentence. Site changes go on a site branch, then Reviewer, then Keith's yes.
+- **Ship blocker:** the live privacy policy at [wlanprofessionals.com/toolbox-privacy](https://wlanprofessionals.com/toolbox-privacy) (effective June 8, 2026, fetched and confirmed 12 Nov 2026) says "The app stores no record of your activity once you close a tool" and "There is no history, no log file, and no database of your activity." A per-place history contradicts both. Those two sentences must be rewritten (Toolbox drafts, Keith approves) and published before this feature ships, matching the policy's own promise: "If the app's data behavior ever changes, we will update this policy and the effective date above before the change ships." The page is on wlanprofessionals.com, not the Toolbox site; who updates it is unknown. toolbox.wlanpros.com lead text also needs a matching sentence. Site and policy changes go on their own branches, then Reviewer, then Keith's yes. The feature does not ship until the published policy matches the new behavior.
+- Analyze Results footer (`lib/screens/tools/network/analyze_results_screen.dart`, on-screen string at line 287 on `cdcf29a4`): "Analyzed on your device. Nothing is sent or stored." Proposed replacement (Toolbox drafts, Keith approves): "Analyzed on your device. Nothing is sent. What's kept stays on this device and can be forgotten."
 - Library tool-guide pages for Test My Connection and Analyze, when those guides are rebuilt (Library's process; Toolbox hands them the approved help).
 - Store listing text only if the "what's new" blurb mentions the feature; "No data collected" remains true if nothing leaves the device.
 
@@ -214,6 +217,7 @@ When the feature lands, Toolbox (not Larry) drafts copy on its own branch and se
 - Existing Check My Connection headlines, chips, and Analyze rules are unchanged in wording and thresholds.
 - New unit and widget tests as above are green. Analyze (`scripts/analyze.sh`) is no worse than the current baseline on this branch.
 - Help text is not written by Larry; a note in the PR-less branch points Toolbox at the shipping strings.
+- **Ship blocker:** the published privacy policy at https://wlanprofessionals.com/toolbox-privacy no longer says "The app stores no record of your activity once you close a tool" or "There is no history, no log file, and no database of your activity." The rewritten sentences (Toolbox drafts, Keith approves) are live, with a new effective date, before this feature ships, as the policy itself promises an update before any data-behavior change. Who updates that wlanprofessionals.com page is unknown.
 
 ---
 
@@ -233,7 +237,7 @@ Proposed rung names (first slice):
 
 1. **This device**
 2. **Wi-Fi link**
-3. **Your router**
+3. **Your router/access point**
 4. **Name lookup (DNS)**
 5. **The internet**
 6. **Specific services**
@@ -258,7 +262,7 @@ Recommended first-slice mapping, using data already in a Test My Connection run 
 | --- | --- | --- | --- |
 | This device | `notOnWifi`, path facts (`WifiConnectionService`), captive-portal and "no internet" verdicts | Wi-Fi is off or the path is gone, when that is the story; do not call cellular "off" a fault (R-05N already says "You are not connected to Wi-Fi, so there was no Wi-Fi link to check") | CPU / memory are not measured today. Do not add a machine-load rung in this slice. |
 | Wi-Fi link | RSSI, SNR, Tx/Rx rates, usable Wi-Fi capacity; Analyze R-01, R-10, R-11, R-15 to R-24 | Existing Wi-Fi-limiter verdict, or RSSI Poor, or a low rate with a strong signal (R-18) | iOS without the Shortcut (R-31); wired; platform does not expose the field |
-| Your router | Gateway *address* is already read (`NetworkDetails.gateway`) and shown on the Network card and in Copy. On a WLAN Pi, `/toolboxapi/conntest` already measures gateway reachability and latency. On native, the address is not pinged as part of this run | Pi: conntest says the gateway is unreachable. Native, first slice: do not guess. See the open question on a short gateway probe | Native first slice: **Not checked** (address may still be shown as context). If the platform cannot probe, **Can't check on this device** |
+| Your router/access point | Gateway *address* is already read (`NetworkDetails.gateway`) and shown on the Network card and in Copy. On a WLAN Pi, `/toolboxapi/conntest` already measures gateway reachability and latency. On native, the address is not pinged as part of this run | Pi: conntest says the gateway is unreachable. Native, first slice: do not guess. See the open question on a short gateway probe | Native first slice: **Not checked** (address may still be shown as context). If the platform cannot probe, **Can't check on this device** |
 | Name lookup (DNS) | `DnsProbeService` already times a lookup of cloudflare.com, then google.com, then apple.com, through the device's own resolver. Analyze R-32 fires at `kDnsSlowMs` (200 ms) | DNS failed, or resolution time is at or above 200 ms (same constant; do not invent a second threshold) | Lookup marked "Not available" |
 | The internet | net_quality download, upload, latency, jitter, loss, responsiveness; public IP / ISP via `IpGeoService` (keyless, fail-open); Analyze R-02, R-25 to R-29; "No internet" and "You are online" outcomes | Existing upstream / internet-down / poor latency, jitter, loss, or responsiveness | Speed test skipped (cellular decline): **Not checked** for speed, but reachability can still "Look fine" if DNS, public IP, and cloud apps answered |
 | Specific services | `CloudAppsPanel` and `kCloudApps` in `packages/net_quality/lib/src/popular_sites.dart` (Facebook, Instagram, TikTok, YouTube, Netflix, Google, iCloud, Microsoft 365, Cloudflare, Amazon AWS, Zoom, Slack, GitHub, Cloudflare DNS). Analyze R-40 (none reachable), R-41 (mixed). R-42 (slow but reachable) is in the file but held false (`_alwaysFalse`) until per-service latency is threaded through | R-41 mixed, or R-40 none reachable (then this rung and "The internet" should agree, and the sign-in outcome takes priority when it applies) | Panel error: **Not checked** |
