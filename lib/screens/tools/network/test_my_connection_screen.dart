@@ -2619,6 +2619,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                           facts: _facts(),
                           onCopy: _copyDetails,
                           copied: _detailsCopied,
+                          onCopyPublic: () => _copyDetails(forPublicPost: true),
+                          publicCopied: _publicCopied,
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         // NETWORK details (Keith #5): local IP / subnet / gateway
@@ -3433,6 +3435,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   // ---- §8.16 copy payload (shared by toolbar + inline button) ----
 
   bool _detailsCopied = false;
+  bool _publicCopied = false;
 
   /// The COMPREHENSIVE help-desk clipboard payload (Keith #3 / #4 / #5 / #6). A
   /// polished, scannable plain-text report a help-desk tech will respect: a
@@ -3460,7 +3463,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// Internet: …" line is preserved verbatim near the top, and the exact
   /// "Internet Down / Internet Up" / "Wi-Fi Down / Wi-Fi Up" labels the
   /// help-desk + existing tests rely on are unchanged.
-  String? _buildCopyText() {
+  ///
+  /// [forPublicPost] swaps the three values that identify the user's network
+  /// (public IP, SSID, BSSID) for a plain "removed" marker, so the report is
+  /// safe to paste into a public forum. The rows stay so a reader can see what
+  /// was taken out. Idea credited to octomon.dev's redacted `--doctor` report.
+  String? _buildCopyText({bool forPublicPost = false}) {
     if (_running || _verdict == null) return null;
     final List<_Fact> facts = _facts();
     String fact(String label) =>
@@ -3485,6 +3493,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // one-shot read while the sparklines show data (GL-005).
     final ConnectedAp? ap = _effectiveAp;
 
+    String identifying(String value) =>
+        forPublicPost ? 'Removed for a public post' : value;
+
     final StringBuffer buf = StringBuffer();
 
     // ── Header ──────────────────────────────────────────────────────────────
@@ -3500,12 +3511,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // ── Wi-Fi ─────────────────────────────────────────────────────────────
     final String? wifiName = _consumerWifiName(ap);
     _copySection(buf, 'WI-FI', <_CopyRow>[
-      _CopyRow('Network (SSID)', _nameOrLocationHint(wifiName)),
+      _CopyRow('Network (SSID)', identifying(_nameOrLocationHint(wifiName))),
       // Vendor-advertised AP name leads the BSSID when the beacon carried one
       // (macOS); omitted entirely when null — the report reads as before (GL-005).
       if (ap != null && ap.apName != null && ap.apName!.trim().isNotEmpty)
         _CopyRow('AP name', ap.apName!.trim()),
-      _CopyRow('BSSID', _nameOrLocationHint(ap?.bssid)),
+      _CopyRow('BSSID', identifying(_nameOrLocationHint(ap?.bssid))),
       _CopyRow('RSSI', _rssiOnly(ap)),
       _CopyRow('Noise', _noiseOnly(ap)),
       _CopyRow('SNR', _snrOnly(ap)),
@@ -3599,7 +3610,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       final String? asn = isp.asn;
       final String? loc = isp.locationLine;
       final List<_CopyRow> rows = <_CopyRow>[
-        if (ip != null) _CopyRow('Public IP', ip),
+        if (ip != null) _CopyRow('Public IP', identifying(ip)),
         if (org != null) _CopyRow('ISP / org', org),
         if (asn != null) _CopyRow('ASN', asn),
         if (loc != null) _CopyRow('Approx. location', loc),
@@ -3766,20 +3777,22 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     );
   }
 
-  Future<void> _copyDetails() async {
-    final String? text = _buildCopyText();
+  Future<void> _copyDetails({bool forPublicPost = false}) async {
+    final String? text = _buildCopyText(forPublicPost: forPublicPost);
     if (text == null) return;
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     SemanticsService.sendAnnouncement(
       View.of(context),
-      'Details copied',
+      forPublicPost ? 'Details copied for a public post' : 'Details copied',
       TextDirection.ltr,
     );
-    setState(() => _detailsCopied = true);
+    void mark(bool copied) =>
+        forPublicPost ? _publicCopied = copied : _detailsCopied = copied;
+    setState(() => mark(true));
     Future<void>.delayed(const Duration(milliseconds: 1500), () {
       if (!mounted) return;
-      setState(() => _detailsCopied = false);
+      setState(() => mark(false));
     });
   }
 
@@ -5265,11 +5278,15 @@ class _HelpDeskCard extends StatelessWidget {
     required this.facts,
     required this.onCopy,
     required this.copied,
+    required this.onCopyPublic,
+    required this.publicCopied,
   });
 
   final List<_Fact> facts;
   final Future<void> Function() onCopy;
   final bool copied;
+  final Future<void> Function() onCopyPublic;
+  final bool publicCopied;
 
   @override
   Widget build(BuildContext context) {
@@ -5319,6 +5336,30 @@ class _HelpDeskCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxs),
           Text(
             'Paste this into an email or text to your IT or support team.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Semantics(
+            button: true,
+            label: publicCopied
+                ? 'Details copied for a public post'
+                : 'Copy for a public post',
+            child: OutlinedButton.icon(
+              onPressed: onCopyPublic,
+              icon: Icon(
+                publicCopied ? Icons.check : Icons.public,
+                size: 20,
+                color: publicCopied
+                    ? colors.statusSuccess
+                    : colors.textSecondary,
+              ),
+              label: Text(publicCopied ? 'Copied' : 'Copy for a public post'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Leaves out your public IP address, network name (SSID) and '
+            'BSSID, for forums and other public posts.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
         ],

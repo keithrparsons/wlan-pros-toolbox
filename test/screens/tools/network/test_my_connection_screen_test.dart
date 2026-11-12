@@ -2703,6 +2703,52 @@ void main() {
         );
 
     testWidgets(
+      'Copy for a public post removes public IP, SSID and BSSID and keeps the '
+      'measurements',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(),
+              ipGeoService: _FakeIpGeoService(result: ispSuccess()),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await tester.pumpAndSettle();
+
+        final Finder publicBtn = find.text('Copy for a public post');
+        await tester.ensureVisible(publicBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(publicBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        expect(copied, isNot(contains('KeithNet')));
+        expect(copied, isNot(contains('a4:83:e7:00:11:22')));
+        expect(copied, isNot(contains('203.0.113.7')));
+        expect(copied, contains('Network (SSID): Removed for a public post'));
+        expect(copied, contains('BSSID: Removed for a public post'));
+        expect(copied, contains('Public IP: Removed for a public post'));
+        // The measurements a forum needs are still there.
+        expect(copied, contains('RSSI: -58 dBm'));
+        expect(copied, contains('Internet Down: 60 Mbps'));
+        expect(copied, contains('ISP / org: Fusion Networks'));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
       'copy payload is sectioned (Wi-Fi / Internet / ISP / Verdict) and carries '
       'all available Wi-Fi + internet fields plus the ISP block',
       (tester) async {
