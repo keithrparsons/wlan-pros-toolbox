@@ -18,7 +18,7 @@ There is no single score. Each measurement is graded on its own, and the verdict
 
 **Three quick reachability checks.** Did a name resolve in DNS? Did we get a public IP address? Did at least one well-known service answer? These run alongside the speed test, so they still count when the speed test itself stalls.
 
-## Step 2: How much of your Wi-Fi rate you can actually use
+## Step 2: How much of your Wi-Fi rate you can use
 
 Real throughput over Wi-Fi runs about half to 60% of the link rate, because of protocol overhead and sharing the air. The app uses 55% of the link rate as your usable Wi-Fi capacity.
 
