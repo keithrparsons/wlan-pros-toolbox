@@ -3464,8 +3464,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// "Internet Down / Internet Up" / "Wi-Fi Down / Wi-Fi Up" labels the
   /// help-desk + existing tests rely on are unchanged.
   ///
-  /// [forPublicPost] swaps the three values that identify the user's network
-  /// (public IP, SSID, BSSID) for a plain "removed" marker, so the report is
+  /// [forPublicPost] swaps the values that identify the user's network or
+  /// place (public IP, SSID, BSSID, AP name, approximate location) for a plain
+  /// "removed" marker, so the report is
   /// safe to paste into a public forum. The rows stay so a reader can see what
   /// was taken out. Idea credited to octomon.dev's redacted `--doctor` report.
   String? _buildCopyText({bool forPublicPost = false}) {
@@ -3515,7 +3516,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // Vendor-advertised AP name leads the BSSID when the beacon carried one
       // (macOS); omitted entirely when null — the report reads as before (GL-005).
       if (ap != null && ap.apName != null && ap.apName!.trim().isNotEmpty)
-        _CopyRow('AP name', ap.apName!.trim()),
+        _CopyRow('AP name', identifying(ap.apName!.trim())),
       _CopyRow('BSSID', identifying(_nameOrLocationHint(ap?.bssid))),
       _CopyRow('RSSI', _rssiOnly(ap)),
       _CopyRow('Noise', _noiseOnly(ap)),
@@ -3613,7 +3614,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         if (ip != null) _CopyRow('Public IP', identifying(ip)),
         if (org != null) _CopyRow('ISP / org', org),
         if (asn != null) _CopyRow('ASN', asn),
-        if (loc != null) _CopyRow('Approx. location', loc),
+        if (loc != null) _CopyRow('Approx. location', identifying(loc)),
       ];
       if (rows.isNotEmpty) _copySection(buf, 'ISP', rows);
     }
@@ -5358,8 +5359,8 @@ class _HelpDeskCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Leaves out your public IP address, network name (SSID) and '
-            'BSSID, for forums and other public posts.',
+            'Leaves out your public IP address, location, network name '
+            '(SSID), AP name and BSSID, for forums and other public posts.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
         ],

@@ -2739,6 +2739,11 @@ void main() {
         expect(copied, contains('Network (SSID): Removed for a public post'));
         expect(copied, contains('BSSID: Removed for a public post'));
         expect(copied, contains('Public IP: Removed for a public post'));
+        expect(copied, isNot(contains('Lehi')));
+        expect(
+          copied,
+          contains('Approx. location: Removed for a public post'),
+        );
         // The measurements a forum needs are still there.
         expect(copied, contains('RSSI: -58 dBm'));
         expect(copied, contains('Internet Down: 60 Mbps'));
@@ -3530,6 +3535,22 @@ void main() {
       final double nameY = tester.getTopLeft(find.text('AP name')).dy;
       final double bssidY = tester.getTopLeft(find.text('BSSID')).dy;
       expect(nameY, lessThan(bssidY));
+    });
+
+    testWidgets(
+        'Copy for a public post removes the AP name', (tester) async {
+      await pumpResults(tester, apName: 'AP-Lobby-2');
+      final Finder publicBtn = find.text('Copy for a public post');
+      await tester.ensureVisible(publicBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(publicBtn);
+      await tester.pumpAndSettle();
+      expect(clipboardWrites.last, isNot(contains('AP-Lobby-2')));
+      expect(
+        clipboardWrites.last,
+        contains('AP name: Removed for a public post'),
+      );
+      await tester.pump(const Duration(milliseconds: 1600));
     });
 
     testWidgets(
