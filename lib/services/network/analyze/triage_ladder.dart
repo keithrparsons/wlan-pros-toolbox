@@ -308,9 +308,20 @@ TriageRung _internet(TriageInput i, WifiVsInternetVerdict verdict) {
       break;
   }
 
-  // The throughput below is only a fair read of the internet when the Wi-Fi link
-  // is not the thing limiting it, so reachability evidence (which does not
-  // depend on throughput) is checked first.
+  // With no Wi-Fi reading the verdict cannot localize the slowness, so a measured
+  // internet is graded on its own, and that grade beats mere reachability: a
+  // Poor read must not be hidden behind "Reachable".
+  if (verdict == WifiVsInternetVerdict.wifiUnknown &&
+      i.internetMeasured &&
+      i.internetHealth != null) {
+    return _meetsInternetBar(i.internetHealth!)
+        ? rung(TriageStatus.looksFine, 'Speed and response look healthy.')
+        : rung(TriageStatus.looksOff, _belowGoodReason);
+  }
+
+  // The throughput is only a fair read of the internet when the Wi-Fi link is
+  // not the thing limiting it, so reachability evidence (which does not depend
+  // on throughput) answers for the remaining verdicts.
   if (i.evidence.isOnline) {
     if (i.speedTestSkipped) {
       return rung(
@@ -325,16 +336,6 @@ TriageRung _internet(TriageInput i, WifiVsInternetVerdict verdict) {
           : 'Reachable. The speed could not be measured.',
     );
   }
-  if (verdict == WifiVsInternetVerdict.wifiUnknown &&
-      i.internetMeasured &&
-      i.internetHealth != null) {
-    return i.internetHealth == InternetHealth.good
-        ? rung(TriageStatus.looksFine, 'Speed and response look healthy.')
-        : rung(
-            TriageStatus.looksOff,
-            'The internet measurements were below the Good range.',
-          );
-  }
   return rung(
     TriageStatus.notChecked,
     i.speedTestSkipped
@@ -344,6 +345,13 @@ TriageRung _internet(TriageInput i, WifiVsInternetVerdict verdict) {
         : 'Not enough answered to say.',
   );
 }
+
+/// The one place the internet bar lives: Good is Looks fine, anything below is
+/// Looks off. Change it here (Keith has the Fair question open).
+bool _meetsInternetBar(InternetHealth health) => health == InternetHealth.good;
+
+const String _belowGoodReason =
+    'The internet measurements were below the Good range.';
 
 const String _noServicesAnswered = 'None of the test services answered.';
 

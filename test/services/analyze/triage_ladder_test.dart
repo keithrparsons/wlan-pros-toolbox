@@ -550,4 +550,34 @@ void main() {
       expect(t.internetHealth, InternetHealth.marginal);
     });
   });
+
+  group('review fixes', () {
+    test('wired desktop with online evidence: a measured Poor internet is '
+        'still Looks off (grade beats reachability)', () {
+      final TriageLadder l = TriageLadder.compute(
+        healthy(
+          verdict: WifiVsInternetVerdict.wifiUnknown,
+          rssiDbm: null,
+          internetHealth: InternetHealth.marginal,
+        ),
+      );
+      expect(status(l, TriageRungId.internet), TriageStatus.looksOff);
+      expect(
+        rung(l, TriageRungId.internet).reason,
+        'The internet measurements were below the Good range.',
+      );
+    });
+
+    test('wired desktop with online evidence and a Good grade reads the '
+        'grade, not "speed could not be measured"', () {
+      final TriageLadder l = TriageLadder.compute(
+        healthy(verdict: WifiVsInternetVerdict.wifiUnknown, rssiDbm: null),
+      );
+      expect(status(l, TriageRungId.internet), TriageStatus.looksFine);
+      expect(
+        rung(l, TriageRungId.internet).reason,
+        'Speed and response look healthy.',
+      );
+    });
+  });
 }
