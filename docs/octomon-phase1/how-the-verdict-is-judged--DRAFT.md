@@ -51,7 +51,7 @@ The app divides your internet download speed by your usable Wi-Fi capacity.
 | 0.40 to 0.70 | Mostly your Wi-Fi | Both sides are a little slow. The Wi-Fi fixes come first because they are easy and free. |
 | under 0.40 | Looks like your Internet | Your Wi-Fi has plenty of room left over. The slow part is upstream. |
 
-Example: your link rate is 400 Mbps, so usable Wi-Fi is about 220 Mbps. The internet measured 30 Mbps down with 3% loss, so it is not good. 30 divided by 220 is about 0.14, well under 0.40: "Looks like your Internet."
+Example: your link rate is 400 Mbps, so usable Wi-Fi is about 220 Mbps. The internet measured 30 Mbps down with 3% loss, so it is not good. 30 divided by 220 is 0.136, well under 0.40: "Looks like your Internet."
 
 Pins: `kWifiLimiterRatio = 0.70`, `kUpstreamRatio = 0.40`, `lib/services/network/wifi_vs_internet.dart:50-53`; headlines in `lib/services/network/consumer_verdict.dart:469-510`.
 

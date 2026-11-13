@@ -1,6 +1,6 @@
 # What the Toolbox contacts on the internet, and why (DRAFT)
 
-Draft for Keith's review, from octomon review recommendation 6(c). Not published. Built from the app's own code at commit `87c0ba5c`: every endpoint is pinned to file:line so a reviewer can check it. The pins come out before publishing; the tables stay.
+Draft for Keith's review, from octomon review recommendation 6(c). Not published. Built from the app's own code: every endpoint is pinned to file:line, and every pin was re-checked against this branch on 13 November 2026. The pins come out before publishing; the tables stay.
 
 Scope of this draft: the Dart code in `lib/` and `packages/net_quality/lib/`. The platform code under `ios/`, `macos/`, `android/` and `windows/`, and the iOS companion Shortcut, were **not** reviewed. Check those before this page goes live.
 
