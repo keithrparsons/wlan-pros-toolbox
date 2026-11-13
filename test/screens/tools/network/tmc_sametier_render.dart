@@ -199,7 +199,7 @@ Future<void> _renderScenario(
   );
 
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Check My Connection'));
+  await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
   await tester.pumpAndSettle();
 
   await _capture(tester, boundaryKey, 'tmc-sametier_${s.slug}_$themeName.png');

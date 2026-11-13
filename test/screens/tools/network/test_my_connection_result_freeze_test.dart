@@ -319,7 +319,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // ---- AT HOME, ON WI-FI: run the check. ----
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
@@ -444,7 +444,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // ---- AT HOME, ON WI-FI: run the check. DNS is still in flight. ----
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();

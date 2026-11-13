@@ -328,7 +328,7 @@ void main() {
 
   Future<void> runCheck(WidgetTester tester) async {
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Check My Connection'));
+    await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
     await tester.pumpAndSettle();
   }
 

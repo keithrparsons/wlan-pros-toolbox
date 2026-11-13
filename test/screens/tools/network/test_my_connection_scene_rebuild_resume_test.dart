@@ -554,7 +554,7 @@ void main() {
 
       // The user taps Check My Connection — the tap that, on Keith's phone, threw him
       // out to Home.
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();

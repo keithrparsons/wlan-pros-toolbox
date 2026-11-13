@@ -945,7 +945,7 @@ void main() {
 
   Future<void> runCheck(WidgetTester tester) async {
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Check My Connection'));
+    await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
     await tester.pumpAndSettle();
   }
 
@@ -978,7 +978,10 @@ void main() {
       // Present in the pre-run idle state, as a text-weight aside (not a second
       // filled button), sitting beside the primary "Check My Connection" action.
       expect(find.text("What's the difference?"), findsOneWidget);
-      expect(find.text('Check My Connection'), findsOneWidget);
+      expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       // The aside is a TextButton carrying the help_outline glyph (the bottom
       // ToolHelpFooter also uses that glyph, so scope the match to the button).
       expect(
@@ -1349,7 +1352,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pump(const Duration(seconds: 9));
       await tester.pumpAndSettle();
 
@@ -1453,7 +1456,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pump(const Duration(seconds: 9));
       await tester.pumpAndSettle();
 
@@ -1885,7 +1888,7 @@ void main() {
       // No re-run affordance before a result exists.
       expect(find.byIcon(Icons.refresh), findsNothing);
 
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
       expect(quality.measureCount, 1);
 
@@ -1933,7 +1936,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
 
       // The AppBar title renders the FULL string with no ellipsis, at 375px,
@@ -1970,7 +1973,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
 
       await tester.pump(const Duration(seconds: 9));
       await tester.pumpAndSettle();
@@ -2383,7 +2386,10 @@ void main() {
         expect(find.text('Set up live Wi-Fi'), findsNothing);
         expect(bridge.openUrlCalls, 0);
         // The normal front-door idle state renders instead, with zero taps.
-        expect(find.text('Check My Connection'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       },
     );
 
@@ -2409,7 +2415,10 @@ void main() {
         // A user who demonstrably has the Shortcut working is never nagged.
         expect(find.text('Set up live Wi-Fi'), findsNothing);
         // The normal front-door idle state is shown instead.
-        expect(find.text('Check My Connection'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       },
     );
 
@@ -2435,7 +2444,10 @@ void main() {
         // One-time: the persisted seen-flag suppresses the sheet on every later
         // open, even though the Shortcut is not yet demonstrably working.
         expect(find.text('Set up live Wi-Fi'), findsNothing);
-        expect(find.text('Check My Connection'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       },
     );
 
@@ -2459,7 +2471,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Set up live Wi-Fi'), findsNothing);
-        expect(find.text('Check My Connection'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       },
     );
   });
@@ -2957,7 +2972,7 @@ void main() {
         // No affordance before a result.
         expect(find.text('Run again'), findsNothing);
 
-        await tester.tap(find.text('Check My Connection'));
+        await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         await tester.pumpAndSettle();
         expect(quality.measureCount, 1);
 
@@ -2989,7 +3004,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Check My Connection'));
+        await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         // Pump a frame mid-run (the counting client delays 100ms before yielding).
         await tester.pump(const Duration(milliseconds: 40));
 
@@ -3350,7 +3365,7 @@ void main() {
         ));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Check My Connection'));
+        await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         await tester.pumpAndSettle();
         await settleDetails(tester);
 

@@ -411,7 +411,7 @@ void main() {
         ),
       ),
       drive: (t) async {
-        await t.tap(find.text('Check My Connection'));
+        await t.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         await t.pumpAndSettle();
       },
       verify: (t) {

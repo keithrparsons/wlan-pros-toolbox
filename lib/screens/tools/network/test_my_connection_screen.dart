@@ -129,6 +129,10 @@ bool shouldDisarmOnDispose(AppLifecycleState? state) =>
     state == AppLifecycleState.resumed;
 
 class TestMyConnectionScreen extends StatefulWidget {
+  /// The Run button. Tests find it by this key because its label matches the
+  /// screen title.
+  static const Key runButtonKey = Key('check-my-connection-run');
+
   const TestMyConnectionScreen({
     super.key,
     this.sourceOverride,
@@ -2862,6 +2866,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                   MeteredRisk.none => 'Check my connection',
                 },
           child: FilledButton(
+            key: TestMyConnectionScreen.runButtonKey,
             onPressed: _running
                 ? null
                 : () {

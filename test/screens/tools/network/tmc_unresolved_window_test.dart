@@ -154,7 +154,10 @@ void main() {
         reason: 'and no "may use data" nag either — we simply do not know yet, so we '
             'say nothing until we do',
       );
-      expect(find.text('Check My Connection'), findsOneWidget);
+      expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       expect(find.text('Check without the speed test'), findsNothing);
 
       // Release the probe: it resolves to MEASURED cellular. Now the card appears.
@@ -212,7 +215,7 @@ void main() {
       // Tap while the probe is still gated, THEN release it. `_run` re-settles the
       // probe before deciding, so by the time `spendData` is evaluated the link is
       // known-cellular and the throughput is withheld.
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       gate.release();
       await tester.pumpAndSettle();
 

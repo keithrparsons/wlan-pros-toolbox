@@ -256,7 +256,7 @@ Future<void> _renderScenario(
 
   // Run the check, then settle the result so the hero + chips are painted.
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Check My Connection'));
+  await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
   await tester.pumpAndSettle();
 
   await _capture(tester, boundaryKey, 'tmc-3tier_${s.slug}_$themeName.png');

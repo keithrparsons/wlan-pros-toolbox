@@ -241,7 +241,10 @@ void main() {
       ),
     );
     await _pumpFrames(tester);
-    expect(find.text('Check My Connection'), findsOneWidget);
+    expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
     await _capture(tester, boundaryKey, '05-tmc-front-door-dark.png');
   });
 }
