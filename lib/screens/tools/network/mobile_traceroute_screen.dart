@@ -41,7 +41,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/first_hop_note.dart';
+import '../../../widgets/router_note.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -565,7 +565,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
           if (firstHopSilentButPathAnswers(
             hops.map((PiHop h) => h.reachable && h.target != null).toList(),
           ))
-            const FirstHopNote(),
+            const RouterNote(text: firstHopSilentNote),
         ],
       ),
     );
@@ -752,7 +752,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
           if (firstHopSilentButPathAnswers(
             _hops.map((IcmpHop h) => !h.timedOut).toList(),
           ))
-            const FirstHopNote(),
+            const RouterNote(text: firstHopSilentNote),
         ],
       ),
     );

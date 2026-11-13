@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/traceroute_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/traceroute_service.dart';
-import 'package:wlan_pros_toolbox/widgets/first_hop_note.dart';
+import 'package:wlan_pros_toolbox/widgets/router_note.dart';
 
 /// Test double for [TracerouteService] that never touches Process or network.
 /// [launchable] drives the upfront capability probe; [hops] and [result] drive

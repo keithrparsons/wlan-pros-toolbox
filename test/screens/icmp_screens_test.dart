@@ -15,7 +15,7 @@ import 'package:wlan_pros_toolbox/screens/tools/network/icmp_ping_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/mobile_traceroute_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/icmp_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
-import 'package:wlan_pros_toolbox/widgets/first_hop_note.dart';
+import 'package:wlan_pros_toolbox/widgets/router_note.dart';
 
 /// Fake backend that never opens a socket; emits nothing. The widget tests
 /// here exercise idle/unavailable states, not a run, so an empty stream is fine.

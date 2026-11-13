@@ -1,5 +1,5 @@
-// A plain note for the common traceroute pattern where hop 1 (usually the
-// user's router) never answers but hops beyond it do. Without the note, a user
+// Plain notes for routers that ignore probes sent to themselves. The traceroute
+// case: hop 1 (usually the user's router) never answers but hops beyond it do. Without the note, a user
 // reads the silent first hop as a broken router or broken Wi-Fi, which is the
 // wrong conclusion: the later answers prove the router forwarded the probes.
 // Routers commonly drop or rate-limit ICMP addressed to their own control
@@ -27,13 +27,15 @@ bool firstHopSilentButPathAnswers(List<bool> hopAnswered) =>
     hopAnswered.skip(1).any((bool answered) => answered);
 
 /// Informational styling on purpose: this is reassurance, not an alarm.
-class FirstHopNote extends StatelessWidget {
-  const FirstHopNote({super.key});
+class RouterNote extends StatelessWidget {
+  const RouterNote({super.key, required this.text});
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Row(
@@ -43,8 +45,8 @@ class FirstHopNote extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
-              firstHopSilentNote,
-              style: text.bodySmall?.copyWith(color: colors.textSecondary),
+              text,
+              style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
             ),
           ),
         ],

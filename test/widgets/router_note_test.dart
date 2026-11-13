@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wlan_pros_toolbox/widgets/first_hop_note.dart';
+import 'package:wlan_pros_toolbox/widgets/router_note.dart';
 
 void main() {
   group('firstHopSilentButPathAnswers', () {
