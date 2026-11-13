@@ -29,6 +29,7 @@
 
 import '../wifi_grading.dart';
 import '../wifi_vs_internet.dart';
+import 'analyze_input.dart';
 import 'analyze_rules.dart' show kDnsSlowMs;
 import 'package:net_quality/net_quality.dart' show QualityGrade;
 
@@ -88,6 +89,34 @@ class TriageInput {
     this.cloudTotalCount,
   });
 
+  /// Reads the run fields off the [AnalyzeInput] the Analyze rules already use, so
+  /// the two cannot disagree. The four arguments are what [AnalyzeInput] cannot
+  /// carry: the DNS probe's failed-vs-pending state, the online evidence, the
+  /// engine's internet grade gate, and whether the cloud panel is part of the
+  /// screen.
+  factory TriageInput.fromAnalyzeInput(
+    AnalyzeInput a, {
+    required TriageDnsState dns,
+    required OnlineEvidence evidence,
+    required InternetHealth? internetHealth,
+    required bool cloudPanelPresent,
+  }) => TriageInput(
+    verdict: a.verdict,
+    rssiDbm: a.rssiDbm,
+    notOnWifi: a.notOnWifi,
+    platformIsIos: a.platformIsIos,
+    wifiSignalCaptured: a.wifiSignalCaptured,
+    dns: dns,
+    dnsMs: a.dnsResolutionMs,
+    evidence: evidence,
+    internetMeasured: a.internetMeasured,
+    internetHealth: a.internetMeasured ? internetHealth : null,
+    speedTestSkipped: a.speedTestSkipped,
+    cloudPanelPresent: cloudPanelPresent,
+    cloudReachableCount: a.cloudReachableCount,
+    cloudTotalCount: a.cloudTotalCount,
+  );
+
   /// Null until a run has produced a verdict; the ladder is empty then.
   final WifiVsInternetVerdict? verdict;
   final int? rssiDbm;
@@ -145,6 +174,25 @@ class TriageLadder {
   final String? summary;
 
   bool get isEmpty => rungs.isEmpty;
+
+  /// A frozen copy for surfaces that do not update (Analyze, Copy): a rung still
+  /// [TriageStatus.checking] becomes Not checked, so "Checking" never sits on a
+  /// page that will not change.
+  TriageLadder settled() => TriageLadder._(
+    rungs
+        .map(
+          (TriageRung r) => r.status == TriageStatus.checking
+              ? TriageRung(
+                  id: r.id,
+                  name: r.name,
+                  status: TriageStatus.notChecked,
+                  reason: 'No answer yet when this was captured.',
+                )
+              : r,
+        )
+        .toList(growable: false),
+    summary,
+  );
 
   static TriageLadder compute(TriageInput input) {
     final WifiVsInternetVerdict? verdict = input.verdict;

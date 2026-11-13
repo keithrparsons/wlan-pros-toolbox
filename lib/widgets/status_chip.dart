@@ -123,12 +123,16 @@ class StatusChip extends StatelessWidget {
             children: <Widget>[
               Icon(kind.glyph, size: glyphSize, color: Colors.white),
               const SizedBox(width: AppSpacing.xxs),
-              Text(
-                word,
-                style: (text.labelMedium ?? const TextStyle()).copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
+              // Flexible so a long word wraps inside a narrow slot at large text
+              // instead of overflowing the row; no effect when it already fits.
+              Flexible(
+                child: Text(
+                  word,
+                  style: (text.labelMedium ?? const TextStyle()).copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
                 ),
               ),
             ],
@@ -145,12 +149,14 @@ class StatusChip extends StatelessWidget {
         children: <Widget>[
           Icon(kind.glyph, size: glyphSize, color: hue),
           const SizedBox(width: AppSpacing.xxs),
-          Text(
-            word,
-            style: (text.labelMedium ?? const TextStyle()).copyWith(
-              color: hue,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
+          Flexible(
+            child: Text(
+              word,
+              style: (text.labelMedium ?? const TextStyle()).copyWith(
+                color: hue,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
         ],

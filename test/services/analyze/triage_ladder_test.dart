@@ -7,6 +7,7 @@
 // apps stay distinct (R-40 / R-41), and a sign-in network takes priority.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/services/network/analyze/analyze_input.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_rules.dart'
     show kDnsSlowMs;
 import 'package:wlan_pros_toolbox/services/network/analyze/triage_ladder.dart';
@@ -497,6 +498,56 @@ void main() {
         triageLadderToPlainText(TriageLadder.compute(const TriageInput())),
         '',
       );
+    });
+  });
+
+  group('settled and fromAnalyzeInput', () {
+    test('settled turns Checking into Not checked, leaves the rest alone', () {
+      final TriageLadder l = TriageLadder.compute(
+        healthy(
+          dns: TriageDnsState.pending,
+          dnsMs: null,
+          cloudReachable: null,
+          cloudTotal: null,
+        ),
+      ).settled();
+      expect(status(l, TriageRungId.dns), TriageStatus.notChecked);
+      expect(status(l, TriageRungId.services), TriageStatus.notChecked);
+      expect(status(l, TriageRungId.wifiLink), TriageStatus.looksFine);
+      expect(
+        l.rungs.any((TriageRung r) => r.status == TriageStatus.checking),
+        isFalse,
+      );
+    });
+
+    test('fromAnalyzeInput carries the run\'s own fields across', () {
+      const AnalyzeInput a = AnalyzeInput(
+        verdict: WifiVsInternetVerdict.upstream,
+        rssiDbm: -60,
+        notOnWifi: false,
+        platformIsIos: true,
+        wifiSignalCaptured: true,
+        dnsResolutionMs: 250,
+        internetMeasured: true,
+        speedTestSkipped: false,
+        cloudReachableCount: 2,
+        cloudTotalCount: 5,
+      );
+      final TriageInput t = TriageInput.fromAnalyzeInput(
+        a,
+        dns: TriageDnsState.resolved,
+        evidence: _online,
+        internetHealth: InternetHealth.marginal,
+        cloudPanelPresent: true,
+      );
+      expect(t.verdict, WifiVsInternetVerdict.upstream);
+      expect(t.rssiDbm, -60);
+      expect(t.platformIsIos, isTrue);
+      expect(t.dnsMs, 250);
+      expect(t.internetMeasured, isTrue);
+      expect(t.cloudReachableCount, 2);
+      expect(t.cloudTotalCount, 5);
+      expect(t.internetHealth, InternetHealth.marginal);
     });
   });
 }
