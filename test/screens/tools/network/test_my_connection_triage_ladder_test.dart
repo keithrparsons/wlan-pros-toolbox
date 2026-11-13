@@ -37,6 +37,8 @@
 // `_recomputeVerdict` — which is the exact production path Keith hit, and the one the
 // off-Wi-Fi suite proved is the real chokepoint. We assert the state AFTER it fires.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
@@ -299,6 +301,14 @@ class _ThrowingCloudProbe extends ReachabilityProbe {
   Future<List<SiteReachability>> measure() async => throw StateError('boom');
 }
 
+ReachabilityProbe _gatedCloudProbe(Completer<void> gate) => ReachabilityProbe(
+  sites: kCloudApps,
+  prober: (String host, int port, Duration timeout) async {
+    await gate.future;
+    return const Duration(milliseconds: 20);
+  },
+);
+
 void main() {
   late List<String> clipboardWrites;
 
@@ -424,6 +434,37 @@ void main() {
       expect(copied, contains('Where it looks off'));
       expect(copied, contains('The internet: Looks off'));
       expect(copied, contains('This network wants a sign-in.'));
+      await tester.pump(const Duration(seconds: 3));
+    });
+
+    testWidgets('Analyze Copy matches the ladder the screen showed, even if '
+        'an answer lands after it opened', (WidgetTester tester) async {
+      final Completer<void> gate = Completer<void>();
+      await _runCheck(
+        tester,
+        dns: _WorkingDns(),
+        cloud: _gatedCloudProbe(gate),
+      );
+      final Finder analyze = find.text('Analyze my results');
+      await tester.ensureVisible(analyze);
+      await tester.pumpAndSettle();
+      await tester.tap(analyze);
+      await tester.pumpAndSettle();
+      expect(
+        _visibleText(tester),
+        contains('No answer yet when this was captured.'),
+      );
+
+      // The cloud panel on the screen underneath now answers.
+      gate.complete();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.byType(AppCopyAction));
+      await tester.pumpAndSettle();
+      expect(
+        clipboardWrites.last,
+        contains('No answer yet when this was captured.'),
+        reason: 'the copy must be the page the user was looking at',
+      );
       await tester.pump(const Duration(seconds: 3));
     });
 

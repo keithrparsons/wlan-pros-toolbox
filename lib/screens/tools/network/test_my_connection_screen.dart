@@ -3796,15 +3796,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// using the SAME [AnalysisFinding.verdictWord] the on-screen [StatusChip]
   /// shows, so no verdict survives as color-only on the clipboard. Zero
   /// em-dashes: the category-and-verdict line uses a colon, not a dash.
-  String? _buildAnalysisCopyText(AnalysisReport report) {
+  String? _buildAnalysisCopyText(AnalysisReport report, TriageLadder ladder) {
     if (!report.hasFindings) return null;
     final StringBuffer buf = StringBuffer();
     buf.writeln('WLAN Pros Toolbox: Connection Analysis');
     buf.writeln('Generated: ${_formatTimestamp(_testedAt)} on $_platformLabel');
     buf.writeln('');
-    final String ladderText = triageLadderToPlainText(
-      _triageLadder().settled(),
-    );
+    final String ladderText = triageLadderToPlainText(ladder);
     if (ladderText.isNotEmpty) {
       buf.writeln(ladderText);
       buf.writeln('');
@@ -3823,12 +3821,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   void _openAnalyze() {
     if (_running || _verdict == null) return;
     final AnalysisReport report = _buildAnalysisReport();
+    // One snapshot, taken now, for the screen AND its Copy, so the clipboard is
+    // the page the user was looking at even if a late answer lands meanwhile.
+    final TriageLadder ladder = _triageLadder().settled();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => AnalyzeResultsScreen(
           report: report,
-          ladder: _triageLadder().settled(),
-          copyTextBuilder: () => _buildAnalysisCopyText(report),
+          ladder: ladder,
+          copyTextBuilder: () => _buildAnalysisCopyText(report, ladder),
         ),
       ),
     );
