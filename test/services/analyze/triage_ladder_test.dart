@@ -612,5 +612,24 @@ void main() {
       );
       expect(status(l, TriageRungId.wifiLink), TriageStatus.looksFine);
     });
+
+    test('a cloud panel that errored is Not checked, never Checking', () {
+      final TriageLadder l = TriageLadder.compute(
+        const TriageInput(
+          verdict: WifiVsInternetVerdict.bothHealthy,
+          cloudPanelPresent: true,
+          cloudFailed: true,
+        ),
+      );
+      expect(status(l, TriageRungId.services), TriageStatus.notChecked);
+      expect(
+        rung(l, TriageRungId.services).reason,
+        'The services check did not complete.',
+      );
+      expect(
+        l.settled().rungs.last.reason,
+        rung(l, TriageRungId.services).reason,
+      );
+    });
   });
 }

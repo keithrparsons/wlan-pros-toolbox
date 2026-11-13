@@ -425,6 +425,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// the copy payload can summarize them. Empty until the panel's probe lands.
   List<SiteReachability> _cloudResults = const <SiteReachability>[];
 
+  /// The cloud panel errored with no rows, so the ladder reads "Not checked"
+  /// rather than waiting on an answer that will never come.
+  bool _cloudFailed = false;
+
   StreamSubscription<QualityProgress>? _sub;
 
   /// True only on iOS (the companion-Shortcut source).
@@ -2707,11 +2711,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                         // the panel still owns its own probe + scoped re-check.
                         onResults: (List<SiteReachability> rows) {
                           if (!mounted) return;
-                          setState(() => _cloudResults = rows);
+                          setState(() {
+                            _cloudResults = rows;
+                            _cloudFailed = false;
+                          });
                           // Reachable cloud apps are one of the three "you're
                           // online" signals; re-derive the verdict in case the
                           // speed test stalled (Keith 2026-06-17).
                           _recomputeVerdict();
+                        },
+                        onError: () {
+                          if (!mounted) return;
+                          setState(() => _cloudFailed = true);
                         },
                       ),
                     ],
@@ -3761,6 +3772,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         evidence: _onlineEvidence,
         internetHealth: ConnectionCheck.internetHealth(_internet),
         cloudPanelPresent: widget.enableCloudApps ?? widget.enableLiveSampling,
+        cloudFailed: _cloudFailed,
       ),
     );
   }

@@ -288,6 +288,17 @@ String _visibleText(WidgetTester tester) {
   return buf.toString();
 }
 
+class _ThrowingCloudProbe extends ReachabilityProbe {
+  _ThrowingCloudProbe()
+    : super(
+        sites: kCloudApps,
+        prober: (String host, int port, Duration timeout) async => null,
+      );
+
+  @override
+  Future<List<SiteReachability>> measure() async => throw StateError('boom');
+}
+
 void main() {
   late List<String> clipboardWrites;
 
@@ -347,7 +358,9 @@ void main() {
       expect(ladderY, lessThan(analyzeY));
       expect(
         ladderY,
-        greaterThan(tester.getTopLeft(find.textContaining('Your Wi-Fi is fine').first).dy),
+        greaterThan(
+          tester.getTopLeft(find.textContaining('Your Wi-Fi is fine').first).dy,
+        ),
         reason: 'the ladder comes after the headline',
       );
     });
@@ -412,6 +425,21 @@ void main() {
       expect(copied, contains('The internet: Looks off'));
       expect(copied, contains('This network wants a sign-in.'));
       await tester.pump(const Duration(seconds: 3));
+    });
+
+    testWidgets('a cloud panel that errored reads Not checked in the Copy '
+        'report, not Checking', (WidgetTester tester) async {
+      await _runCheck(tester, dns: _WorkingDns(), cloud: _ThrowingCloudProbe());
+      final Finder copyBtn = find.text('Copy these details');
+      await tester.ensureVisible(copyBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(copyBtn);
+      await tester.pumpAndSettle();
+      final String report = clipboardWrites.last;
+      expect(report, contains('Services: Not checked'));
+      expect(report, contains('The services check did not complete.'));
+      expect(report, isNot(contains('No answer yet when this was captured.')));
+      await tester.pump(const Duration(seconds: 2));
     });
   });
 }

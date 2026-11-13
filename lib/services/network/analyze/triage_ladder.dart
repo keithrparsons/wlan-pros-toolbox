@@ -87,6 +87,7 @@ class TriageInput {
     this.cloudPanelPresent = false,
     this.cloudReachableCount,
     this.cloudTotalCount,
+    this.cloudFailed = false,
   });
 
   /// Reads the run fields off the [AnalyzeInput] the Analyze rules already use, so
@@ -100,6 +101,7 @@ class TriageInput {
     required OnlineEvidence evidence,
     required InternetHealth? internetHealth,
     required bool cloudPanelPresent,
+    bool cloudFailed = false,
   }) => TriageInput(
     verdict: a.verdict,
     rssiDbm: a.rssiDbm,
@@ -115,6 +117,7 @@ class TriageInput {
     cloudPanelPresent: cloudPanelPresent,
     cloudReachableCount: a.cloudReachableCount,
     cloudTotalCount: a.cloudTotalCount,
+    cloudFailed: cloudFailed,
   );
 
   /// Null until a run has produced a verdict; the ladder is empty then.
@@ -146,6 +149,9 @@ class TriageInput {
   final bool cloudPanelPresent;
   final int? cloudReachableCount;
   final int? cloudTotalCount;
+
+  /// The cloud panel errored and produced no rows. Distinct from still pending.
+  final bool cloudFailed;
 }
 
 class TriageRung {
@@ -380,7 +386,9 @@ TriageRung? _services(TriageInput i) {
   final int? reachable = i.cloudReachableCount;
   final int? total = i.cloudTotalCount;
   if (reachable == null || total == null) {
-    return rung(TriageStatus.checking, null);
+    return i.cloudFailed
+        ? rung(TriageStatus.notChecked, 'The services check did not complete.')
+        : rung(TriageStatus.checking, null);
   }
   if (total == 0) return rung(TriageStatus.notChecked, null);
   if (reachable == 0) {
