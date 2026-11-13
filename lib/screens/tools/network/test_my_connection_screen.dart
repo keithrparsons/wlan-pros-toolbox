@@ -3703,26 +3703,29 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// copy text already read — directly from the in-memory models, never by
   /// re-parsing the copy text. Pure local evaluation; no network, nothing
   /// stored (GL-005 / GL-008).
-  AnalysisReport _buildAnalysisReport() {
+  AnalysisReport _buildAnalysisReport() =>
+      AnalyzeEngine.analyze(_analyzeInput());
+
+  /// The one [AnalyzeInput] for this result, read by the Analyze rules and by the
+  /// triage ladder so the two can never disagree about what the run measured.
+  AnalyzeInput _analyzeInput() {
     final List<SiteReachability> cloud = _cloudResults;
-    return AnalyzeEngine.analyze(
-      AnalyzeInput.fromConnectionState(
-        ap: _effectiveAp,
-        internet: _internet,
-        engine: _engine,
-        dns: _dnsResult,
-        cloudReachable: cloud.isEmpty
-            ? null
-            : cloud.where((SiteReachability s) => s.reachable).length,
-        cloudTotal: cloud.isEmpty ? null : cloud.length,
-        platformIsIos: _isIos,
-        wifiSignalCaptured: _iosRfCaptured,
-        // Separates "the Shortcut has not captured the RF yet" (R-31: tap Capture)
-        // from "there was no Wi-Fi link at all" (R-31 must stay silent — cold-eyes
-        // F2). Both arrive here as `wifiSignalCaptured: false`.
-        notOnWifi: _resultNotOnWifi,
-        speedTestSkipped: _resultSpeedTestSkipped,
-      ),
+    return AnalyzeInput.fromConnectionState(
+      ap: _effectiveAp,
+      internet: _internet,
+      engine: _engine,
+      dns: _dnsResult,
+      cloudReachable: cloud.isEmpty
+          ? null
+          : cloud.where((SiteReachability s) => s.reachable).length,
+      cloudTotal: cloud.isEmpty ? null : cloud.length,
+      platformIsIos: _isIos,
+      wifiSignalCaptured: _iosRfCaptured,
+      // Separates "the Shortcut has not captured the RF yet" (R-31: tap Capture)
+      // from "there was no Wi-Fi link at all" (R-31 must stay silent — cold-eyes
+      // F2). Both arrive here as `wifiSignalCaptured: false`.
+      notOnWifi: _resultNotOnWifi,
+      speedTestSkipped: _resultSpeedTestSkipped,
     );
   }
 
