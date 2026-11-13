@@ -579,5 +579,38 @@ void main() {
         'Speed and response look healthy.',
       );
     });
+
+    test('Wi-Fi link has no reading behind it for a verdict that never '
+        'inspects Wi-Fi: Can\'t check, not Looks fine', () {
+      for (final WifiVsInternetVerdict v in <WifiVsInternetVerdict>[
+        WifiVsInternetVerdict.internetUnreachable,
+        WifiVsInternetVerdict.captivePortal,
+        WifiVsInternetVerdict.onlineUnmeasured,
+      ]) {
+        final TriageLadder l = TriageLadder.compute(
+          healthy(verdict: v, rssiDbm: null),
+        );
+        expect(
+          status(l, TriageRungId.wifiLink),
+          TriageStatus.cantCheck,
+          reason: '$v',
+        );
+      }
+    });
+
+    test('Wi-Fi link is Looks fine for those verdicts once an RSSI grades', () {
+      final TriageLadder l = TriageLadder.compute(
+        healthy(verdict: WifiVsInternetVerdict.captivePortal, rssiDbm: -55),
+      );
+      expect(status(l, TriageRungId.wifiLink), TriageStatus.looksFine);
+    });
+
+    test('Wi-Fi link is still Looks fine for a verdict that measured the '
+        'link rate, with no RSSI', () {
+      final TriageLadder l = TriageLadder.compute(
+        healthy(verdict: WifiVsInternetVerdict.bothHealthy, rssiDbm: null),
+      );
+      expect(status(l, TriageRungId.wifiLink), TriageStatus.looksFine);
+    });
   });
 }
