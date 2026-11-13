@@ -9232,7 +9232,8 @@
         "The round-trip time is the connection time to a port, slightly higher than classic ping, and it depends on that port answering. Even a \"refused\" target gives you a valid timing number, because the host answered.",
         "A host that never answers is reported as loss with no round-trip time. The tool never invents an RTT for a packet it did not get back.",
         "This is not classic ICMP echo (see Ping (ICMP) for the real-ICMP path on mobile). If a host blocks the probe port, it reads as loss even if the host is up on another port; try a different probe port.",
-        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen."
+        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen.",
+        "If you ping your router and it answers none of at least 3 pings, the tool says so in a plain note: many routers ignore pings sent to themselves while still passing your traffic, so that on its own is not a fault. Run Traceroute to check the path past it."
       ],
       "source": "Times how long it takes to open a TCP connection to the host, and reports that as the round-trip time."
     },
@@ -9254,7 +9255,8 @@
         "It runs on every native platform, including the Mac desktop where true ICMP can't run. When the Toolbox is served from a WLAN Pi, the Pi runs a bounded ICMP ping series and the screen labels it that way. In a browser anywhere else it's turned off and shows a prompt to download the app.",
         "Dropped probes are always shown, never hidden. A lost sample is a red dot on the axis and counts toward the loss percentage, so a flaky path reads honestly instead of as a smooth line.",
         "The chart keeps a fixed number of recent samples so a long run stays light on memory, and the copy export notes how many of the total samples are shown.",
-        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen."
+        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen.",
+        "If you ping your router and it answers none of at least 3 pings, the tool says so in a plain note: many routers ignore pings sent to themselves while still passing your traffic, so that on its own is not a fault. Run Traceroute to check the path past it."
       ],
       "source": "It repeatedly sends TCP round-trip probes to the host and charts each reply as it arrives."
     },
@@ -9272,7 +9274,8 @@
       "fieldNotes": [
         "Where it works, honestly: iOS and Android both do real ICMP echo. On macOS the only way to run ICMP is the system ping program, which the Mac App Sandbox blocks, so the screen says so and points you at TCP Ping instead. ICMP ping is not part of the Windows build; the Windows screen says that plainly and points you at TCP Ping too. When the Toolbox is served from a WLAN Pi, the Pi runs the echo. In a browser anywhere else there is no way to do this, so it offers the download instead.",
         "Where it's available, this is genuine ICMP timing and loss, the real thing, not a TCP stand-in.",
-        "On macOS and Windows, use TCP Ping for reachability and round-trip time; it works there and labels itself as TCP."
+        "On macOS and Windows, use TCP Ping for reachability and round-trip time; it works there and labels itself as TCP.",
+        "If you ping your router and it answers none of at least 3 pings, the tool says so in a plain note: many routers ignore pings sent to themselves while still passing your traffic, so that on its own is not a fault. Run Traceroute to check the path past it."
       ],
       "source": "It sends genuine ICMP echo requests using the phone's built-in ping capability, or the WLAN Pi's when the Toolbox is served from one."
     },

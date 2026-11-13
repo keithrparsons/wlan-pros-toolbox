@@ -22,4 +22,32 @@ void main() {
       expect(firstHopSilentButPathAnswers(<bool>[]), isFalse);
     });
   });
+
+  group('routerSilentToPing', () {
+    bool silent(String target, String? gateway, int sent, int received) =>
+        routerSilentToPing(
+          target: target,
+          gatewayIp: gateway,
+          sent: sent,
+          received: received,
+        );
+
+    test('true when the router got 3 or more pings and answered none', () {
+      expect(silent('192.168.1.1', '192.168.1.1', 3, 0), isTrue);
+      expect(silent(' 192.168.1.1 ', '192.168.1.1', 10, 0), isTrue);
+    });
+
+    test('false when the router answered any ping', () {
+      expect(silent('192.168.1.1', '192.168.1.1', 10, 1), isFalse);
+    });
+
+    test('false for a target that is not the router', () {
+      expect(silent('1.1.1.1', '192.168.1.1', 10, 0), isFalse);
+      expect(silent('192.168.1.1', null, 10, 0), isFalse);
+    });
+
+    test('false until 3 pings have gone unanswered', () {
+      expect(silent('192.168.1.1', '192.168.1.1', 2, 0), isFalse);
+    });
+  });
 }

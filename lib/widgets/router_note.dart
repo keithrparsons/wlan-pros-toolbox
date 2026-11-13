@@ -26,6 +26,24 @@ bool firstHopSilentButPathAnswers(List<bool> hopAnswered) =>
     !hopAnswered.first &&
     hopAnswered.skip(1).any((bool answered) => answered);
 
+const String routerIgnoresPingNote =
+    'This is your router, and it did not answer. Many routers are set to '
+    'ignore pings sent to themselves while still passing your traffic, so on '
+    'its own this is not a fault. To check the path past it, run Traceroute.';
+
+/// True when [target] is the device's router and it has answered none of at
+/// least 3 pings. One or two lost pings are too few to call it a pattern.
+bool routerSilentToPing({
+  required String target,
+  required String? gatewayIp,
+  required int sent,
+  required int received,
+}) =>
+    gatewayIp != null &&
+    target.trim() == gatewayIp &&
+    sent >= 3 &&
+    received == 0;
+
 /// Informational styling on purpose: this is reassurance, not an alarm.
 class RouterNote extends StatelessWidget {
   const RouterNote({super.key, required this.text});

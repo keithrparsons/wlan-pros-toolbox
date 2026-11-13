@@ -29,6 +29,7 @@ import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../router/app_router.dart';
+import '../../../services/network/current_network.dart';
 import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
@@ -39,19 +40,24 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/router_note.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class IcmpPingScreen extends StatefulWidget {
-  const IcmpPingScreen({super.key, this.service});
+  const IcmpPingScreen({super.key, this.service, this.network});
 
   /// Injected in tests. In production this is null and the screen builds an
   /// [IcmpService] with the real backend on supported native targets
   /// ([defaultIcmpBackend]) — null on web/desktop, where the capability gate
   /// routes to the unavailable/sandboxed-desktop state before any run.
   final IcmpService? service;
+
+  /// Injectable current-network helper, used to recognize the router as a
+  /// target. Null in production → the real CurrentNetwork().
+  final CurrentNetwork? network;
 
   @override
   State<IcmpPingScreen> createState() => _IcmpPingScreenState();
@@ -63,6 +69,10 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   final FocusNode _hostFocus = FocusNode();
 
   int _count = 10;
+
+  /// The device gateway, so a silent router gets the router note. Null when
+  /// unknown.
+  String? _gatewayIp;
 
   bool _running = false;
   String? _error;
@@ -90,6 +100,14 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     if (!_piBacked) {
       _service = widget.service ?? IcmpService(backend: defaultIcmpBackend());
     }
+    _loadGateway();
+  }
+
+  Future<void> _loadGateway() async {
+    final NetworkSuggestion s = await (widget.network ?? CurrentNetwork())
+        .suggest();
+    if (!mounted) return;
+    setState(() => _gatewayIp = s.gatewayIp);
   }
 
   /// Pi-hosted ICMP ping: runs ON the Pi and renders the final aggregate. The
@@ -829,6 +847,13 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               ],
             ),
           ),
+          if (routerSilentToPing(
+            target: _hostCtrl.text,
+            gatewayIp: _gatewayIp,
+            sent: _stats.sent,
+            received: _stats.received,
+          ))
+            const RouterNote(text: routerIgnoresPingNote),
         ],
       ),
     );
