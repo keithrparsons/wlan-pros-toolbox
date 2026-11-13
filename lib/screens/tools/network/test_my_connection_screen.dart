@@ -43,6 +43,7 @@ import '../../../services/network/wifi_connection_service.dart';
 import '../../../services/network/analyze/analyze_engine.dart';
 import '../../../services/network/analyze/analyze_input.dart';
 import '../../../services/network/analyze/analyze_report_text.dart';
+import '../../../services/network/analyze/triage_ladder.dart';
 import '../../../services/network/analyze/analysis_finding.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
@@ -72,6 +73,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/packet_flow_progress.dart';
 import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../widgets/triage_ladder_card.dart';
 import '../concept_graphic_band.dart';
 import 'analyze_results_screen.dart';
 import 'cloud_apps_panel.dart';
@@ -2589,6 +2591,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                       comparison: _comparisonLine(verdict),
                     ),
                     const SizedBox(height: AppSpacing.md),
+                    // TRIAGE LADDER — where the trouble looks like it sits, from
+                    // the facts this run already has (no new probe). One line per
+                    // rung here; the reasons live in Analyze.
+                    ..._triageLadderSection(),
                     // ANALYZE — opens the in-app, local, plain-language report
                     // (the [AnalyzeEngine] over the same result data). It sits
                     // ALONGSIDE the AppBar's Copy action: Copy saves the raw
@@ -3496,6 +3502,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         'Internet ${_TwoAxisChips.word(v.internetStatus)}',
       );
     }
+    final String ladderText = triageLadderToPlainText(
+      _triageLadder().settled(),
+    );
+    if (ladderText.isNotEmpty) {
+      buf.writeln('');
+      buf.writeln(ladderText);
+      buf.writeln('');
+    }
 
     // ── Wi-Fi ─────────────────────────────────────────────────────────────
     final String? wifiName = _consumerWifiName(ap);
@@ -3729,6 +3743,37 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     );
   }
 
+  /// The triage ladder for the result on screen. Built from the same
+  /// [AnalyzeInput] the Analyze rules read, plus what that input cannot carry:
+  /// the DNS probe's failed-vs-pending state, the online evidence, the engine's
+  /// grade gate, and whether the cloud panel is part of this screen.
+  TriageLadder _triageLadder() {
+    final DnsProbeResult? dns = _dnsResult;
+    final TriageDnsState dnsState = dns == null
+        ? (_runRealNetworkProbes
+              ? TriageDnsState.pending
+              : TriageDnsState.absent)
+        : (dns.isAvailable ? TriageDnsState.resolved : TriageDnsState.failed);
+    return TriageLadder.compute(
+      TriageInput.fromAnalyzeInput(
+        _analyzeInput(),
+        dns: dnsState,
+        evidence: _onlineEvidence,
+        internetHealth: ConnectionCheck.internetHealth(_internet),
+        cloudPanelPresent: widget.enableCloudApps ?? widget.enableLiveSampling,
+      ),
+    );
+  }
+
+  List<Widget> _triageLadderSection() {
+    final TriageLadder ladder = _triageLadder();
+    if (ladder.isEmpty) return const <Widget>[];
+    return <Widget>[
+      TriageLadderCard(ladder: ladder),
+      const SizedBox(height: AppSpacing.md),
+    ];
+  }
+
   /// The plain-text payload for the Analyze report's own Copy action: a titled
   /// header, then each finding as `Category: Verdict-WORD` + its explanation, in
   /// the same order shown on screen. Plain text only (no markdown). Returns null
@@ -3745,6 +3790,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     buf.writeln('WLAN Pros Toolbox: Connection Analysis');
     buf.writeln('Generated: ${_formatTimestamp(_testedAt)} on $_platformLabel');
     buf.writeln('');
+    final String ladderText = triageLadderToPlainText(
+      _triageLadder().settled(),
+    );
+    if (ladderText.isNotEmpty) {
+      buf.writeln(ladderText);
+      buf.writeln('');
+    }
     // The §7 body, every verdict carried as its WORD, lives in the pure,
     // unit-tested [analysisReportToPlainText] so the on-screen chip word and
     // the clipboard word can never drift.
@@ -3763,6 +3815,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       MaterialPageRoute<void>(
         builder: (_) => AnalyzeResultsScreen(
           report: report,
+          ladder: _triageLadder().settled(),
           copyTextBuilder: () => _buildAnalysisCopyText(report),
         ),
       ),

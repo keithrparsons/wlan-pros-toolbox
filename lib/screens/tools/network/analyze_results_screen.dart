@@ -44,12 +44,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../services/network/analyze/analysis_finding.dart';
 import '../../../services/network/analyze/analyze_engine.dart';
+import '../../../services/network/analyze/triage_ladder.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/centered_content.dart';
 import '../../../widgets/status_chip.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../widgets/triage_ladder_card.dart';
 
 /// Maps a finding's [FindingSeverity] + reassurance flag to the §2 chip kind.
 /// The single source of truth for the screen's verdict-to-chip resolution.
@@ -135,8 +137,13 @@ class AnalyzeResultsScreen extends StatelessWidget {
   const AnalyzeResultsScreen({
     required this.report,
     required this.copyTextBuilder,
+    this.ladder,
     super.key,
   });
+
+  /// The triage ladder for the same result, shown first with its reasons. Null
+  /// (or empty) renders the screen exactly as before.
+  final TriageLadder? ladder;
 
   /// The ordered findings to render, conclusion-first. May be empty (to the
   /// empty state).
@@ -228,6 +235,12 @@ class AnalyzeResultsScreen extends StatelessWidget {
     }
 
     final List<Widget> out = <Widget>[];
+
+    final TriageLadder? triage = ladder;
+    if (triage != null && !triage.isEmpty) {
+      out.add(TriageLadderCard(ladder: triage, showReasons: true));
+      out.add(const SizedBox(height: AppSpacing.md));
+    }
 
     if (hero != null) {
       out.add(_VerdictHero(finding: hero));
