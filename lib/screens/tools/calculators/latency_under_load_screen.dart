@@ -224,7 +224,7 @@ class _AboutCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'To measure your own line while it is busy, use Network Quality '
-            '(its responsiveness figure) or Test My Connection (its loaded '
+            '(its responsiveness figure) or Check My Connection (its loaded '
             'responsiveness check). Both measure delay during a download.',
             style: body,
           ),
@@ -241,7 +241,7 @@ class _AboutCard extends StatelessWidget {
                 onPressed: () =>
                     Navigator.of(context).pushNamed(AppRouter.testMyConnection),
                 icon: const Icon(Icons.open_in_new),
-                label: const Text('Open Test My Connection'),
+                label: const Text('Open Check My Connection'),
               ),
             ],
           ),

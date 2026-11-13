@@ -2427,14 +2427,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // route web (and any no-socket platform) to the shared fallback.
     if (!NetworkSupport.activeNetworkSupported) {
       return NetworkUnavailableView(
-        toolName: 'Test My Connection',
+        toolName: 'Check My Connection',
         reason:
             NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
     if (_source == WifiInfoSource.web) {
       return const NetworkUnavailableView(
-        toolName: 'Test My Connection',
+        toolName: 'Check My Connection',
         reason: NetworkUnavailableReason.web,
       );
     }
@@ -6914,7 +6914,7 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
       'an Orb or Ookla score. Two throughput numbers are reported: the Pi '
       'uplink to the internet, and the local hop between this device and the '
       'Pi. To read your own device\'s Wi-Fi signal and get the full "is it your '
-      'Wi-Fi or your internet?" verdict, run Test My Connection in the native app.',
+      'Wi-Fi or your internet?" verdict, run Check My Connection in the native app.',
       style: text.labelMedium?.copyWith(color: colors.textSecondary),
     );
   }

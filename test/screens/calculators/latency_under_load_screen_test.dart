@@ -125,7 +125,7 @@ void main() {
         isTrue,
       );
       expect(all, contains('Network Quality'));
-      expect(all, contains('Test My Connection'));
+      expect(all, contains('Check My Connection'));
       expect(all, contains('Present opens this simulator'));
       expect(all, contains('Left out:'));
       expect(all, isNot(contains('—')), reason: 'no em dashes');
@@ -256,7 +256,7 @@ void main() {
     expect(find.byType(LatencyUnderLoadStage), findsOneWidget);
     expect(find.byType(LatencyUnderLoadControls), findsOneWidget);
     expect(find.text('Open Network Quality'), findsOneWidget);
-    expect(find.text('Open Test My Connection'), findsOneWidget);
+    expect(find.text('Open Check My Connection'), findsOneWidget);
     expect(find.text('Why a faster plan does not fix it'), findsOneWidget);
   });
 

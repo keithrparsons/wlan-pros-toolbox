@@ -672,7 +672,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'There were no measured results to evaluate. Run Test My Connection '
+            'There were no measured results to evaluate. Run Check My Connection '
             'on a live Wi-Fi connection, then analyze the result.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),

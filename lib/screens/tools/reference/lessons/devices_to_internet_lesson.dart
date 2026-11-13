@@ -238,7 +238,7 @@ const GuidedLesson kDevicesToInternetLesson = GuidedLesson(
         LessonToolLink(
           'test-my-connection',
           route: '/tools/test-my-connection',
-          title: 'Test My Connection',
+          title: 'Check My Connection',
         ),
         LessonFigure(
           asset: 'assets/lesson-figures/devices-to-internet/fig-07.svg',
@@ -323,7 +323,7 @@ const GuidedLesson kDevicesToInternetLesson = GuidedLesson(
         LessonToolLink(
           'test-my-connection',
           route: '/tools/test-my-connection',
-          title: 'Test My Connection',
+          title: 'Check My Connection',
         ),
       ],
     ),
@@ -378,7 +378,7 @@ const GuidedLesson kDevicesToInternetLesson = GuidedLesson(
         LessonToolLink(
           'test-my-connection',
           route: '/tools/test-my-connection',
-          title: 'Test My Connection',
+          title: 'Check My Connection',
         ),
         LessonFigure(
           asset: 'assets/lesson-figures/devices-to-internet/fig-10.svg',
