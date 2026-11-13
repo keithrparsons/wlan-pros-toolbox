@@ -631,5 +631,44 @@ void main() {
         rung(l, TriageRungId.services).reason,
       );
     });
+
+    test(
+      'wifiUnknown with a Poor RSSI is Looks off, never "did not report"',
+      () {
+        final TriageLadder l = TriageLadder.compute(
+          healthy(verdict: WifiVsInternetVerdict.wifiUnknown, rssiDbm: -85),
+        );
+        expect(status(l, TriageRungId.wifiLink), TriageStatus.looksOff);
+        expect(
+          rung(l, TriageRungId.wifiLink).reason,
+          'The Wi-Fi signal is weak.',
+        );
+      },
+    );
+
+    test('wifiUnknown with a healthy RSSI is Looks fine, and says signal, '
+        'not link (the rate was not read)', () {
+      final TriageLadder l = TriageLadder.compute(
+        healthy(verdict: WifiVsInternetVerdict.wifiUnknown, rssiDbm: -55),
+      );
+      expect(status(l, TriageRungId.wifiLink), TriageStatus.looksFine);
+      expect(
+        rung(l, TriageRungId.wifiLink).reason,
+        'The Wi-Fi signal looks healthy.',
+      );
+    });
+
+    test('wifiUnknown on iOS without the Shortcut stays Not checked even '
+        'with a stale RSSI (R-31)', () {
+      final TriageLadder l = TriageLadder.compute(
+        healthy(
+          verdict: WifiVsInternetVerdict.wifiUnknown,
+          platformIsIos: true,
+          wifiSignalCaptured: false,
+          rssiDbm: -55,
+        ),
+      );
+      expect(status(l, TriageRungId.wifiLink), TriageStatus.notChecked);
+    });
   });
 }

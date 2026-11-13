@@ -251,8 +251,10 @@ TriageRung _wifiLink(TriageInput i, WifiVsInternetVerdict verdict) {
       'The Wi-Fi link is part of the slowdown.',
     );
   }
-  if (verdict == WifiVsInternetVerdict.wifiUnknown) return cantCheck();
   final QualityGrade signal = WifiGrading.gradeRssi(i.rssiDbm);
+  // wifiUnknown means the link RATE was not read; an RSSI may still be. Grade
+  // what was measured, and say "signal", not "link".
+  final bool rateUnread = verdict == WifiVsInternetVerdict.wifiUnknown;
   if (verdict != WifiVsInternetVerdict.upstream &&
       signal == QualityGrade.poor) {
     return rung(TriageStatus.looksOff, 'The Wi-Fi signal is weak.');
@@ -261,12 +263,15 @@ TriageRung _wifiLink(TriageInput i, WifiVsInternetVerdict verdict) {
   // measured link rate; the other verdicts (sign-in, no internet, online but
   // unmeasured) never inspect Wi-Fi, so without an RSSI that grades there is
   // nothing behind a "fine". On a non-iOS device that means wired, or a
-  // platform that did not return one: Can't check, same truth as wifiUnknown.
+  // platform that did not return one: Can't check.
   final bool linkRateMeasured =
       verdict == WifiVsInternetVerdict.upstream ||
       verdict == WifiVsInternetVerdict.bothHealthy;
   if (signal == QualityGrade.unavailable && !linkRateMeasured) {
     return cantCheck();
+  }
+  if (rateUnread) {
+    return rung(TriageStatus.looksFine, 'The Wi-Fi signal looks healthy.');
   }
   return rung(TriageStatus.looksFine, 'The Wi-Fi link looks healthy.');
 }
