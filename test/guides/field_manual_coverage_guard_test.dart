@@ -29,7 +29,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help.dart';
 /// tool it belongs to. Adding a heading here is a deliberate act; a heading
 /// that is neither a tool nor listed here fails the guard.
 const Set<String> kManualSupplementaryHeadings = <String>{
-  'Test My Connection',
+  'Check My Connection',
   'Analyze Results',
   'How the Toolbox Measures Throughput',
   'Blue Box (MF)',

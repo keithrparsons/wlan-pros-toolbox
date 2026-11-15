@@ -314,10 +314,13 @@ void main() {
       }) r = await pump(tester, _cellular);
 
       // Mounted on Wi-Fi: the free label, and no consent was ever recorded.
-      expect(find.text('Check My Connection'), findsOneWidget);
+      expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
 
       r.link.walkOut();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
 
       expect(r.quality.measureCalls, 1);
@@ -340,7 +343,7 @@ void main() {
       }) r = await pump(tester, _vpnOpaque);
 
       r.link.walkOut();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
 
       expect(r.quality.measureCalls, 1);
@@ -372,7 +375,7 @@ void main() {
       }) r = await pump(tester, stillWifi);
 
       r.link.walkOut(); // ...and it is STILL Wi-Fi. Nothing changes.
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
 
       expect(r.quality.measureCalls, 1);

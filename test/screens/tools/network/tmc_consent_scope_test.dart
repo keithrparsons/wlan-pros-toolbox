@@ -303,14 +303,17 @@ void main() {
       final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
           await _pump(tester, transport: transport);
 
-      expect(find.text('Check My Connection'), findsOneWidget,
+      expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget,
           reason: 'on Wi-Fi, the plain label — no cost, no warning');
 
       // The user walks out of range. The phone drops to cellular. Nothing has
       // re-probed yet, so the screen still shows the on-Wi-Fi button.
       transport.onWifi = false;
 
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
 
       expect(r.quality.measureCalls, 1);

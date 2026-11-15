@@ -852,6 +852,18 @@ class _FakeNetworkDetails extends NetworkDetailsService {
       );
 }
 
+/// Android-style details whose resolver list carries the router's global IPv6
+/// address, which embeds the household's delegated prefix.
+class _FakeNetworkDetailsWithIpv6Dns extends NetworkDetailsService {
+  @override
+  Future<NetworkDetails> read() async => const NetworkDetails(
+        localIp: '192.168.1.42',
+        subnetMask: '255.255.255.0',
+        gateway: '192.168.1.1',
+        dnsServers: <String>['192.168.1.1', '2600:1700:abcd:1230::1'],
+      );
+}
+
 /// A fake iOS NEHotspotNetwork security reader. Returns a deterministic
 /// unavailable result synchronously (no real method channel), so a live-card
 /// test that leaves `enableLiveSampling` on does not touch the real native
@@ -945,7 +957,7 @@ void main() {
 
   Future<void> runCheck(WidgetTester tester) async {
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Check My Connection'));
+    await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
     await tester.pumpAndSettle();
   }
 
@@ -978,7 +990,10 @@ void main() {
       // Present in the pre-run idle state, as a text-weight aside (not a second
       // filled button), sitting beside the primary "Check My Connection" action.
       expect(find.text("What's the difference?"), findsOneWidget);
-      expect(find.text('Check My Connection'), findsOneWidget);
+      expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       // The aside is a TextButton carrying the help_outline glyph (the bottom
       // ToolHelpFooter also uses that glyph, so scope the match to the button).
       expect(
@@ -1349,7 +1364,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pump(const Duration(seconds: 9));
       await tester.pumpAndSettle();
 
@@ -1453,7 +1468,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pump(const Duration(seconds: 9));
       await tester.pumpAndSettle();
 
@@ -1885,7 +1900,7 @@ void main() {
       // No re-run affordance before a result exists.
       expect(find.byIcon(Icons.refresh), findsNothing);
 
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
       expect(quality.measureCount, 1);
 
@@ -1933,12 +1948,15 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
 
       // The AppBar title renders the FULL string with no ellipsis, at 375px,
       // alongside the single §8.16 copy action (no second AppBar action).
-      final Finder titleFinder = find.text('Test My Connection');
+      final Finder titleFinder = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Check My Connection'),
+      );
       expect(titleFinder, findsOneWidget);
       final RenderParagraph para = tester.renderObject<RenderParagraph>(
         find.descendant(
@@ -1948,7 +1966,7 @@ void main() {
         ),
       );
       expect(para.didExceedMaxLines, isFalse);
-      expect(para.text.toPlainText(), 'Test My Connection');
+      expect(para.text.toPlainText(), 'Check My Connection');
     },
   );
 
@@ -1970,7 +1988,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
 
       await tester.pump(const Duration(seconds: 9));
       await tester.pumpAndSettle();
@@ -2383,7 +2401,10 @@ void main() {
         expect(find.text('Set up live Wi-Fi'), findsNothing);
         expect(bridge.openUrlCalls, 0);
         // The normal front-door idle state renders instead, with zero taps.
-        expect(find.text('Check My Connection'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       },
     );
 
@@ -2409,7 +2430,10 @@ void main() {
         // A user who demonstrably has the Shortcut working is never nagged.
         expect(find.text('Set up live Wi-Fi'), findsNothing);
         // The normal front-door idle state is shown instead.
-        expect(find.text('Check My Connection'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       },
     );
 
@@ -2435,7 +2459,10 @@ void main() {
         // One-time: the persisted seen-flag suppresses the sheet on every later
         // open, even though the Shortcut is not yet demonstrably working.
         expect(find.text('Set up live Wi-Fi'), findsNothing);
-        expect(find.text('Check My Connection'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       },
     );
 
@@ -2459,7 +2486,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Set up live Wi-Fi'), findsNothing);
-        expect(find.text('Check My Connection'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
       },
     );
   });
@@ -2703,6 +2733,95 @@ void main() {
         );
 
     testWidgets(
+      'Copy for a public post removes public IP, SSID and BSSID and keeps the '
+      'measurements',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(),
+              ipGeoService: _FakeIpGeoService(result: ispSuccess()),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await tester.pumpAndSettle();
+
+        final Finder publicBtn = find.text('Copy for a public post');
+        await tester.ensureVisible(publicBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(publicBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        expect(copied, isNot(contains('KeithNet')));
+        expect(copied, isNot(contains('a4:83:e7:00:11:22')));
+        expect(copied, isNot(contains('203.0.113.7')));
+        expect(copied, contains('Network (SSID): Removed for a public post'));
+        expect(copied, contains('BSSID: Removed for a public post'));
+        expect(copied, contains('Public IP: Removed for a public post'));
+        expect(copied, isNot(contains('Lehi')));
+        expect(
+          copied,
+          contains('Approx. location: Removed for a public post'),
+        );
+        // The measurements a forum needs are still there.
+        expect(copied, contains('RSSI: -58 dBm'));
+        expect(copied, contains('Internet Down: 60 Mbps'));
+        expect(copied, contains('ISP / org: Fusion Networks'));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'Copy for a public post removes DNS servers, which can carry the '
+      "household's IPv6 prefix",
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(),
+              ipGeoService: _FakeIpGeoService(result: ispSuccess()),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetailsWithIpv6Dns(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await tester.pumpAndSettle();
+
+        final Finder publicBtn = find.text('Copy for a public post');
+        await tester.ensureVisible(publicBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(publicBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        expect(copied, isNot(contains('2600:1700:abcd')));
+        expect(copied, contains('DNS server(s): Removed for a public post'));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
       'copy payload is sectioned (Wi-Fi / Internet / ISP / Verdict) and carries '
       'all available Wi-Fi + internet fields plus the ISP block',
       (tester) async {
@@ -2906,7 +3025,7 @@ void main() {
         // No affordance before a result.
         expect(find.text('Run again'), findsNothing);
 
-        await tester.tap(find.text('Check My Connection'));
+        await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         await tester.pumpAndSettle();
         expect(quality.measureCount, 1);
 
@@ -2938,7 +3057,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Check My Connection'));
+        await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         // Pump a frame mid-run (the counting client delays 100ms before yielding).
         await tester.pump(const Duration(milliseconds: 40));
 
@@ -3299,7 +3418,7 @@ void main() {
         ));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Check My Connection'));
+        await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         await tester.pumpAndSettle();
         await settleDetails(tester);
 
@@ -3484,6 +3603,22 @@ void main() {
       final double nameY = tester.getTopLeft(find.text('AP name')).dy;
       final double bssidY = tester.getTopLeft(find.text('BSSID')).dy;
       expect(nameY, lessThan(bssidY));
+    });
+
+    testWidgets(
+        'Copy for a public post removes the AP name', (tester) async {
+      await pumpResults(tester, apName: 'AP-Lobby-2');
+      final Finder publicBtn = find.text('Copy for a public post');
+      await tester.ensureVisible(publicBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(publicBtn);
+      await tester.pumpAndSettle();
+      expect(clipboardWrites.last, isNot(contains('AP-Lobby-2')));
+      expect(
+        clipboardWrites.last,
+        contains('AP name: Removed for a public post'),
+      );
+      await tester.pump(const Duration(milliseconds: 1600));
     });
 
     testWidgets(

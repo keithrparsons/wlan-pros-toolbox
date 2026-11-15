@@ -51,6 +51,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/gateway_target_chip.dart';
+import '../../../widgets/router_note.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -80,6 +81,10 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
 
   /// The device gateway offered as a one-tap target, or null when unknown.
   String? _gatewayIp;
+
+  /// The host the current results came from. The router note checks this, not
+  /// the field, which the user may have edited since the run.
+  String _pingedHost = '';
 
   /// True once the user edits the field — stop offering the gateway chip.
   bool _userTouched = false;
@@ -190,6 +195,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       _error = null;
       _running = true;
       _state = PingPlotState.empty;
+      _pingedHost = host;
       _lastAnnounced = DateTime.fromMillisecondsSinceEpoch(0);
     });
     _controller.start(
@@ -230,6 +236,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       _error = null;
       _piLoading = true;
       _state = PingPlotState.empty;
+      _pingedHost = host;
     });
     try {
       final PingPlotState result = await PiBackendClient().pingSeries(
@@ -550,6 +557,13 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
               style: text.bodyLarge?.copyWith(color: colors.textTertiary),
             ),
           ],
+          if (routerSilentToPing(
+            target: _pingedHost,
+            gatewayIp: _gatewayIp,
+            sent: _state.totalSent,
+            received: _state.totalReceived,
+          ))
+            const RouterNote(text: routerIgnoresPingNote),
         ],
       ),
     );
@@ -775,6 +789,13 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
               style: text.bodyLarge?.copyWith(color: colors.textTertiary),
             ),
           ],
+          if (routerSilentToPing(
+            target: _pingedHost,
+            gatewayIp: _gatewayIp,
+            sent: _state.totalSent,
+            received: _state.totalReceived,
+          ))
+            const RouterNote(text: routerIgnoresPingNote),
         ],
       ),
     );

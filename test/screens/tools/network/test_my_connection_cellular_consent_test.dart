@@ -393,9 +393,12 @@ void main() {
       expect(screen, isNot(contains(kCellularDataWarning)));
       expect(find.text('Check without the speed test'), findsNothing);
       // The original, unchanged affordance.
-      expect(find.text('Check My Connection'), findsOneWidget);
+      expect(find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ), findsOneWidget);
 
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
@@ -453,7 +456,10 @@ void main() {
         );
         expect(find.text('Check without the speed test'), findsOneWidget);
         expect(
-          find.text('Check My Connection'),
+          find.descendant(
+          of: find.byKey(TestMyConnectionScreen.runButtonKey),
+          matching: find.text('Check My Connection'),
+        ),
           findsNothing,
           reason: 'the free-to-spend label may not appear on an unproven link',
         );

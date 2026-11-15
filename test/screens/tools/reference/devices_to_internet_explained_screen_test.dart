@@ -20,7 +20,7 @@ void main() {
     );
   });
 
-  test('each step that says Check My Connection opens Test My Connection', () {
+  test('each step that says Check My Connection opens it', () {
     // The guide's button name is Check My Connection; the screen behind it
     // is Test My Connection, which has no catalog tile (the home hero is its
     // door), so the link carries its own route.
@@ -48,7 +48,7 @@ void main() {
       expect(links.length, names ? 1 : 0, reason: s.title);
       for (final LessonToolLink l in links) {
         expect(l.route, AppRouter.testMyConnection);
-        expect(l.title, 'Test My Connection');
+        expect(l.title, 'Check My Connection');
       }
     }
   });

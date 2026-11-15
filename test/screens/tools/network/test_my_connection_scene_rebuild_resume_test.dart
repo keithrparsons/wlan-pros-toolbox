@@ -375,8 +375,9 @@ void main() {
             'answer. A completed run renders its result affordances; a screen that '
             'merely reset renders the pre-run intro. Visible text was:\n$text',
       );
+      // The Run button, by key: the title bar carries the same words.
       expect(
-        text.contains('Check My Connection'),
+        find.byKey(TestMyConnectionScreen.runButtonKey).evaluate().isNotEmpty,
         isFalse,
         reason: 'the PRE-RUN call to action must be gone — its presence means the '
             'screen came back reset, with the run silently dropped',
@@ -554,7 +555,7 @@ void main() {
 
       // The user taps Check My Connection — the tap that, on Keith's phone, threw him
       // out to Home.
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
@@ -721,8 +722,7 @@ void main() {
 
       await _mountAfterSceneRebuild(tester, g);
 
-      final String text = _visibleText(tester);
-      expect(text.contains('Check My Connection'), isTrue,
+      expect(find.byKey(TestMyConnectionScreen.runButtonKey), findsOneWidget,
           reason: 'no arm → no resume → the pre-run call to action stands');
       expect(g.oneShotFires, 0);
     });

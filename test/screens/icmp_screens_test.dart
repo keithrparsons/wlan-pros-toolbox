@@ -15,6 +15,7 @@ import 'package:wlan_pros_toolbox/screens/tools/network/icmp_ping_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/mobile_traceroute_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/icmp_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/router_note.dart';
 
 /// Fake backend that never opens a socket; emits nothing. The widget tests
 /// here exercise idle/unavailable states, not a run, so an empty stream is fine.
@@ -31,6 +32,34 @@ class _SilentBackend implements IcmpBackend {
     Future<void>? cancel,
   }) =>
       const Stream<IcmpReply>.empty();
+}
+
+/// Android service whose TTL-walk replays fixed [hops], so a run renders
+/// without a device.
+class _ReplayTraceService extends IcmpService {
+  _ReplayTraceService(this.hops)
+      : super(
+          platformOverride: 'android',
+          isWebOverride: false,
+          backend: const _SilentBackend(),
+        );
+
+  final List<IcmpHop> hops;
+
+  @override
+  Stream<IcmpTraceEvent> traceroute({
+    required String host,
+    int maxHops = 30,
+    int probesPerHop = 1,
+    Duration interval = const Duration(milliseconds: 200),
+    Duration timeout = const Duration(seconds: 2),
+    Future<void>? cancel,
+  }) async* {
+    for (final IcmpHop hop in hops) {
+      yield IcmpTraceEvent.hop(hop);
+    }
+    yield IcmpTraceEvent.complete(reachedTarget: true);
+  }
 }
 
 Widget _wrap(Widget child) =>
@@ -177,6 +206,32 @@ void main() {
           find.text('Use the system Traceroute on desktop'), findsOneWidget);
       expect(find.text('Open Traceroute'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Trace'), findsNothing);
+    });
+
+    Future<void> runTrace(WidgetTester tester, List<IcmpHop> hops) async {
+      await tester.pumpWidget(
+        _wrap(MobileTracerouteScreen(service: _ReplayTraceService(hops))),
+      );
+      await tester.enterText(find.byType(TextField), 'example.com');
+      await tester.tap(find.widgetWithText(FilledButton, 'Trace'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('silent hop 1 with later hops answering: shows the router note',
+        (tester) async {
+      await runTrace(tester, const <IcmpHop>[
+        IcmpHop(ttl: 1, timedOut: true),
+        IcmpHop(ttl: 2, fromIp: '203.0.113.5', rttMs: 12.4),
+      ]);
+      expect(find.text(firstHopSilentNote), findsOneWidget);
+    });
+
+    testWidgets('hop 1 answering: no router note', (tester) async {
+      await runTrace(tester, const <IcmpHop>[
+        IcmpHop(ttl: 1, fromIp: '10.0.0.1', rttMs: 1.2),
+        IcmpHop(ttl: 2, fromIp: '203.0.113.5', rttMs: 12.4),
+      ]);
+      expect(find.text(firstHopSilentNote), findsNothing);
     });
   });
 }

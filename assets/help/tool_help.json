@@ -3578,7 +3578,7 @@
         "The SQM-on curve is illustrative. No published consumer measurement of it was found, so it sits at idle plus FQ-CoDel's 5 ms default target, a stand-in, not a measurement. The FCC notes that some providers have since added queue management of their own.",
         "The busy figures are read by eye from the bars of the FCC's chart and are approximate. The FCC measured in its 2022 test period and published in 2024. Under download load its bars differ, and one cable provider reached about 380 ms there.",
         "Left out: the Wi-Fi hop, queues inside the provider's network and at the far end, jitter, and packet loss. One upload, one call, one line. The 20-second timing and the 0.8 s fill time are illustrative.",
-        "To measure your own line while it is busy, use Network Quality (its responsiveness figure measures round-trip time during a download) or Test My Connection (its loaded responsiveness check). The tool's About card opens both.",
+        "To measure your own line while it is busy, use Network Quality (its responsiveness figure measures round-trip time during a download) or Check My Connection (its loaded responsiveness check). The tool's About card opens both.",
         "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "FCC, Measuring Broadband America, 13th Fixed Broadband Report (FCC 24-136), pp. 18 to 19: idle latency quoted from the text, latency under upstream load read from Chart 7. RFC 8290, The Flow Queue CoDel Packet Scheduler and Active Queue Management Algorithm, section 4.2 (default target 5 ms) and abstract. Wi-Fi Classroom candidates research brief, 2026-09-27, candidate 1. Computed on your device.",
@@ -3607,7 +3607,7 @@
               "why": "The queue picture is the mechanism behind the number."
             },
             {
-              "control": "Open Network Quality, Open Test My Connection",
+              "control": "Open Network Quality, Open Check My Connection",
               "does": "Opens the two tools that measure a real line under load.",
               "why": "Moves the class from the model to their own line."
             }
@@ -3618,7 +3618,7 @@
             "Reveal: play it. The call goes from 18 ms idle to 225 ms, 12.5 times idle. Press Up: with SQM on the same upload leaves it at 23 ms (help example).",
             "Optional follow-up: switch to DSL with SQM off: 29 ms to 665 ms."
           ],
-          "pairsWith": "Test My Connection and Network Quality, the Home Internet explainer.",
+          "pairsWith": "Check My Connection and Network Quality, the Home Internet explainer.",
           "leftOut": "the SQM-on curve is illustrative (idle plus FQ-CoDel's 5 ms target); no consumer measurement of it was found. The busy figures are read by eye from the FCC's chart. Left out: the Wi-Fi hop, queues inside the provider and at the far end, jitter and loss. There is no built-in predict question on this tool; ask it yourself."
         }
       ]
@@ -8958,7 +8958,7 @@
       "source": "The tool draws on the official Unicode names, with a messaging-weighted popularity ranking."
     },
     "test-my-connection": {
-      "name": "Test My Connection",
+      "name": "Check My Connection",
       "category": "Test Network",
       "purpose": "Answers the everyday question \"is the slowdown my Wi-Fi or my internet?\" in plain English, and tells you what to say to support.",
       "whyHere": "The consumer-friendly front door, reached from the \"Check My Connection\" button on the home screen. Reach for it when you want a one-tap answer plus vetted self-help steps; Network Quality and Wi-Fi Information go deeper when you want engineer-grade numbers.",
@@ -8971,6 +8971,7 @@
         "The whole test takes up to about a minute (three back-to-back measurement windows of up to about 15 seconds each: download, upload, then a loaded-responsiveness check). A short \"This usually takes about half a minute\" note shows under the loader.",
         "Use the \"Run again\" button on its own row just below the verdict sentence to re-run the whole Wi-Fi and internet test.",
         "Tap \"Copy these details\" for a thorough, help-desk-ready report. It opens with a \"WLAN Pros Toolbox: Connection Report\" header plus the test date and time, then clearly labeled sections: Wi-Fi (SSID, BSSID, RSSI, noise, SNR, Tx/Rx rate, channel, width, band, PHY, security), Internet (download, upload, latency, jitter, loss, responsiveness), DNS (a real resolution-time measurement), Network (local IP, subnet mask, default gateway, plus DHCP server and DNS server(s) where the platform exposes them, and VLAN, which no device can see), ISP (public IP, ISP/org, ASN, when reachable), cloud apps reachability, and the verdict. Unavailable fields say so; the ISP and cloud-apps sections are left out cleanly when you're offline.",
+        "Tap \"Copy for a public post\" when you want to share the same report on a forum or other public page. It is identical except that your public IP address, approximate location, network name (SSID), AP name and BSSID read \"Removed for a public post\", so the post does not name your network or show where you are. Your ISP and the measurements stay in.",
         "Scroll to the bottom for the \"Cloud apps reachable?\" panel. It checks whether your device can reach recognizable services (Facebook, Instagram, TikTok, YouTube, Netflix, Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub, and a Cloudflare DNS anchor) and times each connection. Its \"Re-check cloud apps\" button re-runs ONLY this panel, not the whole test."
       ],
       "inputs": [],
@@ -9000,10 +9001,10 @@
     "analyze-results": {
       "name": "Analyze Results",
       "category": "Test Network",
-      "purpose": "Turns a finished Test My Connection result into a plain-language, conclusion-first report: what your connection is telling you and what to do about it, most important thing first.",
-      "whyHere": "Test My Connection gives you the headline verdict and the raw numbers. Analyze Results explains them. Reach for it when you want the why behind the verdict and the recommended next steps, all worked out right on your device. It sits next to Copy on the result screen: Copy saves the raw report to send to support, Analyze explains it.",
+      "purpose": "Turns a finished Check My Connection result into a plain-language, conclusion-first report: what your connection is telling you and what to do about it, most important thing first.",
+      "whyHere": "Check My Connection gives you the headline verdict and the raw numbers. Analyze Results explains them. Reach for it when you want the why behind the verdict and the recommended next steps, all worked out right on your device. It sits next to Copy on the result screen: Copy saves the raw report to send to support, Analyze explains it.",
       "howToUse": [
-        "Run Test My Connection first so there is a measured result to explain.",
+        "Run Check My Connection first so there is a measured result to explain.",
         "Tap \"Analyze my results\" beneath the verdict.",
         "Read the findings top to bottom. The most important ones lead (the verdict, an open network, packet loss, a dead path), then signal, band, and internet-quality context follow. Each finding carries a plain severity word (ACTION / WORTH A LOOK / CONTEXT) plus a color, never color on its own.",
         "Tap Copy (top right) to save the whole analysis as plain text."
@@ -9065,7 +9066,7 @@
         "Web: the browser version cannot read Wi-Fi and points you to download the app. Served from a WLAN Pi, the tool shows what the Pi reports about its own radio (SSID, BSSID, RSSI, Tx and Rx rate, channel, width, band, standard, country, interface, and MAC). The Pi does not report a noise floor or a security type, so those read unavailable rather than guessed.",
         "RSSI and SNR carry hard grades; read the rate as a trend, not a pass/fail. The standard label combines the 802.11 designation and the Wi-Fi generation (for example \"802.11be (Wi-Fi 7)\"; 802.11ax on 6 GHz shows as Wi-Fi 6E). Anything marked \"derived\" was calculated, not read straight from the radio.",
         "macOS having no Rx rate and iOS having no width are real platform ceilings, not bugs. On macOS, a blank SSID is almost always a missing Location grant, not a hidden network. The macOS read has a 5-second safety timeout: a stalled read shows an honest \"No Wi-Fi reading\" rather than freezing.",
-        "macOS security: the macOS Wi-Fi framework reports Enhanced Open (OWE) as open (seen 25 October 2026 on an OWE network whose beacon advertised OWE). So on macOS the tool also reads the connected access point's own beacon, in the background, and shows OWE (Enhanced Open) only when that beacon's RSN element lists the OWE key-management suite (00-0F-AC:18, IEEE 802.11-2020 Table 9-151; RFC 8110). In OWE transition mode the OWE half is a hidden BSS, and macOS leaves it out of every scan (checked 25 October 2026), so its beacon cannot be read and Security stays Open with the caveat. Pure Enhanced Open (no transition) is read correctly. Until then, or when the beacon cannot be read (Location off, scan failed), Security reads Open with the note \"macOS also reports Enhanced Open (OWE) as open\". When the beacon has been read and carries no RSN or WPA element, the network really is open (for example the open half of an OWE transition pair), and the note instead reads \"The access point's beacon confirms this network is open\". The beacon is read again every 5 minutes (a chosen interval, not a standard) while macOS says open, because an access point can be switched between OWE and open. Test My Connection's copied report carries the same note, and its Analyze report does not call an unconfirmed macOS Open \"wide open\"."
+        "macOS security: the macOS Wi-Fi framework reports Enhanced Open (OWE) as open (seen 25 October 2026 on an OWE network whose beacon advertised OWE). So on macOS the tool also reads the connected access point's own beacon, in the background, and shows OWE (Enhanced Open) only when that beacon's RSN element lists the OWE key-management suite (00-0F-AC:18, IEEE 802.11-2020 Table 9-151; RFC 8110). In OWE transition mode the OWE half is a hidden BSS, and macOS leaves it out of every scan (checked 25 October 2026), so its beacon cannot be read and Security stays Open with the caveat. Pure Enhanced Open (no transition) is read correctly. Until then, or when the beacon cannot be read (Location off, scan failed), Security reads Open with the note \"macOS also reports Enhanced Open (OWE) as open\". When the beacon has been read and carries no RSN or WPA element, the network really is open (for example the open half of an OWE transition pair), and the note instead reads \"The access point's beacon confirms this network is open\". The beacon is read again every 5 minutes (a chosen interval, not a standard) while macOS says open, because an access point can be switched between OWE and open. Check My Connection's copied report carries the same note, and its Analyze report does not call an unconfirmed macOS Open \"wide open\"."
       ],
       "source": "Reads the live connection from the system Wi-Fi on macOS, Android, and Windows, from the Pi's own radio on a WLAN Pi, and from the companion Shortcut on iOS."
     },
@@ -9231,7 +9232,8 @@
         "The round-trip time is the connection time to a port, slightly higher than classic ping, and it depends on that port answering. Even a \"refused\" target gives you a valid timing number, because the host answered.",
         "A host that never answers is reported as loss with no round-trip time. The tool never invents an RTT for a packet it did not get back.",
         "This is not classic ICMP echo (see Ping (ICMP) for the real-ICMP path on mobile). If a host blocks the probe port, it reads as loss even if the host is up on another port; try a different probe port.",
-        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen."
+        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen.",
+        "If you ping your router and it answers none of at least 3 pings, the tool says so in a plain note: many routers ignore pings sent to themselves while still passing your traffic, so that on its own is not a fault. Run Traceroute to check the path past it."
       ],
       "source": "Times how long it takes to open a TCP connection to the host, and reports that as the round-trip time."
     },
@@ -9253,7 +9255,8 @@
         "It runs on every native platform, including the Mac desktop where true ICMP can't run. When the Toolbox is served from a WLAN Pi, the Pi runs a bounded ICMP ping series and the screen labels it that way. In a browser anywhere else it's turned off and shows a prompt to download the app.",
         "Dropped probes are always shown, never hidden. A lost sample is a red dot on the axis and counts toward the loss percentage, so a flaky path reads honestly instead of as a smooth line.",
         "The chart keeps a fixed number of recent samples so a long run stays light on memory, and the copy export notes how many of the total samples are shown.",
-        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen."
+        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen.",
+        "If you ping your router and it answers none of at least 3 pings, the tool says so in a plain note: many routers ignore pings sent to themselves while still passing your traffic, so that on its own is not a fault. Run Traceroute to check the path past it."
       ],
       "source": "It repeatedly sends TCP round-trip probes to the host and charts each reply as it arrives."
     },
@@ -9271,7 +9274,8 @@
       "fieldNotes": [
         "Where it works, honestly: iOS and Android both do real ICMP echo. On macOS the only way to run ICMP is the system ping program, which the Mac App Sandbox blocks, so the screen says so and points you at TCP Ping instead. ICMP ping is not part of the Windows build; the Windows screen says that plainly and points you at TCP Ping too. When the Toolbox is served from a WLAN Pi, the Pi runs the echo. In a browser anywhere else there is no way to do this, so it offers the download instead.",
         "Where it's available, this is genuine ICMP timing and loss, the real thing, not a TCP stand-in.",
-        "On macOS and Windows, use TCP Ping for reachability and round-trip time; it works there and labels itself as TCP."
+        "On macOS and Windows, use TCP Ping for reachability and round-trip time; it works there and labels itself as TCP.",
+        "If you ping your router and it answers none of at least 3 pings, the tool says so in a plain note: many routers ignore pings sent to themselves while still passing your traffic, so that on its own is not a fault. Run Traceroute to check the path past it."
       ],
       "source": "It sends genuine ICMP echo requests using the phone's built-in ping capability, or the WLAN Pi's when the Toolbox is served from one."
     },
@@ -9325,7 +9329,7 @@
       "example": null,
       "fieldNotes": [
         "Where it works, honestly: on macOS and Windows it runs the built-in traceroute. Under the Mac App Sandbox (the App Store build) launching that program is blocked, so the tool quietly tests whether it can run and adapts: a Developer-ID Mac build and Windows run it fine, while the sandboxed build shows a clear \"traceroute unavailable\" message rather than hanging or pretending. On iOS and Android, running an external program isn't allowed, so the screen says \"Traceroute runs on desktop\" and points you at Ping. On Android, Traceroute (Mobile) maps the path instead. When the Toolbox is served from a WLAN Pi, the Pi runs the trace. In a browser anywhere else the tool points you to download the app.",
-        "Each hop shows its number, the responding router (name and IP), and up to three round-trip times. Three asterisks mean a hop that didn't answer, which is common and not necessarily a problem. Reaching the target is reported as \"complete.\"",
+        "Each hop shows its number, the responding router (name and IP), and up to three round-trip times. Three asterisks mean a hop that didn't answer, which is common and not necessarily a problem. Reaching the target is reported as \"complete.\" When hop 1, usually your router, is silent but hops past it answer, the tool says so in a plain note: many routers ignore probes sent to themselves while still passing your traffic, so that pattern on its own is not a fault (router ICMP rate limits: RFC 1812 section 4.3.2.8, RFC 4443 section 2.4(f)).",
         "On a sandboxed Mac App Store build this tool honestly reports itself unavailable. For a path check on mobile, see Traceroute (Mobile), and note its iOS limitation."
       ],
       "source": "It runs the computer's built-in traceroute (or the WLAN Pi's) and reads each hop as it comes back."
@@ -9343,7 +9347,7 @@
       "example": null,
       "fieldNotes": [
         "The platform picture, honestly: on Android it works, because the system ping lets each probe travel a set distance and prints the router that answers each step. On iOS it isn't feasible and is honestly marked unavailable. iOS can send echoes, but its receive path only accepts the plain echo reply and never reads the \"hop exceeded\" message a traceroute needs to name each router, so a short-travel probe just times out with no hop. Rather than fake hops, iOS shows an honest \"not on this device.\" On macOS and Windows, the system Traceroute is the path to use, and this screen points you to it. When the Toolbox is served from a WLAN Pi, the Pi runs the walk and shows the final hop list.",
-        "Where it works (Android), hops show the same hop-number, IP, round-trip-time, and asterisk-timeout shape as the desktop traceroute.",
+        "Where it works (Android), hops show the same hop-number, IP, round-trip-time, and asterisk-timeout shape as the desktop traceroute. When hop 1, usually your router, is silent but hops past it answer, the tool says so in a plain note: many routers ignore probes sent to themselves while still passing your traffic, so that pattern on its own is not a fault (router ICMP rate limits: RFC 1812 section 4.3.2.8, RFC 4443 section 2.4(f)).",
         "The iOS limit is a real platform ceiling and is the reason this tool doesn't run on iPhone. Device-pending note: the Android path is still pending verification on a real device."
       ],
       "source": "On Android (or on a WLAN Pi) it sends ICMP echoes that travel one hop farther each time, naming the router that answers at each step."
@@ -11649,7 +11653,7 @@
       "howToUse": [
         "Read top to bottom. It starts with the short answer and the one big idea, then covers the whole trip, two roads and one box, the six stops, what your bars measure, how cellular skips your box, which road is slow, why a bigger plan won't fix slow Wi-Fi, the hotel with perfect bars, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.",
         "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
-        "Wherever the guide says to tap Check My Connection, in steps 7, 9 and 11, an Open button takes you to Test My Connection, which grades your Wi-Fi and your internet separately. Step 4 opens Home Internet, Explained and step 6 opens Wi-Fi Calling, Explained, the two guides it names.",
+        "Wherever the guide says to tap Check My Connection, in steps 7, 9 and 11, an Open button takes you to Check My Connection, which grades your Wi-Fi and your internet separately. Step 4 opens Home Internet, Explained and step 6 opens Wi-Fi Calling, Explained, the two guides it names.",
         "At the end, Take it with you names the free PDF guide the lesson follows, for printing or sending to whoever asked why the internet is slow.",
         "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
       ],
@@ -11664,7 +11668,7 @@
       "source": "The WLAN Pros print guide How Your Devices Access the Internet, Explained (September 2026), drawn from Keith Parsons, Fix Your Own Wi-Fi, chapters 1, 2 and 6. The full source list is the last section of the lesson.",
       "teaching": [
         {
-          "inClass": "Wi-Fi and cellular are ways to reach the internet, not the internet: two roads that meet at one box, six stops, what the bars measure, and why a bigger plan won't fix slow Wi-Fi. Figure 9 (the hotel with perfect bars) is the story to tell a room. Pair it with Test My Connection, which grades the two roads separately."
+          "inClass": "Wi-Fi and cellular are ways to reach the internet, not the internet: two roads that meet at one box, six stops, what the bars measure, and why a bigger plan won't fix slow Wi-Fi. Figure 9 (the hotel with perfect bars) is the story to tell a room. Pair it with Check My Connection, which grades the two roads separately."
         }
       ]
     },
@@ -12433,7 +12437,7 @@
         "Not reported is a real answer and is shown as one. Some drivers, some virtual interfaces and some platforms do not expose speed or duplex at all, and printing a zero there would be a fabricated number.",
         "On a sandboxed Mac App Store build the routing table cannot be read by shelling out, so the default-route badge may be absent. The direct-download build has no such limit.",
         "The full link table comes from macOS and from a WLAN Pi, which reports its own links. On Windows, iOS, and Android the screen says this platform does not report a full link table here, and a browser not served from a Pi says it cannot see network interfaces.",
-        "A speed figure here is what the link negotiated, which is a ceiling rather than a measurement of throughput. Use Test My Connection for that."
+        "A speed figure here is what the link negotiated, which is a ceiling rather than a measurement of throughput. Use Check My Connection for that."
       ],
       "source": "Values are read from the operating system's interface and routing tables on each platform."
     },
@@ -12489,7 +12493,7 @@
       "example": "A device shows full signal and nothing loads. Full signal means the first hop is healthy, which rules out the hop most people blame and points at everything after it. In the panel: a 100 Mbps switch port carries 94.1 Mb/s, so a Wi-Fi link carrying 576.4 Mb/s and a 300 Mb/s plan still give 94.1 Mb/s end to end, and the best Wi-Fi link here (720.6 Mb/s) leaves it at 94.1. With the device far from the AP, Wi-Fi is the slowest hop at 86.5 Mb/s; the best Wi-Fi link raises the total to 300 Mb/s and no further, because then the plan is the slowest hop.",
       "fieldNotes": [
         "The single most useful idea on the plate is that the local network is not the Internet. A device can be perfectly associated, with a strong signal and a valid address, and still reach nothing, because association and Internet access are different achievements.",
-        "Wi-Fi Information and Test My Connection answer those two halves separately.",
+        "Wi-Fi Information and Check My Connection answer those two halves separately.",
         "The panel's Wi-Fi efficiency and its 300 Mb/s plan are illustrative; the Ethernet figures are arithmetic. CWNA-109 objective 6.6.1 lists LAN port speed and insufficient Internet or WAN bandwidth among the causes of insufficient throughput."
       ],
       "source": "WLAN Pros field plate."

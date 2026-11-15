@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/traceroute_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/traceroute_service.dart';
+import 'package:wlan_pros_toolbox/widgets/router_note.dart';
 
 /// Test double for [TracerouteService] that never touches Process or network.
 /// [launchable] drives the upfront capability probe; [hops] and [result] drive
@@ -96,6 +97,40 @@ void main() {
     expect(find.textContaining('10.0.0.1'), findsWidgets);
     expect(find.textContaining('203.0.113.5'), findsWidgets);
     expect(find.text('Traceroute unavailable'), findsNothing);
+  });
+
+  Future<void> runTrace(WidgetTester tester, List<TracerouteHop> hops) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TracerouteScreen(
+          service: _FakeTracerouteService(launchable: true, hops: hops),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'example.com');
+    await tester.tap(find.text('Trace'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('silent hop 1 with later hops answering: shows the router note', (
+    WidgetTester tester,
+  ) async {
+    await runTrace(tester, <TracerouteHop>[
+      const TracerouteHop(ttl: 1, timedOut: true),
+      const TracerouteHop(ttl: 2, ip: '203.0.113.5', rttsMs: <double>[12.4]),
+    ]);
+
+    expect(find.text(firstHopSilentNote), findsOneWidget);
+  });
+
+  testWidgets('hop 1 answering: no router note', (WidgetTester tester) async {
+    await runTrace(tester, <TracerouteHop>[
+      const TracerouteHop(ttl: 1, ip: '10.0.0.1', rttsMs: <double>[1.2]),
+      const TracerouteHop(ttl: 2, ip: '203.0.113.5', rttsMs: <double>[12.4]),
+    ]);
+
+    expect(find.text(firstHopSilentNote), findsNothing);
   });
 
   testWidgets(

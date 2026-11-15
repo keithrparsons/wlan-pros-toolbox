@@ -655,7 +655,7 @@ void main() {
         ),
       ),
       drive: (t) async {
-        await t.tap(find.text('Check My Connection'));
+        await t.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         await t.pumpAndSettle();
       },
       verify: (t) {
@@ -682,7 +682,7 @@ void main() {
         ),
       ),
       drive: (t) async {
-        await t.tap(find.text('Check My Connection'));
+        await t.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         await t.pump(const Duration(seconds: 9));
         await t.pumpAndSettle();
       },
@@ -734,7 +734,7 @@ void main() {
         ),
       ),
       drive: (t) async {
-        await t.tap(find.text('Check My Connection'));
+        await t.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
         await t.pumpAndSettle();
       },
       verify: (t) {

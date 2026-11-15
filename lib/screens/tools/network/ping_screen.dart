@@ -34,6 +34,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/gateway_target_chip.dart';
+import '../../../widgets/router_note.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -61,6 +62,10 @@ class _PingScreenState extends State<PingScreen> {
   /// The device gateway offered as a one-tap target, or null when unknown
   /// (honest NONE — no chip, no fabrication).
   String? _gatewayIp;
+
+  /// The host the current results came from. The router note checks this, not
+  /// the field, which the user may have edited since the run.
+  String _pingedHost = '';
 
   /// True once the user edits the field — stop offering the gateway chip.
   bool _userTouched = false;
@@ -144,6 +149,7 @@ class _PingScreenState extends State<PingScreen> {
       _running = true;
       _replies.clear();
       _stats = PingStats.empty;
+      _pingedHost = host;
       _cancel = cancel;
     });
 
@@ -211,6 +217,7 @@ class _PingScreenState extends State<PingScreen> {
       _running = true;
       _replies.clear();
       _stats = PingStats.empty;
+      _pingedHost = host;
     });
     try {
       final PiHop hop = await PiBackendClient().ping(
@@ -746,6 +753,13 @@ class _PingScreenState extends State<PingScreen> {
             const SizedBox(height: AppSpacing.sm),
             _Sparkline(rttsMs: _stats.rttsMs),
           ],
+          if (routerSilentToPing(
+            target: _pingedHost,
+            gatewayIp: _gatewayIp,
+            sent: _stats.sent,
+            received: _stats.received,
+          ))
+            const RouterNote(text: routerIgnoresPingNote),
         ],
       ),
     );

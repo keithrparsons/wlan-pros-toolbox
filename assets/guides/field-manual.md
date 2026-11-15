@@ -51,7 +51,7 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
 
 Live Wi-Fi and internet diagnostics. These tools read the device's real connection, namely the associated AP, link rates, signal, and throughput, and answer the everyday question of whether a slowdown is the Wi-Fi or the internet.
 
-### Test My Connection
+### Check My Connection
 
 Answer the everyday question "is the slowdown my Wi-Fi or my internet?" in plain English, and tell the user what to say to support.
 
@@ -76,12 +76,12 @@ Answer the everyday question "is the slowdown my Wi-Fi or my internet?" in plain
 
 ### Analyze Results
 
-Turn a finished Test My Connection result into a plain-language, conclusion-first report: what your connection is telling you and what to do about it, ordered by importance.
+Turn a finished Check My Connection result into a plain-language, conclusion-first report: what your connection is telling you and what to do about it, ordered by importance.
 
-**Why it's here.** Test My Connection gives the headline verdict and the raw numbers; Analyze Results explains them. Reach for it when you want the why behind the verdict and the recommended next steps, evaluated entirely on the device. It sits alongside Copy on the result screen: Copy saves the raw report for support, Analyze explains it.
+**Why it's here.** Check My Connection gives the headline verdict and the raw numbers; Analyze Results explains them. Reach for it when you want the why behind the verdict and the recommended next steps, evaluated entirely on the device. It sits alongside Copy on the result screen: Copy saves the raw report for support, Analyze explains it.
 
 **How to use**
-1. Run Test My Connection first so there is a measured result.
+1. Run Check My Connection first so there is a measured result.
 2. Tap "Analyze my results" beneath the verdict.
 3. Read the findings top to bottom: the most important (the verdict, an open network, packet loss, a dead path) lead, then signal/band/internet-quality context. Each carries a severity word (ACTION / WORTH A LOOK / CONTEXT) plus a color, never color alone.
 4. Use the Copy action (top right) to save the whole analysis as plain text.
@@ -196,8 +196,8 @@ Keep them straight from the start.
 
 #### Two numbers, two questions
 
-- **Internet throughput** is shown by *Test My Connection* and *Network Quality*. The headline figure is your download, what people mean by internet speed, measured against the wider internet right now. Upload is measured too and shown as its own separate number.
-- **Usable Wi-Fi capacity** comes from the Wi-Fi-vs-Internet engine (now part of *Test My Connection*). This is roughly how much throughput the Wi-Fi hop itself can carry, based on the rate your radios negotiated.
+- **Internet throughput** is shown by *Check My Connection* and *Network Quality*. The headline figure is your download, what people mean by internet speed, measured against the wider internet right now. Upload is measured too and shown as its own separate number.
+- **Usable Wi-Fi capacity** comes from the Wi-Fi-vs-Internet engine (now part of *Check My Connection*). This is roughly how much throughput the Wi-Fi hop itself can carry, based on the rate your radios negotiated.
 
 Same app, two measurements, two purposes. Everything below explains what each one actually does and why a number you see somewhere else may not match.
 
@@ -232,7 +232,7 @@ Put those together and the pattern is easy to see. A one-number tool that satura
 
 #### What the Wi-Fi number is, and what it is not
 
-The Wi-Fi-vs-Internet engine (folded into *Test My Connection*) produces a different figure entirely: usable Wi-Fi capacity, which the app estimates at about 55% of the negotiated Wi-Fi link rate.
+The Wi-Fi-vs-Internet engine (folded into *Check My Connection*) produces a different figure entirely: usable Wi-Fi capacity, which the app estimates at about 55% of the negotiated Wi-Fi link rate.
 
 Two things to understand about that 55%.
 
@@ -300,7 +300,7 @@ Show the device's own system facts: model (marketing name plus the raw identifie
 
 ### Interface Information
 
-Show the device's own network state: per-interface IPv4/IPv6 addresses, interface name and inferred type, plus gateway, subnet mask, Wi-Fi SSID/BSSID, and the device's primary IP where the platform exposes them. (It does not read the device's configured DNS servers. Only Test My Connection's report does, and only on Android.)
+Show the device's own network state: per-interface IPv4/IPv6 addresses, interface name and inferred type, plus gateway, subnet mask, Wi-Fi SSID/BSSID, and the device's primary IP where the platform exposes them. (It does not read the device's configured DNS servers. Only Check My Connection's report does, and only on Android.)
 
 **Why it's here.** The "what's my IP, gateway, and link" foundation. Reach for it first when you need the device's own address (e.g. before a ping/sweep) or to confirm which interface is active.
 
@@ -362,7 +362,7 @@ Shows every network interface on this device by what it actually is: whether it 
 **Field notes**
 - Not reported is a real answer and is shown as one. Some drivers, some virtual interfaces and some platforms do not expose speed or duplex at all, and printing a zero there would be a fabricated number.
 - On a sandboxed Mac App Store build the routing table cannot be read by shelling out, so the default-route badge may be absent. The direct-download build has no such limit.
-- A speed figure here is what the link negotiated, which is a ceiling rather than a measurement of throughput. Use Test My Connection for that.
+- A speed figure here is what the link negotiated, which is a ceiling rather than a measurement of throughput. Use Check My Connection for that.
 
 ## Reachability & Path (5)
 
@@ -2322,7 +2322,7 @@ A reference plate drawing every hop between a device and the Internet, in order 
 
 **Field notes**
 - The single most useful idea on the plate is that the local network is not the Internet. A device can be perfectly associated, with a strong signal and a valid address, and still reach nothing, because association and Internet access are different achievements.
-- Wi-Fi Information and Test My Connection answer those two halves separately.
+- Wi-Fi Information and Check My Connection answer those two halves separately.
 - The panel's Wi-Fi efficiency and its 300 Mb/s plan are illustrative; the Ethernet figures are arithmetic. CWNA-109 objective 6.6.1 lists LAN port speed and insufficient Internet or WAN bandwidth among the causes of insufficient throughput.
 
 ### macOS Menu-Bar Wi-Fi
@@ -4337,7 +4337,7 @@ A read-along lesson on the trip everything online takes: from your device to the
 **How to use**
 1. Read top to bottom. It starts with the short answer and the one big idea, then covers the whole trip, two roads and one box, the six stops, what your bars measure, how cellular skips your box, which road is slow, why a bigger plan won't fix slow Wi-Fi, the hotel with perfect bars, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
 2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
-3. Wherever the guide says to tap Check My Connection, in steps 7, 9 and 11, an Open button takes you to Test My Connection, which grades your Wi-Fi and your internet separately. Step 4 opens Home Internet, Explained and step 6 opens Wi-Fi Calling, Explained, the two guides it names.
+3. Wherever the guide says to tap Check My Connection, in steps 7, 9 and 11, an Open button takes you to Check My Connection, which grades your Wi-Fi and your internet separately. Step 4 opens Home Internet, Explained and step 6 opens Wi-Fi Calling, Explained, the two guides it names.
 4. At the end, Take it with you names the free PDF guide the lesson follows, for printing or sending to whoever asked why the internet is slow.
 5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
 
@@ -4348,7 +4348,7 @@ A read-along lesson on the trip everything online takes: from your device to the
 
 **Teaching it**
 
-Wi-Fi and cellular are ways to reach the internet, not the internet: two roads that meet at one box, six stops, what the bars measure, and why a bigger plan won't fix slow Wi-Fi. Figure 9 (the hotel with perfect bars) is the story to tell a room. Pair it with Test My Connection, which grades the two roads separately.
+Wi-Fi and cellular are ways to reach the internet, not the internet: two roads that meet at one box, six stops, what the bars measure, and why a bigger plan won't fix slow Wi-Fi. Figure 9 (the hotel with perfect bars) is the story to tell a room. Pair it with Check My Connection, which grades the two roads separately.
 
 ### Mesh, Extenders and Wired Access Points, Explained
 
@@ -7480,7 +7480,7 @@ Shows why a video call stutters when someone else in the house uploads. A chart 
 - The SQM-on curve is illustrative. No published consumer measurement of it was found, so it sits at idle plus FQ-CoDel's 5 ms default target, a stand-in, not a measurement. The FCC notes that some providers have since added queue management of their own.
 - The busy figures are read by eye from the bars of the FCC's chart and are approximate. The FCC measured in its 2022 test period and published in 2024. Under download load its bars differ, and one cable provider reached about 380 ms there.
 - Left out: the Wi-Fi hop, queues inside the provider's network and at the far end, jitter, and packet loss. One upload, one call, one line. The 20-second timing and the 0.8 s fill time are illustrative.
-- To measure your own line while it is busy, use Network Quality (its responsiveness figure measures round-trip time during a download) or Test My Connection (its loaded responsiveness check). The tool's About card opens both.
+- To measure your own line while it is busy, use Network Quality (its responsiveness figure measures round-trip time during a download) or Check My Connection (its loaded responsiveness check). The tool's About card opens both.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 **Teaching it**
@@ -7493,7 +7493,7 @@ Shows why a video call stutters when someone else in the house uploads. A chart 
 | The home line: Fiber / Cable / DSL (default Cable) | Loads the FCC's figures for that technology and rescales the chart. | The picker sits beside the one switch so the class sees DSL suffer most. |
 | Play the call / Pause, 1 s on, Reset | Runs the 20 s in real time or steps it. | Lets you stop while the upload runs and read the delay. |
 | Time into the run (0 to 20 s), or drag across the chart | Moves the playhead; the queue picture shows what the call's packet waits behind. | The queue picture is the mechanism behind the number. |
-| Open Network Quality, Open Test My Connection | Opens the two tools that measure a real line under load. | Moves the class from the model to their own line. |
+| Open Network Quality, Open Check My Connection | Opens the two tools that measure a real line under load. | Moves the class from the model to their own line. |
 
 *A demo that works (about 3 minutes)*
 1. Set up: Reset (Cable, SQM off, whole run drawn).
@@ -7501,7 +7501,7 @@ Shows why a video call stutters when someone else in the house uploads. A chart 
 3. Reveal: play it. The call goes from 18 ms idle to 225 ms, 12.5 times idle. Press Up: with SQM on the same upload leaves it at 23 ms (help example).
 4. Optional follow-up: switch to DSL with SQM off: 29 ms to 665 ms.
 
-*Pairs with:* Test My Connection and Network Quality, the Home Internet explainer.
+*Pairs with:* Check My Connection and Network Quality, the Home Internet explainer.
 
 *Left out on purpose:* the SQM-on curve is illustrative (idle plus FQ-CoDel's 5 ms target); no consumer measurement of it was found. The busy figures are read by eye from the FCC's chart. Left out: the Wi-Fi hop, queues inside the provider and at the far end, jitter and loss. There is no built-in predict question on this tool; ask it yourself.
 

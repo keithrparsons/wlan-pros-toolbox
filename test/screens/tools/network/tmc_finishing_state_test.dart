@@ -97,7 +97,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Run. macOS is never metered, so this fires with no consent tap.
-      await tester.tap(find.text('Check My Connection'));
+      await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
       // Let the (mock) measurement stream close. Its `onDone` now awaits the link
       // read, which will NEVER land — so we are parked in the 8 s window.
       await tester.pump();

@@ -21,7 +21,7 @@ A few things worth knowing up front:
 
 ## Start here: Check My Connection
 
-When you open the app, you'll see a "Check My Connection" button right on the front page. Tap it. It takes you to a tool called Test My Connection, and this is the one I'd point almost everyone to first.
+When you open the app, you'll see a "Check My Connection" button right on the front page. Tap it. It takes you to a tool called Check My Connection, and this is the one I'd point almost everyone to first.
 
 Here is what it does. It runs two quick checks at the same time. One looks at your Wi-Fi, the wireless link between your device and the box on your wall or ceiling that broadcasts your network. The other looks at your internet, the connection that box has to the wider world. Then it tells you, in a single plain headline, which side looks healthy and which side looks like the problem.
 
@@ -90,17 +90,17 @@ That's the other on-ramp. When your Wi-Fi is off, or you walk out of range of yo
 
 Glance at the top of your phone. You read two little meters up there all day without thinking about them, and there is a third you never get to see.
 
-![A diagram titled "Two signals you can see. One you can't." The top row shows the Wi-Fi signal meter climbing from no bars to full arcs; the middle row shows the cellular signal meter climbing from none to four bars. A highlighted panel shows a third meter, a dashed globe for the internet feed, that your phone never displays, which is why full bars can still mean nothing loads, and why the Test My Connection tool exists.](assets/guides/signal-meters.png)
+![A diagram titled "Two signals you can see. One you can't." The top row shows the Wi-Fi signal meter climbing from no bars to full arcs; the middle row shows the cellular signal meter climbing from none to four bars. A highlighted panel shows a third meter, a dashed globe for the internet feed, that your phone never displays, which is why full bars can still mean nothing loads, and why the Check My Connection tool exists.](assets/guides/signal-meters.png)
 
 The Wi-Fi symbol, those stacked arcs, measures the strength of the hop to your router. More arcs, a cleaner link to the neighborhood road. It tells you nothing about the internet behind it.
 
 The cellular bars measure the strength to the nearest tower. More bars, a stronger path to the carrier.
 
-Here is the catch that explains everything: there is no internet meter. Your phone will happily show full Wi-Fi arcs and full cellular bars while the internet itself is down, because it has no icon for the health of the feed coming into the building. That missing third meter is exactly why "full bars, nothing loads" fools people, and it is the gap the Test My Connection tool fills. It runs the check your status bar cannot.
+Here is the catch that explains everything: there is no internet meter. Your phone will happily show full Wi-Fi arcs and full cellular bars while the internet itself is down, because it has no icon for the health of the feed coming into the building. That missing third meter is exactly why "full bars, nothing loads" fools people, and it is the gap the Check My Connection tool fills. It runs the check your status bar cannot.
 
 ### The confusions this clears up
 
-**Full Wi-Fi bars, but nothing loads.** Your phone has a clean link to the router, and the internet feed behind the router is down or crawling. The bars measure the neighborhood road, not the highway. This exact question is what the Toolbox's Test My Connection answers for you.
+**Full Wi-Fi bars, but nothing loads.** Your phone has a clean link to the router, and the internet feed behind the router is down or crawling. The bars measure the neighborhood road, not the highway. This exact question is what the Toolbox's Check My Connection answers for you.
 
 **Great signal, still slow.** Same idea, gentler. Your Wi-Fi is fine and the page still takes forever. The limit is the internet plan or the provider, not the Wi-Fi in your living room. Standing closer to the router won't help, because the router was never the problem.
 
@@ -124,7 +124,7 @@ When something's wrong, ask one question first: is the neighborhood road bad, or
 - If everything on the Wi-Fi is slow at once, suspect the internet feed or the provider.
 - If your phone works the moment you turn Wi-Fi off, the Wi-Fi path is the trouble, not the internet.
 
-You don't have to guess at it. The Test My Connection tool in the WLAN Pros Toolbox runs the check and tells you plainly: is it your Wi-Fi, or is it your internet? That one answer decides who you call and saves you the afternoon on hold.
+You don't have to guess at it. The Check My Connection tool in the WLAN Pros Toolbox runs the check and tells you plainly: is it your Wi-Fi, or is it your internet? That one answer decides who you call and saves you the afternoon on hold.
 
 Wi-Fi, the internet, and cellular are three different things. Get clear on which one is failing, and you fix the right problem the first time.
 
@@ -136,9 +136,9 @@ The Toolbox is organized into six areas. I'll walk you through them in the order
 
 This is the heart of the app for most people. Four tools, all about your live connection right now.
 
-**Test My Connection** is the front-door tool we just covered. For most questions, start and end here.
+**Check My Connection** is the front-door tool we just covered. For most questions, start and end here.
 
-**Network Quality** is the next step up. Where Test My Connection gives you a plain verdict, this one shows you the details behind it, grading several things about your internet at once. Each gets its own grade, from Excellent down to Poor, with no single combined "score." Reach for this tool when "is it fast?" isn't a specific enough question.
+**Network Quality** is the next step up. Where Check My Connection gives you a plain verdict, this one shows you the details behind it, grading several things about your internet at once. Each gets its own grade, from Excellent down to Poor, with no single combined "score." Reach for this tool when "is it fast?" isn't a specific enough question.
 
 **Wi-Fi Information** shows what your wireless connection is actually doing right now: which network you're on, how strong the signal is, which channel it's using, and how fast the link is running. If you've ever wanted to confirm that you're really on the fast network and not the slow guest one, this is the tool. On iPhone it uses the same one-time Shortcuts helper described above.
 
