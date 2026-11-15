@@ -852,6 +852,18 @@ class _FakeNetworkDetails extends NetworkDetailsService {
       );
 }
 
+/// Android-style details whose resolver list carries the router's global IPv6
+/// address, which embeds the household's delegated prefix.
+class _FakeNetworkDetailsWithIpv6Dns extends NetworkDetailsService {
+  @override
+  Future<NetworkDetails> read() async => const NetworkDetails(
+        localIp: '192.168.1.42',
+        subnetMask: '255.255.255.0',
+        gateway: '192.168.1.1',
+        dnsServers: <String>['192.168.1.1', '2600:1700:abcd:1230::1'],
+      );
+}
+
 /// A fake iOS NEHotspotNetwork security reader. Returns a deterministic
 /// unavailable result synchronously (no real method channel), so a live-card
 /// test that leaves `enableLiveSampling` on does not touch the real native
@@ -1941,7 +1953,10 @@ void main() {
 
       // The AppBar title renders the FULL string with no ellipsis, at 375px,
       // alongside the single §8.16 copy action (no second AppBar action).
-      final Finder titleFinder = find.text('Test My Connection');
+      final Finder titleFinder = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Check My Connection'),
+      );
       expect(titleFinder, findsOneWidget);
       final RenderParagraph para = tester.renderObject<RenderParagraph>(
         find.descendant(
@@ -1951,7 +1966,7 @@ void main() {
         ),
       );
       expect(para.didExceedMaxLines, isFalse);
-      expect(para.text.toPlainText(), 'Test My Connection');
+      expect(para.text.toPlainText(), 'Check My Connection');
     },
   );
 
@@ -2763,6 +2778,44 @@ void main() {
         expect(copied, contains('RSSI: -58 dBm'));
         expect(copied, contains('Internet Down: 60 Mbps'));
         expect(copied, contains('ISP / org: Fusion Networks'));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'Copy for a public post removes DNS servers, which can carry the '
+      "household's IPv6 prefix",
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(),
+              ipGeoService: _FakeIpGeoService(result: ispSuccess()),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetailsWithIpv6Dns(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await tester.pumpAndSettle();
+
+        final Finder publicBtn = find.text('Copy for a public post');
+        await tester.ensureVisible(publicBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(publicBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        expect(copied, isNot(contains('2600:1700:abcd')));
+        expect(copied, contains('DNS server(s): Removed for a public post'));
 
         await tester.pump(const Duration(milliseconds: 1600));
       },

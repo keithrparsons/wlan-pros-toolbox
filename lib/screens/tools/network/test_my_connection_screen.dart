@@ -2383,18 +2383,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return Scaffold(
       appBar: AppBar(
         // §8.5 `--text-h2` (28px) screen title. At every real iPhone width
-        // (≥375pt) the full "Test My Connection" string renders at full size
+        // (≥375pt) the full "Check My Connection" string renders at full size
         // beside the single §8.16 copy action (verified 375/430/768 — no
         // ellipsis). `BoxFit.scaleDown` is a no-op there; it engages ONLY below
         // 375pt (e.g. a 320px stress width), shrinking the title just enough to
         // keep the WHOLE name on one line rather than ellipsizing to
-        // "Test My C…". The title never truncates and never wraps.
+        // "Check My C…". The title never truncates and never wraps.
         title: const Align(
           alignment: Alignment.centerLeft,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text('Test My Connection'),
+            child: Text('Check My Connection'),
           ),
         ),
         toolbarHeight: 64,
@@ -3470,7 +3470,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// help-desk + existing tests rely on are unchanged.
   ///
   /// [forPublicPost] swaps the values that identify the user's network or
-  /// place (public IP, SSID, BSSID, AP name, approximate location) for a plain
+  /// place (public IP, SSID, BSSID, AP name, approximate location, DNS
+  /// servers) for a plain
   /// "removed" marker, so the report is
   /// safe to paste into a public forum. The rows stay so a reader can see what
   /// was taken out. Idea credited to octomon.dev's redacted `--doctor` report.
@@ -3599,9 +3600,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _CopyRow('Subnet mask', nd.subnetMask ?? 'Not available'),
       _CopyRow('Default gateway', nd.gateway ?? 'Not available'),
       _CopyRow('DHCP server', nd.dhcpServer ?? nd.dhcpReason),
+      // Android lists IPv6 resolvers too, often the router's global address,
+      // which carries the household's prefix as surely as the public IP does.
       _CopyRow(
         'DNS server(s)',
-        nd.dnsServers.isNotEmpty ? nd.dnsServers.join(', ') : nd.dnsReason,
+        nd.dnsServers.isNotEmpty
+            ? identifying(nd.dnsServers.join(', '))
+            : nd.dnsReason,
       ),
       _CopyRow('VLAN tag', NetworkDetails.vlanReason),
     ]);
@@ -5365,7 +5370,8 @@ class _HelpDeskCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxs),
           Text(
             'Leaves out your public IP address, location, network name '
-            '(SSID), AP name and BSSID, for forums and other public posts.',
+            '(SSID), AP name, BSSID and DNS servers, for forums and other '
+            'public posts.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
         ],
@@ -6675,7 +6681,7 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
           child: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text('Test My Connection'),
+            child: Text('Check My Connection'),
           ),
         ),
         toolbarHeight: 64,
