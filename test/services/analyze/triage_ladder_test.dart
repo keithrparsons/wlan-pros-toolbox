@@ -493,6 +493,17 @@ void main() {
       expect(text, isNot(contains('—')));
     });
 
+    test('a healthy ladder is headed Nothing looks off', () {
+      final TriageLadder l = TriageLadder.compute(healthy());
+      expect(l.heading, 'Nothing looks off');
+      expect(triageLadderToPlainText(l), startsWith('Nothing looks off'));
+    });
+
+    test('a ladder with a Looks off row is headed Where it looks off', () {
+      final TriageLadder l = TriageLadder.compute(healthy(dnsMs: 900));
+      expect(l.heading, 'Where it looks off');
+    });
+
     test('empty ladder serializes to an empty string', () {
       expect(
         triageLadderToPlainText(TriageLadder.compute(const TriageInput())),

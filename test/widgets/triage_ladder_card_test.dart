@@ -71,7 +71,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_host(_ladder()));
-    expect(find.text('Where it looks off'), findsOneWidget);
+    expect(find.text('Nothing looks off'), findsOneWidget);
     for (final String name in <String>[
       'Wi-Fi link',
       'Name lookup (DNS)',
@@ -151,5 +151,20 @@ void main() {
       findsOneWidget,
     );
     handle.dispose();
+  });
+
+  testWidgets('heading says Nothing looks off when every row looks fine', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_host(_ladder()));
+    expect(find.text('Nothing looks off'), findsOneWidget);
+    expect(find.text('Where it looks off'), findsNothing);
+  });
+
+  testWidgets('heading says Where it looks off when a row looks off', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_host(_ladder(dnsMs: 900)));
+    expect(find.text('Where it looks off'), findsOneWidget);
   });
 }

@@ -181,6 +181,14 @@ class TriageLadder {
 
   bool get isEmpty => rungs.isEmpty;
 
+  /// "Where it looks off" over four green rows contradicts them (Keith, 15 NOV,
+  /// on the first test build), so the heading names a problem only when a row
+  /// shows one.
+  String get heading =>
+      rungs.any((TriageRung r) => r.status == TriageStatus.looksOff)
+      ? 'Where it looks off'
+      : 'Nothing looks off';
+
   /// A frozen copy for surfaces that do not update (Analyze, Copy): a rung still
   /// [TriageStatus.checking] becomes Not checked, so "Checking" never sits on a
   /// page that will not change.
@@ -441,7 +449,7 @@ String? _summary(List<TriageRung> rungs, WifiVsInternetVerdict verdict) {
 /// summary. Plain text, no markdown, so no state survives as color-only.
 String triageLadderToPlainText(TriageLadder ladder) {
   if (ladder.isEmpty) return '';
-  final StringBuffer buf = StringBuffer('Where it looks off\n');
+  final StringBuffer buf = StringBuffer('${ladder.heading}\n');
   for (final TriageRung r in ladder.rungs) {
     buf.writeln('${r.name}: ${r.status.word}');
     if (r.reason != null) buf.writeln(r.reason);

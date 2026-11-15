@@ -1,4 +1,4 @@
-// TriageLadderCard, the "Where it looks off" ladder on Check My Connection and
+// TriageLadderCard, the step-by-step ladder on Check My Connection and
 // Analyze Results (Keith, 2026-11-13, approach B).
 //
 // Each rung is a name plus a [StatusChip] (glyph + WORD + hue, always all three,
@@ -55,7 +55,7 @@ class TriageLadderCard extends StatelessWidget {
           Semantics(
             header: true,
             child: Text(
-              'Where it looks off',
+              ladder.heading,
               style: text.labelMedium?.copyWith(
                 color: colors.textSecondary,
                 letterSpacing: 0.4,
