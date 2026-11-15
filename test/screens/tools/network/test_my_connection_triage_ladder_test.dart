@@ -271,7 +271,7 @@ Future<void> _runCheck(
   );
   await tester.pumpAndSettle();
   // On Wi-Fi the link is proven free, so the button carries no data cost.
-  await tester.tap(find.text('Check My Connection'));
+  await tester.tap(find.byKey(TestMyConnectionScreen.runButtonKey));
   await tester.pumpAndSettle();
   await tester.pump(const Duration(seconds: 5));
   await tester.pumpAndSettle();
