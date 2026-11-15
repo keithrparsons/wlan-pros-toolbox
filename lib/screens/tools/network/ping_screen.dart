@@ -63,6 +63,10 @@ class _PingScreenState extends State<PingScreen> {
   /// (honest NONE — no chip, no fabrication).
   String? _gatewayIp;
 
+  /// The host the current results came from. The router note checks this, not
+  /// the field, which the user may have edited since the run.
+  String _pingedHost = '';
+
   /// True once the user edits the field — stop offering the gateway chip.
   bool _userTouched = false;
 
@@ -145,6 +149,7 @@ class _PingScreenState extends State<PingScreen> {
       _running = true;
       _replies.clear();
       _stats = PingStats.empty;
+      _pingedHost = host;
       _cancel = cancel;
     });
 
@@ -212,6 +217,7 @@ class _PingScreenState extends State<PingScreen> {
       _running = true;
       _replies.clear();
       _stats = PingStats.empty;
+      _pingedHost = host;
     });
     try {
       final PiHop hop = await PiBackendClient().ping(
@@ -748,7 +754,7 @@ class _PingScreenState extends State<PingScreen> {
             _Sparkline(rttsMs: _stats.rttsMs),
           ],
           if (routerSilentToPing(
-            target: _hostCtrl.text,
+            target: _pingedHost,
             gatewayIp: _gatewayIp,
             sent: _stats.sent,
             received: _stats.received,

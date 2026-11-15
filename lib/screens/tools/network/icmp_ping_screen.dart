@@ -74,6 +74,10 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   /// unknown.
   String? _gatewayIp;
 
+  /// The host the current results came from. The router note checks this, not
+  /// the field, which the user may have edited since the run.
+  String _pingedHost = '';
+
   bool _running = false;
   String? _error;
   final List<IcmpReply> _replies = <IcmpReply>[];
@@ -178,6 +182,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
       _running = true;
       _replies.clear();
       _stats = IcmpStats.empty;
+      _pingedHost = host;
       _cancel = cancel;
     });
 
@@ -848,7 +853,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             ),
           ),
           if (routerSilentToPing(
-            target: _hostCtrl.text,
+            target: _pingedHost,
             gatewayIp: _gatewayIp,
             sent: _stats.sent,
             received: _stats.received,

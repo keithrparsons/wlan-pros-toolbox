@@ -50,6 +50,14 @@ class _SilentIcmpBackend implements IcmpBackend {
   ]);
 }
 
+/// Typing alone rebuilds only the text field; any later screen rebuild (a
+/// chip tap, focus change, copy) redraws the result card. Force that rebuild.
+Future<void> _rebuild(WidgetTester tester, Type screen) async {
+  // ignore: invalid_use_of_protected_member
+  tester.state(find.byType(screen)).setState(() {});
+  await tester.pump();
+}
+
 void main() {
   group('Ping (TCP)', () {
     Future<void> ping(WidgetTester tester, String target) async {
@@ -74,6 +82,23 @@ void main() {
     ) async {
       await ping(tester, '203.0.113.9');
       expect(find.text(routerIgnoresPingNote), findsNothing);
+    });
+
+    testWidgets('typing the router address after another host failed: no '
+        'router note', (tester) async {
+      await ping(tester, '203.0.113.9');
+      await tester.enterText(find.byType(TextField).first, _gateway);
+      await _rebuild(tester, PingScreen);
+      expect(find.text(routerIgnoresPingNote), findsNothing);
+    });
+
+    testWidgets('editing the field after the router failed keeps the note', (
+      tester,
+    ) async {
+      await ping(tester, _gateway);
+      await tester.enterText(find.byType(TextField).first, '203.0.113.9');
+      await _rebuild(tester, PingScreen);
+      expect(find.text(routerIgnoresPingNote), findsOneWidget);
     });
   });
 
@@ -108,6 +133,17 @@ void main() {
       tester,
     ) async {
       await ping(tester, '203.0.113.9');
+      expect(find.text(routerIgnoresPingNote), findsNothing);
+    });
+
+    testWidgets('typing the router address after another host failed: no '
+        'router note', (tester) async {
+      await ping(tester, '203.0.113.9');
+      // The host field is locked until the run is stopped.
+      await tester.tap(find.text('Stop'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, _gateway);
+      await _rebuild(tester, IcmpPingScreen);
       expect(find.text(routerIgnoresPingNote), findsNothing);
     });
   });
@@ -160,6 +196,16 @@ void main() {
       tester,
     ) async {
       await plot(tester, '203.0.113.9');
+      expect(find.text(routerIgnoresPingNote), findsNothing);
+    });
+
+    testWidgets('typing the router address after another host failed: no '
+        'router note', (tester) async {
+      await plot(tester, '203.0.113.9');
+      await tester.tap(find.text('Stop'));
+      await tester.pump();
+      await tester.enterText(find.byType(TextField), _gateway);
+      await _rebuild(tester, PingPlotterScreen);
       expect(find.text(routerIgnoresPingNote), findsNothing);
     });
   });

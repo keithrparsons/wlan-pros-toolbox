@@ -82,6 +82,10 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   /// The device gateway offered as a one-tap target, or null when unknown.
   String? _gatewayIp;
 
+  /// The host the current results came from. The router note checks this, not
+  /// the field, which the user may have edited since the run.
+  String _pingedHost = '';
+
   /// True once the user edits the field — stop offering the gateway chip.
   bool _userTouched = false;
 
@@ -191,6 +195,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       _error = null;
       _running = true;
       _state = PingPlotState.empty;
+      _pingedHost = host;
       _lastAnnounced = DateTime.fromMillisecondsSinceEpoch(0);
     });
     _controller.start(
@@ -231,6 +236,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       _error = null;
       _piLoading = true;
       _state = PingPlotState.empty;
+      _pingedHost = host;
     });
     try {
       final PingPlotState result = await PiBackendClient().pingSeries(
@@ -552,7 +558,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
             ),
           ],
           if (routerSilentToPing(
-            target: _hostCtrl.text,
+            target: _pingedHost,
             gatewayIp: _gatewayIp,
             sent: _state.totalSent,
             received: _state.totalReceived,
@@ -784,7 +790,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
             ),
           ],
           if (routerSilentToPing(
-            target: _hostCtrl.text,
+            target: _pingedHost,
             gatewayIp: _gatewayIp,
             sent: _state.totalSent,
             received: _state.totalReceived,
