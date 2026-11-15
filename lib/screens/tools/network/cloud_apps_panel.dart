@@ -45,6 +45,7 @@ class CloudAppsPanel extends StatefulWidget {
     this.probe,
     this.autoStart = true,
     this.onResults,
+    this.onError,
   });
 
   /// Injectable reachability probe (tests pass a fake prober). Defaults to a
@@ -62,6 +63,11 @@ class CloudAppsPanel extends StatefulWidget {
   /// only ever carries the rows the probe actually produced — never a fabricated
   /// reachability claim. Optional; null in tests that do not exercise the copy.
   final ValueChanged<List<SiteReachability>>? onResults;
+
+  /// Fired when the probe fails outright (no rows produced). Lets the host say
+  /// "the services check did not complete" instead of showing a check that is
+  /// still pending forever. Optional.
+  final VoidCallback? onError;
 
   @override
   State<CloudAppsPanel> createState() => _CloudAppsPanelState();
@@ -118,6 +124,7 @@ class _CloudAppsPanelState extends State<CloudAppsPanel> {
     } catch (_) {
       if (_disposed || !mounted) return;
       setState(() => _phase = _PanelPhase.error);
+      widget.onError?.call();
     }
   }
 

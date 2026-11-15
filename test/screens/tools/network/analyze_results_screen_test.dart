@@ -19,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/analyze_results_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_engine.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_input.dart';
+import 'package:wlan_pros_toolbox/services/network/analyze/triage_ladder.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_security.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_vs_internet.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
@@ -261,4 +262,41 @@ void main() {
       }
     }
   });
+
+  testWidgets('triage ladder: absent by default, first with reasons when given',
+      (WidgetTester tester) async {
+    final AnalysisReport report = AnalyzeEngine.analyze(
+      const AnalyzeInput(rssiDbm: -73),
+    );
+    await tester.pumpWidget(_wrap(report));
+    await tester.pumpAndSettle();
+    expect(find.text('Where it looks off'), findsNothing);
+
+    final TriageLadder ladder = TriageLadder.compute(
+      const TriageInput(
+        verdict: WifiVsInternetVerdict.upstream,
+        dns: TriageDnsState.resolved,
+        dnsMs: 20,
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: AnalyzeResultsScreen(
+          report: report,
+          ladder: ladder,
+          copyTextBuilder: () => 'report text',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Where it looks off'), findsOneWidget);
+    expect(
+      find.text(
+        'The internet connection is slow past your router/access point.',
+      ),
+      findsOneWidget,
+    );
+  });
 }
+

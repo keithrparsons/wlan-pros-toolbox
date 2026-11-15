@@ -43,6 +43,7 @@ import '../../../services/network/wifi_connection_service.dart';
 import '../../../services/network/analyze/analyze_engine.dart';
 import '../../../services/network/analyze/analyze_input.dart';
 import '../../../services/network/analyze/analyze_report_text.dart';
+import '../../../services/network/analyze/triage_ladder.dart';
 import '../../../services/network/analyze/analysis_finding.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
@@ -72,6 +73,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/packet_flow_progress.dart';
 import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../widgets/triage_ladder_card.dart';
 import '../concept_graphic_band.dart';
 import 'analyze_results_screen.dart';
 import 'cloud_apps_panel.dart';
@@ -426,6 +428,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// The latest cloud-apps reachability rows, lifted from the bottom panel so
   /// the copy payload can summarize them. Empty until the panel's probe lands.
   List<SiteReachability> _cloudResults = const <SiteReachability>[];
+
+  /// The cloud panel errored with no rows, so the ladder reads "Not checked"
+  /// rather than waiting on an answer that will never come.
+  bool _cloudFailed = false;
 
   StreamSubscription<QualityProgress>? _sub;
 
@@ -2593,6 +2599,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                       comparison: _comparisonLine(verdict),
                     ),
                     const SizedBox(height: AppSpacing.md),
+                    // TRIAGE LADDER — where the trouble looks like it sits, from
+                    // the facts this run already has (no new probe). One line per
+                    // rung here; the reasons live in Analyze.
+                    ..._triageLadderSection(),
                     // ANALYZE — opens the in-app, local, plain-language report
                     // (the [AnalyzeEngine] over the same result data). It sits
                     // ALONGSIDE the AppBar's Copy action: Copy saves the raw
@@ -2707,11 +2717,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                         // the panel still owns its own probe + scoped re-check.
                         onResults: (List<SiteReachability> rows) {
                           if (!mounted) return;
-                          setState(() => _cloudResults = rows);
+                          setState(() {
+                            _cloudResults = rows;
+                            _cloudFailed = false;
+                          });
                           // Reachable cloud apps are one of the three "you're
                           // online" signals; re-derive the verdict in case the
                           // speed test stalled (Keith 2026-06-17).
                           _recomputeVerdict();
+                        },
+                        onError: () {
+                          if (!mounted) return;
+                          setState(() => _cloudFailed = true);
                         },
                       ),
                     ],
@@ -3514,6 +3531,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         'Internet ${_TwoAxisChips.word(v.internetStatus)}',
       );
     }
+    final String ladderText = triageLadderToPlainText(
+      _triageLadder().settled(),
+    );
+    if (ladderText.isNotEmpty) {
+      buf.writeln('');
+      buf.writeln(ladderText);
+      buf.writeln('');
+    }
 
     // ── Wi-Fi ─────────────────────────────────────────────────────────────
     final String? wifiName = _consumerWifiName(ap);
@@ -3725,27 +3750,62 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// copy text already read — directly from the in-memory models, never by
   /// re-parsing the copy text. Pure local evaluation; no network, nothing
   /// stored (GL-005 / GL-008).
-  AnalysisReport _buildAnalysisReport() {
+  AnalysisReport _buildAnalysisReport() =>
+      AnalyzeEngine.analyze(_analyzeInput());
+
+  /// The one [AnalyzeInput] for this result, read by the Analyze rules and by the
+  /// triage ladder so the two can never disagree about what the run measured.
+  AnalyzeInput _analyzeInput() {
     final List<SiteReachability> cloud = _cloudResults;
-    return AnalyzeEngine.analyze(
-      AnalyzeInput.fromConnectionState(
-        ap: _effectiveAp,
-        internet: _internet,
-        engine: _engine,
-        dns: _dnsResult,
-        cloudReachable: cloud.isEmpty
-            ? null
-            : cloud.where((SiteReachability s) => s.reachable).length,
-        cloudTotal: cloud.isEmpty ? null : cloud.length,
-        platformIsIos: _isIos,
-        wifiSignalCaptured: _iosRfCaptured,
-        // Separates "the Shortcut has not captured the RF yet" (R-31: tap Capture)
-        // from "there was no Wi-Fi link at all" (R-31 must stay silent — cold-eyes
-        // F2). Both arrive here as `wifiSignalCaptured: false`.
-        notOnWifi: _resultNotOnWifi,
-        speedTestSkipped: _resultSpeedTestSkipped,
+    return AnalyzeInput.fromConnectionState(
+      ap: _effectiveAp,
+      internet: _internet,
+      engine: _engine,
+      dns: _dnsResult,
+      cloudReachable: cloud.isEmpty
+          ? null
+          : cloud.where((SiteReachability s) => s.reachable).length,
+      cloudTotal: cloud.isEmpty ? null : cloud.length,
+      platformIsIos: _isIos,
+      wifiSignalCaptured: _iosRfCaptured,
+      // Separates "the Shortcut has not captured the RF yet" (R-31: tap Capture)
+      // from "there was no Wi-Fi link at all" (R-31 must stay silent — cold-eyes
+      // F2). Both arrive here as `wifiSignalCaptured: false`.
+      notOnWifi: _resultNotOnWifi,
+      speedTestSkipped: _resultSpeedTestSkipped,
+    );
+  }
+
+  /// The triage ladder for the result on screen. Built from the same
+  /// [AnalyzeInput] the Analyze rules read, plus what that input cannot carry:
+  /// the DNS probe's failed-vs-pending state, the online evidence, the engine's
+  /// grade gate, and whether the cloud panel is part of this screen.
+  TriageLadder _triageLadder() {
+    final DnsProbeResult? dns = _dnsResult;
+    final TriageDnsState dnsState = dns == null
+        ? (_runRealNetworkProbes
+              ? TriageDnsState.pending
+              : TriageDnsState.absent)
+        : (dns.isAvailable ? TriageDnsState.resolved : TriageDnsState.failed);
+    return TriageLadder.compute(
+      TriageInput.fromAnalyzeInput(
+        _analyzeInput(),
+        dns: dnsState,
+        evidence: _onlineEvidence,
+        internetHealth: ConnectionCheck.internetHealth(_internet),
+        cloudPanelPresent: widget.enableCloudApps ?? widget.enableLiveSampling,
+        cloudFailed: _cloudFailed,
       ),
     );
+  }
+
+  List<Widget> _triageLadderSection() {
+    final TriageLadder ladder = _triageLadder();
+    if (ladder.isEmpty) return const <Widget>[];
+    return <Widget>[
+      TriageLadderCard(ladder: ladder),
+      const SizedBox(height: AppSpacing.md),
+    ];
   }
 
   /// The plain-text payload for the Analyze report's own Copy action: a titled
@@ -3758,12 +3818,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// using the SAME [AnalysisFinding.verdictWord] the on-screen [StatusChip]
   /// shows, so no verdict survives as color-only on the clipboard. Zero
   /// em-dashes: the category-and-verdict line uses a colon, not a dash.
-  String? _buildAnalysisCopyText(AnalysisReport report) {
+  String? _buildAnalysisCopyText(AnalysisReport report, TriageLadder ladder) {
     if (!report.hasFindings) return null;
     final StringBuffer buf = StringBuffer();
     buf.writeln('WLAN Pros Toolbox: Connection Analysis');
     buf.writeln('Generated: ${_formatTimestamp(_testedAt)} on $_platformLabel');
     buf.writeln('');
+    final String ladderText = triageLadderToPlainText(ladder);
+    if (ladderText.isNotEmpty) {
+      buf.writeln(ladderText);
+      buf.writeln('');
+    }
     // The §7 body, every verdict carried as its WORD, lives in the pure,
     // unit-tested [analysisReportToPlainText] so the on-screen chip word and
     // the clipboard word can never drift.
@@ -3778,11 +3843,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   void _openAnalyze() {
     if (_running || _verdict == null) return;
     final AnalysisReport report = _buildAnalysisReport();
+    // One snapshot, taken now, for the screen AND its Copy, so the clipboard is
+    // the page the user was looking at even if a late answer lands meanwhile.
+    final TriageLadder ladder = _triageLadder().settled();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => AnalyzeResultsScreen(
           report: report,
-          copyTextBuilder: () => _buildAnalysisCopyText(report),
+          ladder: ladder,
+          copyTextBuilder: () => _buildAnalysisCopyText(report, ladder),
         ),
       ),
     );

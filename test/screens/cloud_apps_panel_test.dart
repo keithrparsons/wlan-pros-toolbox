@@ -147,4 +147,40 @@ void main() {
       expect(t.takeException(), isNull);
     },
   );
+
+  testWidgets('a probe that throws tells the host through onError, not '
+      'onResults', (t) async {
+    int errors = 0;
+    int results = 0;
+    await t.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: CloudAppsPanel(
+              probe: _ThrowingProbe(),
+              onResults: (_) => results++,
+              onError: () => errors++,
+            ),
+          ),
+        ),
+      ),
+    );
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 50));
+    expect(errors, 1);
+    expect(results, 0);
+  });
 }
+
+class _ThrowingProbe extends ReachabilityProbe {
+  _ThrowingProbe()
+    : super(
+        sites: const <PopularSite>[],
+        prober: (String host, int port, Duration timeout) async => null,
+      );
+
+  @override
+  Future<List<SiteReachability>> measure() async => throw StateError('boom');
+}
+
