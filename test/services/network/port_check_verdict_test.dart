@@ -191,11 +191,30 @@ void main() {
       expect(groupNamed(r, 'Name lookups').status, TriageStatus.looksFine);
     });
 
-    test('UDP 53 and 853 both blocked: Looks off', () {
+    // Keith, 16 NOV, picked "Looks fine, with a note (Recommended)": the
+    // baseline hosts resolved, so this network's own DNS works even when
+    // outside DNS servers are blocked.
+    test('UDP 53 and 853 both blocked: Looks fine, with a note that outside '
+        'DNS is blocked and this network\'s own DNS answers', () {
       final PortCheckReport r = judgePortCheck(
         run(failing((t) => tcp(t, 853) || udp(t, 53))),
       );
-      expect(groupNamed(r, 'Name lookups').status, TriageStatus.looksOff);
+      final PortCheckGroup dns = groupNamed(r, 'Name lookups');
+      expect(dns.status, TriageStatus.looksFine);
+      expect(
+        dns.details,
+        contains(
+          'Outside DNS servers are blocked. This network\'s own DNS answers.',
+        ),
+      );
+    });
+
+    test('outside DNS answering: no blocked note', () {
+      final PortCheckReport r = judgePortCheck(run((_) => null));
+      expect(
+        groupNamed(r, 'Name lookups').details.join(' '),
+        isNot(contains('Outside DNS servers are blocked')),
+      );
     });
   });
 

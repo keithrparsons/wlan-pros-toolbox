@@ -290,6 +290,7 @@ PortCheckReport judgePortCheck(
   ].every((_Port p) => p == _Port.unavailable);
   final bool otherUdpOut = dns == _Port.out || ntp == _Port.out;
   const String noUdp = 'No UDP got through at all.';
+  final bool outsideDnsBlocked = dns == _Port.blocked && p853 == _Port.blocked;
 
   final List<PortCheckGroup> groups = <PortCheckGroup>[
     PortCheckGroup(_groupNames[0], decide(p443 == _Port.out, false), <String>[
@@ -327,13 +328,18 @@ PortCheckReport judgePortCheck(
     ),
     PortCheckGroup(
       _groupNames[4],
+      // The baseline hosts resolved, so this network's own DNS works even when
+      // outside DNS servers are blocked (Keith, 16 NOV: "Looks fine, with a
+      // note").
       decide(
-        dns == _Port.out || p853 == _Port.out,
-        dns == _Port.blocked && p853 == _Port.blocked,
+        dns == _Port.out || p853 == _Port.out || outsideDnsBlocked,
+        false,
       ),
       <String>[
         line('UDP 53', dns),
         line('TLS 853', p853),
+        if (outsideDnsBlocked)
+          'Outside DNS servers are blocked. This network\'s own DNS answers.',
         if (noUdpAtAll) noUdp,
       ],
     ),
