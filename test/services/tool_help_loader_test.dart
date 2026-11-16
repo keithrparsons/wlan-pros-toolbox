@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 268;
+const int _expectedEntryCount = 269;
 
 const String _fixture = '''
 {
@@ -560,6 +560,9 @@ void main() {
       // ONE entry, one-talker, on top of that. 267 + 1 = 268. Counted off the
       // merged file on wifi-lab/preview-1.12: `len(json['tools'])` returned
       // 268 and each of the three new ids appears exactly once.
+      // 2026-11-16: What This Network Lets Out added ONE entry, egress-check.
+      // 268 + 1 = 269. Counted off the file: `len(json['tools'])` returned 269
+      // and the id appears exactly once.
       expect(store.count, _expectedEntryCount);
     });
 

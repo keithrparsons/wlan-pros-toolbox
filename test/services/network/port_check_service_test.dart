@@ -149,7 +149,10 @@ void main() {
         tcp: (String host, int port, Duration timeout) async =>
             TargetOutcome.gotOut,
         udp: (PortCheckTarget t) async =>
-            throw const SocketException('No route to host'),
+            throw const SocketException(
+              'No route to host',
+              osError: OSError('No route to host', 65),
+            ),
       );
       final Map<PortCheckTarget, TargetOutcome> r = await service.run();
       for (final PortCheckTarget t in kPortCheckTargets) {
