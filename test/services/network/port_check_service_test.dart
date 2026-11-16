@@ -63,6 +63,7 @@ void main() {
     test('probes every TCP target and returns each outcome', () async {
       final List<String> asked = <String>[];
       final PortCheckService service = PortCheckService(
+        udp: (PortCheckTarget t) async => TargetOutcome.gotOut,
         tcp: (String host, int port, Duration timeout) async {
           asked.add('$host:$port');
           return port == 22 ? TargetOutcome.didNotGetOut : TargetOutcome.gotOut;
@@ -81,16 +82,48 @@ void main() {
       }
     });
 
+    test('probes every UDP target through the UDP prober', () async {
+      final List<String> asked = <String>[];
+      final PortCheckService service = PortCheckService(
+        tcp: (String host, int port, Duration timeout) async =>
+            TargetOutcome.gotOut,
+        udp: (PortCheckTarget t) async {
+          asked.add('${t.host}:${t.port}');
+          return t.udp == UdpProbeKind.stun
+              ? TargetOutcome.didNotGetOut
+              : TargetOutcome.gotOut;
+        },
+      );
+      final Map<PortCheckTarget, TargetOutcome> r = await service.run();
+      final List<PortCheckTarget> udpTargets = kPortCheckTargets
+          .where((PortCheckTarget t) => t.transport == PortCheckTransport.udp)
+          .toList();
+      expect(asked.length, udpTargets.length);
+      expect(r.length, kPortCheckTargets.length);
+      for (final PortCheckTarget t in udpTargets) {
+        expect(
+          r[t],
+          t.udp == UdpProbeKind.stun
+              ? TargetOutcome.didNotGetOut
+              : TargetOutcome.gotOut,
+        );
+      }
+    });
+
     test('probes run at once, not one after another', () async {
       final PortCheckService service = PortCheckService(
         tcp: (String host, int port, Duration timeout) async {
           await Future<void>.delayed(const Duration(milliseconds: 150));
           return TargetOutcome.gotOut;
         },
+        udp: (PortCheckTarget t) async {
+          await Future<void>.delayed(const Duration(milliseconds: 150));
+          return TargetOutcome.gotOut;
+        },
       );
       final Stopwatch sw = Stopwatch()..start();
       await service.run();
-      // 15 TCP targets at 150 ms each would be 2.2 s one after another.
+      // 22 targets at 150 ms each would be 3.3 s one after another.
       expect(sw.elapsedMilliseconds, lessThan(600));
     });
 
@@ -101,6 +134,7 @@ void main() {
           seen = timeout;
           return TargetOutcome.gotOut;
         },
+        udp: (PortCheckTarget t) async => TargetOutcome.gotOut,
       );
       await service.run();
       expect(seen, kPortCheckTcpTimeout);

@@ -12,6 +12,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'port_check_udp.dart';
 import 'port_check_verdict.dart';
 import 'tcp_probe_classifier.dart';
 
@@ -42,22 +43,28 @@ Future<TargetOutcome> connectTcp(
   }
 }
 
+typedef UdpProber = Future<TargetOutcome> Function(PortCheckTarget target);
+
 class PortCheckService {
-  PortCheckService({TcpConnector? tcp}) : _tcp = tcp ?? connectTcp;
+  PortCheckService({TcpConnector? tcp, UdpProber? udp})
+    : _tcp = tcp ?? connectTcp,
+      _udp = udp ?? probeUdpTarget;
 
   final TcpConnector _tcp;
+  final UdpProber _udp;
 
+  /// All targets at once: the slowest one, not the sum, sets the time.
   Future<Map<PortCheckTarget, TargetOutcome>> run() async {
-    final List<PortCheckTarget> targets = kPortCheckTargets
-        .where((PortCheckTarget t) => t.transport == PortCheckTransport.tcp)
-        .toList();
     final List<TargetOutcome> outcomes = await Future.wait(
-      targets.map(
-        (PortCheckTarget t) => _tcp(t.host, t.port, kPortCheckTcpTimeout),
+      kPortCheckTargets.map(
+        (PortCheckTarget t) => t.transport == PortCheckTransport.tcp
+            ? _tcp(t.host, t.port, kPortCheckTcpTimeout)
+            : _udp(t),
       ),
     );
     return <PortCheckTarget, TargetOutcome>{
-      for (int i = 0; i < targets.length; i++) targets[i]: outcomes[i],
+      for (int i = 0; i < outcomes.length; i++)
+        kPortCheckTargets[i]: outcomes[i],
     };
   }
 }
