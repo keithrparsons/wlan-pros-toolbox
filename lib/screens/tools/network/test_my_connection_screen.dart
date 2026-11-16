@@ -3845,8 +3845,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return buf.toString().trimRight();
   }
 
-  /// Opens the in-app Analyze Results report for the current result. No-op while
-  /// a run is in flight or before a verdict exists (the button is hidden then).
   void _openPortCheck() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -3858,6 +3856,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     );
   }
 
+  /// Opens the in-app Analyze Results report for the current result. No-op while
+  /// a run is in flight or before a verdict exists (the button is hidden then).
   void _openAnalyze() {
     if (_running || _verdict == null) return;
     final AnalysisReport report = _buildAnalysisReport();
