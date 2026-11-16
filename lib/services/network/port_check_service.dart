@@ -56,15 +56,23 @@ class PortCheckService {
   /// All targets at once: the slowest one, not the sum, sets the time.
   Future<Map<PortCheckTarget, TargetOutcome>> run() async {
     final List<TargetOutcome> outcomes = await Future.wait(
-      kPortCheckTargets.map(
-        (PortCheckTarget t) => t.transport == PortCheckTransport.tcp
-            ? _tcp(t.host, t.port, kPortCheckTcpTimeout)
-            : _udp(t),
-      ),
+      kPortCheckTargets.map(_probe),
     );
     return <PortCheckTarget, TargetOutcome>{
       for (int i = 0; i < outcomes.length; i++)
         kPortCheckTargets[i]: outcomes[i],
     };
+  }
+
+  /// One probe that throws (no route, Wi-Fi gone mid-run) must not sink the
+  /// other 21. A probe that never left says nothing about the port.
+  Future<TargetOutcome> _probe(PortCheckTarget t) async {
+    try {
+      return t.transport == PortCheckTransport.tcp
+          ? await _tcp(t.host, t.port, kPortCheckTcpTimeout)
+          : await _udp(t);
+    } catch (_) {
+      return TargetOutcome.noVerdict;
+    }
   }
 }

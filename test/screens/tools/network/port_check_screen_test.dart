@@ -1,6 +1,8 @@
 // PortCheckScreen: "What This Network Lets Out". Taps run it, opening runs
 // nothing, words come from the ladder, no color-only state.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/port_check_screen.dart';
@@ -25,6 +27,15 @@ class _FakeService extends PortCheckService {
             : TargetOutcome.gotOut,
     };
   }
+}
+
+class _GatedService extends PortCheckService {
+  _GatedService(this.result);
+
+  final Future<Map<PortCheckTarget, TargetOutcome>> result;
+
+  @override
+  Future<Map<PortCheckTarget, TargetOutcome>> run() => result;
 }
 
 Widget _wrap(
@@ -58,6 +69,34 @@ void main() {
   ) async {
     await tester.pumpWidget(_wrap(_FakeService()));
     expect(find.textContaining('well-known mail, SSH, DNS'), findsOneWidget);
+  });
+
+  testWidgets('the intro never claims nothing is sent', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_wrap(_FakeService()));
+    expect(find.textContaining('no data'), findsNothing);
+    expect(find.textContaining('small test packets'), findsOneWidget);
+  });
+
+  testWidgets('says Checking while it runs, then why Run again waits', (
+    WidgetTester tester,
+  ) async {
+    final Completer<Map<PortCheckTarget, TargetOutcome>> gate =
+        Completer<Map<PortCheckTarget, TargetOutcome>>();
+    await tester.pumpWidget(_wrap(_GatedService(gate.future)));
+    await tester.tap(find.text('Run the check'));
+    await tester.pump();
+    expect(find.text('Checking…'), findsOneWidget);
+    gate.complete(<PortCheckTarget, TargetOutcome>{
+      for (final PortCheckTarget t in kPortCheckTargets)
+        t: TargetOutcome.gotOut,
+    });
+    await tester.pump();
+    expect(find.text('Checking…'), findsNothing);
+    expect(find.textContaining('again in a few seconds'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 10));
+    expect(find.textContaining('again in a few seconds'), findsNothing);
   });
 
   testWidgets('a tap runs it and shows each group with a word and a glyph', (

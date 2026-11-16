@@ -144,12 +144,22 @@ Future<TargetOutcome> probeUdpAddress(
       finish(TargetOutcome.gotOut);
     }
   });
+  // A send that throws never left this device, so it says nothing about the
+  // port; the socket still has to be closed below.
+  void send() {
+    try {
+      socket.send(spec.payload, address, port);
+    } on SocketException {
+      finish(TargetOutcome.noVerdict);
+    }
+  }
+
   final Timer resend = Timer(resendAfter, () {
-    if (!done.isCompleted) socket.send(spec.payload, address, port);
+    if (!done.isCompleted) send();
   });
   final Timer giveUp = Timer(window, () => finish(TargetOutcome.didNotGetOut));
 
-  socket.send(spec.payload, address, port);
+  send();
   final TargetOutcome outcome = await done.future;
   resend.cancel();
   giveUp.cancel();
@@ -158,16 +168,24 @@ Future<TargetOutcome> probeUdpAddress(
   return outcome;
 }
 
-/// Resolve [target] (IPv4 first, as the socket is IPv4) and probe it. A name
-/// that will not resolve is a DNS problem, not a UDP one.
+/// IPv4 first; an IPv6-only (NAT64) network hands back only IPv6, and asking
+/// for IPv4 alone there would read as every UDP port blocked.
+InternetAddress? udpAddressFor(List<InternetAddress> found) {
+  for (final InternetAddress a in found) {
+    if (a.type == InternetAddressType.IPv4) return a;
+  }
+  return found.isEmpty ? null : found.first;
+}
+
+/// Resolve [target] and probe it. A name that will not resolve is a DNS
+/// problem, not a UDP one.
 Future<TargetOutcome> probeUdpTarget(PortCheckTarget target) async {
   try {
-    final List<InternetAddress> found = await InternetAddress.lookup(
-      target.host,
-      type: InternetAddressType.IPv4,
+    final InternetAddress? address = udpAddressFor(
+      await InternetAddress.lookup(target.host),
     );
-    if (found.isEmpty) return TargetOutcome.noVerdict;
-    return probeUdpAddress(found.first, target.port, udpProbeFor(target.udp!));
+    if (address == null) return TargetOutcome.noVerdict;
+    return probeUdpAddress(address, target.port, udpProbeFor(target.udp!));
   } on SocketException {
     return TargetOutcome.noVerdict;
   }

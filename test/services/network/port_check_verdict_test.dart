@@ -212,6 +212,15 @@ void main() {
       expect(groupNamed(r, 'Calls').status, TriageStatus.looksFine);
     });
 
+    test('QUIC has one target, so its silence alone is no verdict', () {
+      final PortCheckReport r = judgePortCheck(
+        run(failing((t) => t.udp == UdpProbeKind.quic)),
+      );
+      final String websites = groupNamed(r, 'Websites').details.join(' ');
+      expect(websites, contains('QUIC (UDP 443) was not checked.'));
+      expect(websites, isNot(contains('either test server')));
+    });
+
     test('all UDP silent while TCP passes: No UDP got through at all', () {
       final PortCheckReport r = judgePortCheck(
         run(failing((t) => t.transport == PortCheckTransport.udp)),

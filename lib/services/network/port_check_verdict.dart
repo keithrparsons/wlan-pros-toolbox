@@ -203,14 +203,18 @@ PortCheckReport judgePortCheck(
   Map<PortCheckTarget, TargetOutcome> outcomes, {
   bool signInNeeded = false,
 }) {
-  _Port stateOf(bool Function(PortCheckTarget) which) {
+  _Port stateOf(
+    bool Function(PortCheckTarget) which, {
+    int targetsForBlocked = 1,
+  }) {
     final List<TargetOutcome> seen = <TargetOutcome>[
       for (final PortCheckTarget t in kPortCheckTargets)
         if (which(t)) outcomes[t] ?? TargetOutcome.noVerdict,
     ];
     if (seen.contains(TargetOutcome.gotOut)) return _Port.out;
     if (seen.isEmpty) return _Port.unknown;
-    if (seen.every((TargetOutcome o) => o == TargetOutcome.didNotGetOut)) {
+    if (seen.length >= targetsForBlocked &&
+        seen.every((TargetOutcome o) => o == TargetOutcome.didNotGetOut)) {
       return _Port.blocked;
     }
     if (seen.every((TargetOutcome o) => o == TargetOutcome.unavailable)) {
@@ -223,7 +227,9 @@ PortCheckReport judgePortCheck(
     (PortCheckTarget t) =>
         t.transport == PortCheckTransport.tcp && t.port == number,
   );
-  _Port udp(UdpProbeKind kind) => stateOf((PortCheckTarget t) => t.udp == kind);
+  // UDP silence from one target is no verdict, so a UDP kind needs two.
+  _Port udp(UdpProbeKind kind) =>
+      stateOf((PortCheckTarget t) => t.udp == kind, targetsForBlocked: 2);
 
   final bool baselinePassed = kPortCheckTargets.any(
     (PortCheckTarget t) => t.baseline && outcomes[t] == TargetOutcome.gotOut,
@@ -274,11 +280,14 @@ PortCheckReport judgePortCheck(
   final _Port stun = udp(UdpProbeKind.stun);
   final _Port quic = udp(UdpProbeKind.quic);
 
-  final List<_Port> udpStates = <_Port>[dns, ntp, stun, quic];
-  final bool noUdpAtAll = udpStates.every((_Port p) => p == _Port.blocked);
-  final bool udpUnavailable = udpStates.every(
-    (_Port p) => p == _Port.unavailable,
-  );
+  // QUIC has a single target, so it can never read blocked; leave it out of
+  // the "no UDP at all" call.
+  final List<_Port> pairedUdp = <_Port>[dns, ntp, stun];
+  final bool noUdpAtAll = pairedUdp.every((_Port p) => p == _Port.blocked);
+  final bool udpUnavailable = <_Port>[
+    ...pairedUdp,
+    quic,
+  ].every((_Port p) => p == _Port.unavailable);
   final bool otherUdpOut = dns == _Port.out || ntp == _Port.out;
   const String noUdp = 'No UDP got through at all.';
 

@@ -39,6 +39,7 @@ class _PortCheckScreenState extends State<PortCheckScreen> {
   PortCheckReport? _report;
   DateTime? _checkedAt;
   bool _busy = false;
+  bool _running = false;
   Timer? _cooldown;
 
   @override
@@ -48,7 +49,10 @@ class _PortCheckScreenState extends State<PortCheckScreen> {
   }
 
   Future<void> _run() async {
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _running = true;
+    });
     final PortCheckReport report = widget.signInNeeded
         ? judgePortCheck(<PortCheckTarget, TargetOutcome>{}, signInNeeded: true)
         : judgePortCheck(await _service.run());
@@ -56,6 +60,7 @@ class _PortCheckScreenState extends State<PortCheckScreen> {
     setState(() {
       _report = report;
       _checkedAt = DateTime.now();
+      _running = false;
     });
     _cooldown = Timer(kPortCheckCooldown, () {
       if (mounted) setState(() => _busy = false);
@@ -107,7 +112,8 @@ class _PortCheckScreenState extends State<PortCheckScreen> {
                   Text(
                     'This opens connections to well-known mail, SSH, DNS and '
                     'time servers to see which ones this network lets out. It '
-                    'sends no mail and no data. It takes about 4 seconds.',
+                    'sends small test packets, no mail and none of your files '
+                    'or messages. It takes about 4 seconds.',
                     style: text.bodyMedium?.copyWith(
                       color: colors.textSecondary,
                     ),
@@ -115,8 +121,23 @@ class _PortCheckScreenState extends State<PortCheckScreen> {
                   const SizedBox(height: AppSpacing.md),
                   FilledButton(
                     onPressed: _busy ? null : _run,
-                    child: Text(report == null ? 'Run the check' : 'Run again'),
+                    child: Text(
+                      _running
+                          ? 'Checking…'
+                          : report == null
+                          ? 'Run the check'
+                          : 'Run again',
+                    ),
                   ),
+                  if (_busy && !_running) ...<Widget>[
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      'You can run it again in a few seconds.',
+                      style: text.bodySmall?.copyWith(
+                        color: colors.textTertiary,
+                      ),
+                    ),
+                  ],
                   if (report != null) ...<Widget>[
                     const SizedBox(height: AppSpacing.md),
                     _ResultsCard(

@@ -141,4 +141,42 @@ void main() {
       expect(kPortCheckTcpTimeout, const Duration(seconds: 3));
     });
   });
+
+  group('PortCheckService.run when a probe throws', () {
+    test('a UDP probe that throws is no verdict; the run still completes',
+        () async {
+      final PortCheckService service = PortCheckService(
+        tcp: (String host, int port, Duration timeout) async =>
+            TargetOutcome.gotOut,
+        udp: (PortCheckTarget t) async =>
+            throw const SocketException('No route to host'),
+      );
+      final Map<PortCheckTarget, TargetOutcome> r = await service.run();
+      for (final PortCheckTarget t in kPortCheckTargets) {
+        expect(
+          r[t],
+          t.transport == PortCheckTransport.udp
+              ? TargetOutcome.noVerdict
+              : TargetOutcome.gotOut,
+        );
+      }
+    });
+
+    test('a TCP probe that throws is no verdict; the run still completes',
+        () async {
+      final PortCheckService service = PortCheckService(
+        tcp: (String host, int port, Duration timeout) async =>
+            throw StateError('boom'),
+        udp: (PortCheckTarget t) async => TargetOutcome.gotOut,
+      );
+      final Map<PortCheckTarget, TargetOutcome> r = await service.run();
+      expect(r.length, kPortCheckTargets.length);
+      expect(
+        r.entries
+            .where((e) => e.key.transport == PortCheckTransport.tcp)
+            .every((e) => e.value == TargetOutcome.noVerdict),
+        isTrue,
+      );
+    });
+  });
 }

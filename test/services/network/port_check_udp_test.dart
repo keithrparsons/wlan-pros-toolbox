@@ -193,4 +193,29 @@ void main() {
       );
     });
   });
+
+  group('udpAddressFor', () {
+    test('prefers an IPv4 address when there is one', () {
+      expect(
+        udpAddressFor(<InternetAddress>[
+          InternetAddress('2606:4700::1111'),
+          InternetAddress('1.1.1.1'),
+        ])?.address,
+        '1.1.1.1',
+      );
+    });
+
+    test('falls back to IPv6 on an IPv6-only (NAT64) network', () {
+      expect(
+        udpAddressFor(<InternetAddress>[
+          InternetAddress('64:ff9b::808:808'),
+        ])?.address,
+        '64:ff9b::808:808',
+      );
+    });
+
+    test('nothing found is null', () {
+      expect(udpAddressFor(<InternetAddress>[]), isNull);
+    });
+  });
 }
