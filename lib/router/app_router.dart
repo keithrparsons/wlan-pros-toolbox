@@ -245,6 +245,7 @@ import '../screens/tools/network/ping_screen.dart';
 import '../screens/tools/network/ping_plotter_screen.dart';
 import '../screens/tools/network/ping_sweep_screen.dart';
 import '../screens/tools/network/port_reference_screen.dart';
+import '../screens/tools/network/port_check_screen.dart';
 import '../screens/tools/network/port_scan_screen.dart';
 import '../screens/tools/network/subnet_calc_screen.dart';
 import '../screens/tools/network/subnet_planner_screen.dart';
@@ -655,6 +656,7 @@ class AppRouter {
   static const String deviceInfo = '/tools/device-info';
   static const String dnsLookup = '/tools/dns-lookup';
   static const String portScan = '/tools/port-scan';
+  static const String egressCheck = '/tools/egress-check';
   static const String ping = '/tools/ping';
   static const String icmpPing = '/tools/icmp-ping';
 
@@ -1250,6 +1252,7 @@ class AppRouter {
     deviceInfo: (_) => const DeviceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
+    egressCheck: (_) => const PortCheckScreen(),
     ping: (_) => const PingScreen(),
     icmpPing: (_) => const IcmpPingScreen(),
     pingPlotter: (_) => const PingPlotterScreen(),

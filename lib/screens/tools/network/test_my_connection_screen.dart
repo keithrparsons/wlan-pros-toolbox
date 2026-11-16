@@ -58,6 +58,7 @@ import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/pi_backend.dart';
 import '../../../services/network/pi_backend_client.dart';
+import '../../../services/network/port_check_verdict.dart' show offerPortCheck;
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
 import '../../../services/network/wifi_info_adapter.dart';
@@ -76,6 +77,7 @@ import '../../../widgets/tool_help_footer.dart';
 import '../../../widgets/triage_ladder_card.dart';
 import '../concept_graphic_band.dart';
 import 'analyze_results_screen.dart';
+import 'port_check_screen.dart';
 import 'cloud_apps_panel.dart';
 import 'get_reading_icon.dart';
 import 'setup_live_wifi_icon.dart';
@@ -2609,6 +2611,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                     // report for support; Analyze explains it. Local-only; no
                     // network, nothing stored (GL-005 / GL-008).
                     _AnalyzeButton(onAnalyze: _openAnalyze),
+                    // PORT CHECK — offered only when the ladder points at the
+                    // internet or at services. It opens the tool; nothing runs
+                    // until the user taps Run there (Keith, 16 NOV).
+                    if (offerPortCheck(_triageLadder()))
+                      _PortCheckButton(onOpen: _openPortCheck),
                     const SizedBox(height: AppSpacing.lg),
                     // DETAILS — the Mbps / bars / live signal / pro readout, now
                     // ALWAYS rendered (the "See the details" disclosure was
@@ -3838,6 +3845,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return buf.toString().trimRight();
   }
 
+  void _openPortCheck() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PortCheckScreen(
+          signInNeeded:
+              _engine?.verdict == WifiVsInternetVerdict.captivePortal,
+        ),
+      ),
+    );
+  }
+
   /// Opens the in-app Analyze Results report for the current result. No-op while
   /// a run is in flight or before a verdict exists (the button is hidden then).
   void _openAnalyze() {
@@ -3936,6 +3954,31 @@ class _CopyRow {
 // ===========================================================================
 // ANALYZE button — opens the local, in-app plain-language report.
 // ===========================================================================
+
+/// Opens the port check. A quiet outline button under Analyze.
+class _PortCheckButton extends StatelessWidget {
+  const _PortCheckButton({required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Semantics(
+        button: true,
+        label: 'What does this network let out?',
+        child: ExcludeSemantics(
+          child: OutlinedButton.icon(
+            onPressed: onOpen,
+            icon: const Icon(Icons.rule, size: 20),
+            label: const Text('What does this network let out?'),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// The "Analyze my results" affordance: a full-width §8.3 secondary (outline)
 /// button beneath the verdict. It opens the [AnalyzeResultsScreen] report,

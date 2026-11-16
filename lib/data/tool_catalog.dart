@@ -234,6 +234,7 @@ const Set<String> kWebUnavailableToolIds = <String>{
   'device-info', // device system facts via platform bridge
   'dns-lookup', // DNS-over-HTTPS via dart:io HttpClient (no web path)
   'port-scan', // raw TCP connect scan
+  'egress-check', // TCP connects and UDP datagrams to public servers
   'ping', // TCP-handshake RTT probe (socket)
   'icmp-ping', // raw ICMP echo
   'ping-plotter', // sustained socket ping
@@ -536,6 +537,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Port Scan',
         description: 'TCP connect scan: common ports preset or custom range',
         routeName: '/tools/port-scan',
+        isLive: true,
+        subgroup: 'Discovery & Scanning',
+      ),
+      ToolEntry(
+        id: 'egress-check',
+        title: 'What This Network Lets Out',
+        description:
+            'Which mail, SSH, DNS, call and web ports get out of this '
+            'network. Runs only when you tap',
+        routeName: '/tools/egress-check',
         isLive: true,
         subgroup: 'Discovery & Scanning',
       ),
