@@ -114,6 +114,18 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'doh',
     'name resolution',
   ],
+  'egress-check': <String>[
+    'firewall',
+    'blocked ports',
+    'port 25',
+    'smtp',
+    'ssh',
+    'vpn',
+    'udp',
+    'stun',
+    'outbound',
+    'egress',
+  ],
   'port-scan': <String>[
     'nmap',
     'open ports',
