@@ -19,7 +19,8 @@
 //   * Status words come from [TriageStatus], the ladder's own set.
 //   * US spelling, no em dashes, never a bare "AP".
 
-import 'analyze/triage_ladder.dart' show TriageStatus;
+import 'analyze/triage_ladder.dart'
+    show TriageLadder, TriageRung, TriageRungId, TriageStatus;
 
 enum PortCheckTransport { tcp, udp }
 
@@ -374,3 +375,11 @@ const List<String> _groupNames = <String>[
   'Calls and video',
   'VPN (IPsec)',
 ];
+
+/// Check My Connection offers the port check only when its ladder points at the
+/// internet or at services. Offered, never run: the tap opens the tool.
+bool offerPortCheck(TriageLadder ladder) => ladder.rungs.any(
+  (TriageRung r) =>
+      (r.id == TriageRungId.internet || r.id == TriageRungId.services) &&
+      r.status == TriageStatus.looksOff,
+);

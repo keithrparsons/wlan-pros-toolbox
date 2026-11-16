@@ -385,6 +385,37 @@ void main() {
       );
     });
 
+    testWidgets('dead internet: the port check is offered, and a tap opens '
+        'it without running anything', (WidgetTester tester) async {
+      await _runCheck(
+        tester,
+        dns: _FailingDns(),
+        cloud: _unreachableCloudApps(),
+      );
+      final Finder offer = find.text('What does this network let out?');
+      await tester.ensureVisible(offer);
+      await tester.pumpAndSettle();
+      await tester.tap(offer);
+      await tester.pumpAndSettle();
+      expect(find.text('What This Network Lets Out'), findsOneWidget);
+      expect(find.text('Run the check'), findsOneWidget);
+      expect(find.text('Looks fine'), findsNothing);
+    });
+
+    testWidgets('a sign-in network: the port check opens and says to sign in '
+        'first instead of probing', (WidgetTester tester) async {
+      await _runCheck(tester, dns: _WorkingDns(), cloud: _reachableCloudApps());
+      final Finder offer = find.text('What does this network let out?');
+      await tester.ensureVisible(offer);
+      await tester.pumpAndSettle();
+      await tester.tap(offer);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Run the check'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Sign in, then run this again'), findsWidgets);
+      await tester.pump(const Duration(seconds: 10));
+    });
+
     testWidgets('the TMC Copy report carries the ladder as words', (
       WidgetTester tester,
     ) async {
