@@ -1,16 +1,16 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · Polarization, OFDMA vs MU-MIMO and One Talker per Channel added 2026-09-29 · covers 264 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · Polarization, OFDMA vs MU-MIMO and One Talker per Channel added 2026-09-29 · covers 265 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
 ## Contents
 
 - **Test Network** (5 tools)
-- **Networking Tools** (25 tools)
+- **Networking Tools** (26 tools)
   - This Device (5)
   - Reachability & Path (5)
-  - Discovery & Scanning (5)
+  - Discovery & Scanning (6)
   - Names & Ownership (5)
   - Services & Protocols (5)
 - **Calculators & Tools** (39 tools)
@@ -252,7 +252,7 @@ Two throughput numbers, two questions. The internet figure is your honest path t
 
 ---
 
-# Networking Tools (25 tools)
+# Networking Tools (26 tools)
 
 Socket, lookup, and scan utilities for working a network from the device in hand. Ping, traceroute, port and host discovery, DNS and registry lookups, and packet-level senders and inspectors.
 
@@ -449,7 +449,7 @@ Hop-by-hop path discovery via the OS traceroute/tracert (desktop).
 - Each hop shows TTL, the responding router (name + IP), and up to three probe RTTs; * * * is a hop that didn't answer (common and not necessarily a problem). Reaching the target is reported as a terminal "complete".
 - On a sandboxed macOS App Store build this tool honestly reports unavailable. For a path read on mobile, see Traceroute (Mobile), but note its iOS limitation.
 
-## Discovery & Scanning (5)
+## Discovery & Scanning (6)
 
 ### Lookup (ARP/NDP)
 
@@ -533,6 +533,27 @@ TCP connect scan of a host, either a common-ports preset or a custom range, repo
 - Platform differences: works identically on every native platform (no entitlement beyond network-client). Served from a WLAN Pi, the Pi runs it. Any other browser is gated off.
 - "Filtered" means the SYN went unanswered (likely a firewall); it does not mean the port is closed. A custom range parser de-dupes and bounds-checks (1 to 65535).
 - This is a TCP connect scan, not a SYN/stealth scan; it completes the handshake then tears it down. A host that's all-filtered is usually unreachable or firewalled wholesale.
+
+### What This Network Lets Out
+
+Checks which kinds of traffic this network lets out to the internet: websites, sending and reading email, remote login (SSH), name lookups, calls and video, and VPN. Each group reads Looks fine, Looks off, Not checked or Can't check on this device.
+
+**Why it's here.** Hotel, conference and guest networks often block some kinds of traffic and say nothing. When mail won't send, a video call won't connect or a VPN won't come up, this tells you whether the network stopped it, so you stop troubleshooting the device.
+
+**How to use**
+1. Tap Run the check. It takes about 4 seconds and runs only when you tap.
+2. Read each group. Looks off means that kind of traffic did not get out on this network. The lines under each group name the ports behind the verdict.
+3. If the network wants a sign-in first (a hotel or airport page), sign in, then run it. Before sign-in nearly everything reads as blocked. Opened from Check My Connection after it saw a sign-in page, it shows a sign-in reminder instead of running.
+4. Copy puts the whole result on the clipboard to paste into a support ticket or an email to the venue.
+
+**Formula or method.** The check tries 22 public servers at once and sends no mail and none of your data. For TCP it opens a connection and closes it as soon as it completes (3 second limit). For UDP it sends one small question that the server answers by design: a DNS lookup on port 53, a time request on port 123, a STUN request on ports 3478 and 19302, and a QUIC packet on UDP 443. It sends the question again after 1 second and waits up to 2.5 seconds for a matching reply. Each port is tried against two servers run by different companies (for example Google and Microsoft for mail), so one server being down is never blamed on the network. Nothing is judged until cloudflare.com or example.com answers on port 443; if neither does, the result says no internet got through. A port is called blocked only when every server for it failed. A refused connection counts as blocked here, because a public mail or SSH server does not refuse; something in between did. No server of ours is used.
+
+**Field notes**
+- VPN (IPsec) always reads Not checked. No public server answers a test packet on UDP 500 or 4500, so VPN setup traffic cannot be tested from here. The line under it says whether other UDP got out, which is a hint, not a verdict.
+- Port 25 is blocked on most home and guest networks to stop spam. That alone does not stop a mail app, which sends on 587 or 465; Email sending reads Looks off only when both of those are blocked.
+- UDP has two outcomes only: a reply, or silence. A network that answers in place of the real server (some hotel gateways answer every DNS lookup) can look like it let traffic out when it did not.
+- Platform differences: works on iPhone, iPad, Android, Mac and Windows. In a browser, including a WLAN Pi web page, it is turned off, because a browser cannot open these connections. Where a device will not open a UDP socket, the UDP groups read Can't check on this device instead of blocked.
+- Check My Connection offers this tool with a button when its ladder shows The internet or Services as Looks off. It opens the tool; it does not run the check for you.
 
 ## Names & Ownership (5)
 
