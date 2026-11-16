@@ -15,6 +15,13 @@
 #
 set -euo pipefail
 
+# fastlane's upload reads altool output as text; with no locale set (a shell
+# started by an agent, for one) Ruby falls back to US-ASCII and the upload
+# step dies with "invalid byte sequence in US-ASCII" after the IPA is sent
+# (1.15.0, 16 NOV 2026).
+export LANG="${LANG:-en_US.UTF-8}"
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+
 export PATH="/opt/homebrew/bin:$PATH"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
