@@ -415,7 +415,7 @@ const GuidedLesson kDevicesToInternetLesson = GuidedLesson(
               'not the Wi-Fi at all" (the four handoffs; the sign-in page)',
           'WLAN Pros, "How your devices access the Internet", master '
               'graphic, version 3, September 2026 (Figure 2)',
-          'WLAN Pros Toolbox, Test My Connection screen: two grades, '
+          'WLAN Pros Toolbox, Check My Connection screen: two grades, '
               'measured internet side, Wi-Fi side worked out from the '
               'negotiated rate',
         ]),

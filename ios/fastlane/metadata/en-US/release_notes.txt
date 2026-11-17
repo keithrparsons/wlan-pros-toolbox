@@ -6,4 +6,4 @@ The same two-pane view appears on any screen 600 points wide or more: an iPad, a
 
 Long tool names no longer break in the middle of a word in the narrow list.
 
-Fixed: when a Shortcut finished a Test My Connection or Wi-Fi Information run, the app could jump back to the home screen instead of showing the results.
+Fixed: when a Shortcut finished a Check My Connection or Wi-Fi Information run, the app could jump back to the home screen instead of showing the results.

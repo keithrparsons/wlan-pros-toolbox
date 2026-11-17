@@ -9,7 +9,7 @@ The Wireless Classroom
 - A Teacher's Guide and a Field Manual for instructors.
 
 Is It Your Wi-Fi or Your Internet?
-Test My Connection helps answer the question everyone asks, in plain language. Start here when someone hands you a slow connection.
+Check My Connection helps answer the question everyone asks, in plain language. Start here when someone hands you a slow connection.
 
 Networking Tools
 Ping, traceroute, DNS, WHOIS, BGP/ASN, MAC vendor lookup, IP geolocation, port scan, HTTP and SSL/TLS inspectors, NTP, Wake-on-LAN.

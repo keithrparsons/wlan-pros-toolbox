@@ -3266,6 +3266,9 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'hotel wi-fi slow',
     'cellular',
     'check my connection',
+    // Old name of the same tool, kept so a search for it still lands here
+    // (Keith, 17 Nov 2026: renamed to Check My Connection; nothing removed).
+    'test my connection',
     'which road is slow',
   ],
   // Mesh, Extenders and Wired Access Points, Explained (Guided Lesson). What

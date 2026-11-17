@@ -21,13 +21,16 @@ void main() {
   });
 
   test('each step that says Check My Connection opens it', () {
-    // The guide's button name is Check My Connection; the screen behind it
-    // is Test My Connection, which has no catalog tile (the home hero is its
-    // door), so the link carries its own route.
+    // The guide's button name is Check My Connection, the same name as the
+    // screen behind it (route id test-my-connection), which has no catalog
+    // tile (the home hero is its door), so the link carries its own route.
     for (final LessonStep s in kDevicesToInternetLesson.steps) {
       final bool names = s.blocks.any(
         (LessonBlock b) =>
             b is! LessonToolLink &&
+            // A sources entry cites the screen; it does not tell the reader
+            // to open it, so it needs no Open button.
+            b is! LessonSourceList &&
             lessonStrings(
               GuidedLesson(
                 toolId: 'x',

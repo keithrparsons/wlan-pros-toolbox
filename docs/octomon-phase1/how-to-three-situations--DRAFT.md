@@ -39,4 +39,4 @@ A hotel, an airport, a conference, a coffee shop. You didn't set it up and you d
 
 - Situation 3 stops short of "which ports does this network let out" (VPN, video calls). That is the Phase 3 outbound port check; it does not exist yet, so this page doesn't promise it.
 - Ping Plotter's step in situation 2 assumes it is available on the platform; it is listed per platform in its own help entry.
-- Keith ruled on 13 November that "Check My Connection" is the name everywhere. The help file, the in-app guides, the "Open" buttons and the lesson links now say so. The screen's own title bar still says "Test My Connection"; see the Phase 1 report.
+- Keith ruled on 13 November that "Check My Connection" is the name everywhere. The help file, the in-app guides, the "Open" buttons and the lesson links now say so. The screen's own title bar says "Check My Connection" too (checked on main e264bd92, 17 November); the App Store description and release notes were renamed on 17 November.
