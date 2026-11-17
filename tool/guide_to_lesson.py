@@ -52,7 +52,7 @@ LINKS BY PHRASE. The guide's words stay as they are; an Open button
 plain words, not only as an italic guide title. Ask for each one:
 
     --link-phrase "Wi-Fi Calling, Explained=wifi-calling-explained"
-    --link-phrase "Check My Connection=test-my-connection|/tools/test-my-connection|Test My Connection"
+    --link-phrase "Check My Connection=test-my-connection|/tools/test-my-connection|Check My Connection"
 
 (Merged 2026-09-28: lessons-110-a built this as --link; lessons-110-b built
 the italic-title --link above. Both are kept, under two names.)
