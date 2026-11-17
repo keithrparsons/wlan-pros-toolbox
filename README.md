@@ -37,7 +37,7 @@ One Flutter codebase targets iOS, macOS, Windows, Android, and the web.
 ### Platform capability notes
 
 - **iOS** has no public API for RSSI or PHY rate / MCS index. Those metrics are surfaced through a companion Apple Shortcut ("WLAN Pros Live") where iOS allows it, and are reported as honestly unavailable where it does not. Local Network access prompts on first use.
-- **Nearby AP scan** runs on Android today. Apple platforms (iOS and macOS) block third-party Wi-Fi scanning at the OS level; a Windows version is planned (Windows can enumerate access points, it is just not wired into this tool yet).
+- **Nearby AP scan** runs on Android, macOS and Windows. On macOS it needs Location permission. iOS blocks third-party Wi-Fi scanning at the OS level, so the scan isn't available on iPhone or iPad. When the web version is served from a WLAN Pi, the scan runs on the Pi.
 - **Traceroute** has two forms: a system-binary traceroute on desktop (macOS, Windows, Linux), and a mobile TTL-walk that works on Android but is honestly unavailable on iOS (the available ICMP layer only parses Echo Reply, never Time Exceeded).
 - **Ping (TCP)** is a TCP-handshake RTT probe, labeled as such; **Ping (ICMP)** is the separate echo-based tool.
 
