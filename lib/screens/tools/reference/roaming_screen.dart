@@ -145,7 +145,7 @@ class RoamingScreen extends StatelessWidget {
 
   /// RSSI / SNR / latency design thresholds. Grades map the scenario to a
   /// §8.13 verdict: the two design targets pass (good), the overlap zone is
-  /// marginal, the sticky-trigger and unusable rows fail (bad).
+  /// marginal, the sticky-trigger and roam-immediately rows fail (bad).
   static const List<RoamingThreshold> kThresholds = <RoamingThreshold>[
     RoamingThreshold(
       scenario: 'VoIP / UC design target',
