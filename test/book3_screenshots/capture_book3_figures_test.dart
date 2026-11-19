@@ -705,7 +705,7 @@ void main() {
               interfaceName: 'en0',
               ssid: 'WLANPros-Home',
               bssid: 'c0:56:27:00:24:06',
-              rssiDbm: -72, // Fair
+              rssiDbm: -72, // Good on the default bands (Fair on the old scale)
               noiseDbm: -88, // SNR 16
               snrDb: 16,
               txRateMbps: 58, // low link speed

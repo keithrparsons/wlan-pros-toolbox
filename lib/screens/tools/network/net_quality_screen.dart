@@ -1325,6 +1325,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       case QualityGrade.fair:
         return (c.statusWarning, Icons.warning_amber);
       case QualityGrade.poor:
+      case QualityGrade.unusable:
         return (c.statusDanger, Icons.error);
       case QualityGrade.unavailable:
         // Neutral solid fill (textSecondary #4A4A4A, white-on-fill 9.0:1).
@@ -1351,6 +1352,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       case QualityGrade.fair:
         return (colors.statusWarning, colors.onPrimary);
       case QualityGrade.poor:
+      case QualityGrade.unusable:
         return (colors.statusDanger, colors.onPrimary);
       case QualityGrade.unavailable:
         return (colors.surface2, colors.textSecondary);

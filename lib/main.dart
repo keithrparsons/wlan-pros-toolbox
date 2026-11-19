@@ -42,6 +42,7 @@ import 'router/live_error_nav_gate.dart';
 import 'services/help/tool_help_loader.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'services/network/pi_backend.dart';
+import 'services/network/rssi_scale.dart';
 import 'services/network/wifi_details_bridge.dart';
 import 'favorites/my_tools_controller.dart';
 import 'favorites/my_tools_item.dart';
@@ -364,6 +365,10 @@ Future<void> main() async {
   // FSPL Simulator design targets (Keith, 2026-09-27): the teacher's own
   // lines load before the first frame, the same way. load() never throws.
   await FsplTargetStore.instance.load();
+  // The user's own RSSI signal bands (Signal Bands settings), or Keith
+  // Parsons' defaults. Every signal grade reads this store, so it loads before
+  // the first frame. load() never throws.
+  await RssiScaleStore.instance.load();
 
   // My Tools, the user's own top ten (Keith, 2026-10-03). Device-only
   // shared_preferences; ids the catalog no longer carries are dropped here.

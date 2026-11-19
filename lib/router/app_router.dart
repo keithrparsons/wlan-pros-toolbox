@@ -15,6 +15,7 @@ import '../screens/tools/educational/educational_resources_screen.dart';
 import '../screens/tools/educational/spectrum_analysis_screen.dart';
 import '../screens/tools/educational/ham_study_resources_screen.dart';
 import '../screens/search_screen.dart';
+import '../screens/settings/signal_bands_settings_screen.dart';
 import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
 import '../widgets/presenter/large_screen_gate.dart' show gateWifiLabRoutes;
 import '../screens/tools/dbm_watt_converter.dart';
@@ -288,6 +289,11 @@ class AppRouter {
   /// App-level "About" surface (SOP-020 copy). Not a tool route — reached from
   /// the HomeScreen AppBar info action, never the tool catalog.
   static const String about = '/about';
+
+  /// App-level Signal Bands settings: the user's own RSSI band boundaries,
+  /// with a reset to Keith Parsons' defaults. Not a tool route; reached from
+  /// the Signal Thresholds screen and from About.
+  static const String signalBandsSettings = '/settings/signal-bands';
 
   /// App-level "Help & Documentation" browse surface — lists every tool with a
   /// help entry, grouped by catalog category, each opening its help sheet.
@@ -1080,6 +1086,7 @@ class AppRouter {
   routes = gateWifiLabRoutes(<String, WidgetBuilder>{
     home: (_) => const HomeScreen(),
     about: (_) => const AboutScreen(),
+    signalBandsSettings: (_) => const SignalBandsSettingsScreen(),
     helpBrowse: (_) => const HelpBrowseScreen(),
     educationalResources: (_) => const EducationalResourcesScreen(),
     // The optional String argument is the seed query, pushed by the category

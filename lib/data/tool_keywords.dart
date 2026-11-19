@@ -2949,6 +2949,9 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'dbm targets',
     'minimum signal',
     'coverage',
+    'signal bands',
+    'rssi bands',
+    'unusable signal',
   ],
   'wpa-security': <String>[
     'wpa2',

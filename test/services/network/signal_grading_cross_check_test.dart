@@ -1,11 +1,16 @@
 // Cross-surface guard for RSSI signal grading (audit finding F2).
 //
 // THE MISSING TEST that let 1.7.1 ship. Two surfaces grade RSSI:
-//   1. The VERDICT / Live engine — WifiGrading.gradeRssi (numeric, on
-//      WifiGradingBands.kRssiBands minDbm bounds). This is what fires R-10/R-11/
-//      R-12 and drives the Live grade word.
-//   2. The Signal Thresholds REFERENCE SCREEN — the ranges it PRINTS in
-//      SignalThresholdsScreen.kSignalBands, which the user reads off the table.
+//   1. The VERDICT / Live engine: WifiGrading.gradeRssi (numeric, on the
+//      RssiScaleStore band minDbm bounds). This is what fires R-10/R-11/R-12
+//      and drives the Live grade word.
+//   2. The Signal Thresholds REFERENCE SCREEN: the ranges it PRINTS in
+//      SignalThresholdsScreen.signalBands(), which the user reads off the
+//      table.
+//
+// Since 19 Nov 2026 the bands are user-settable (Keith Parsons' defaults plus
+// the user's overrides), so the agreement walk runs on the defaults AND on
+// custom scales.
 //
 // In 1.7.1 these two disagreed (engine graded -73/-74 dBm "Poor / no plan will
 // help", the reference table called the same reading "Fair / usable") because
@@ -20,6 +25,7 @@
 // are hand-typed from Keith's confirmed bands, never read back from the code.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:net_quality/net_quality.dart' show QualityGrade;
 import 'package:wlan_pros_toolbox/screens/tools/reference/signal_thresholds_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_grading.dart';
@@ -35,13 +41,15 @@ QualityGrade _labelToGrade(String label) {
       return QualityGrade.fair;
     case 'Poor':
       return QualityGrade.poor;
+    case 'Unusable':
+      return QualityGrade.unusable;
     default:
       fail('Unknown reference band label "$label".');
   }
 }
 
 /// True if [dbm] falls inside a reference-table range STRING, read the way a
-/// user reads it. Parses the printed text ("> -60 dBm", "-60 to -67", "-73 or
+/// user reads it. Parses the printed text ("-66 dBm and stronger", "-67 to -72", "-85 and
 /// weaker") into a predicate. Independent of WifiGradingBands numeric bounds on
 /// purpose — this is the "what the screen shows" surface.
 bool _rangeContains(String range, int dbm) {
@@ -50,10 +58,12 @@ bool _rangeContains(String range, int dbm) {
       .map((RegExpMatch m) => int.parse(m.group(0)!))
       .toList();
   expect(nums, isNotEmpty, reason: 'Unparseable reference range "$range".');
-  if (range.contains('>')) return dbm > nums.first; // "> -60 dBm"
-  if (range.contains('weaker')) return dbm <= nums.first; // "-73 or weaker"
+  if (range.contains('stronger')) return dbm >= nums.first; // "-66 dBm and stronger"
+  if (range.contains('weaker')) return dbm <= nums.first; // "-85 and weaker"
+  if (range.contains('>')) return dbm > nums.first; // "> -60 dBm" legacy form
   if (range.contains('<')) return dbm < nums.first; // "< -80 dBm" legacy form
-  // "A to B", less-negative first, e.g. "-60 to -67": inclusive both ends.
+  if (nums.length == 1) return dbm == nums.first; // a 1 dB band, e.g. "-71"
+  // "A to B", less-negative first, e.g. "-67 to -72": inclusive both ends.
   final int hi = nums.reduce((int a, int b) => a > b ? a : b);
   final int lo = nums.reduce((int a, int b) => a < b ? a : b);
   return dbm <= hi && dbm >= lo;
@@ -63,82 +73,87 @@ bool _rangeContains(String range, int dbm) {
 /// band (strongest-first, the way you read a table top to bottom) whose printed
 /// range contains the reading.
 QualityGrade _referenceScreenGrade(int dbm) {
-  for (final SignalBand band in SignalThresholdsScreen.kSignalBands) {
+  for (final SignalBand band in SignalThresholdsScreen.signalBands()) {
     if (_rangeContains(band.range, dbm)) return _labelToGrade(band.label);
   }
   fail('No reference band covers $dbm dBm — the printed scale has a gap.');
 }
 
+/// Custom scales the agreement walk also runs on, including a 1 dB band.
+const List<RssiScale> _customScales = <RssiScale>[
+  RssiScale(excellentMinDbm: -60, goodMinDbm: -67, fairMinDbm: -72, poorMinDbm: -80),
+  RssiScale(excellentMinDbm: -70, goodMinDbm: -71, fairMinDbm: -72, poorMinDbm: -73),
+  RssiScale(excellentMinDbm: -30, goodMinDbm: -50, fairMinDbm: -90, poorMinDbm: -100),
+];
+
+List<String> _disagreements() {
+  final List<String> out = <String>[];
+  for (int dbm = -30; dbm >= -110; dbm--) {
+    final QualityGrade engine = WifiGrading.gradeRssi(dbm);
+    final QualityGrade screen = _referenceScreenGrade(dbm);
+    if (engine != screen) {
+      out.add('$dbm dBm: engine=${engine.name} screen=${screen.name}');
+    }
+  }
+  return out;
+}
+
 void main() {
-  group('RSSI grading — engine vs reference screen agree (F2 guard)', () {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues(<String, Object>{});
+  setUp(RssiScaleStore.resetForTest);
+  tearDown(RssiScaleStore.resetForTest);
+
+  group('RSSI grading: engine vs reference screen agree (F2 guard)', () {
     test(
         'the verdict engine and the reference screen assign the SAME grade at '
-        'every dBm from -30 to -100', () {
-      // This is the guard that would have caught 1.7.1. If either surface
-      // drifts (a constant edited without the display, or vice versa), some
-      // reading flips and this fails, naming the exact dBm.
-      final List<String> disagreements = <String>[];
-      for (int dbm = -30; dbm >= -100; dbm--) {
-        final QualityGrade engine = WifiGrading.gradeRssi(dbm);
-        final QualityGrade screen = _referenceScreenGrade(dbm);
-        if (engine != screen) {
-          disagreements.add('$dbm dBm: engine=${engine.name} '
-              'screen=${screen.name}');
-        }
-      }
+        'every dBm from -30 to -110 (defaults)', () {
+      final List<String> d = _disagreements();
       expect(
-        disagreements,
+        d,
         isEmpty,
         reason: 'The verdict engine and the Signal Thresholds screen disagree '
-            'on these readings — the exact class of drift that shipped in '
-            '1.7.1:\n${disagreements.join('\n')}',
+            'on these readings, the exact class of drift that shipped in '
+            '1.7.1:\n${d.join('\n')}',
       );
     });
 
-    test('-67 dBm is Good only and -68 dBm is Fair, on both surfaces', () {
-      // Keith, 2026-10-27: -67 belongs to Good alone. Engine and printed
-      // table must both put -67 in Good and -68 in Fair.
-      expect(WifiGrading.gradeRssi(-67), QualityGrade.good);
-      expect(_referenceScreenGrade(-67), QualityGrade.good);
-      expect(WifiGrading.gradeRssi(-68), QualityGrade.fair);
-      expect(_referenceScreenGrade(-68), QualityGrade.fair);
-    });
-
-    test('no reading falls inside two printed ranges', () {
-      // Reading the table top to bottom hides an overlap, so check every
-      // band: each dBm from -30 to -100 must sit in exactly one range.
-      final List<String> overlaps = <String>[];
-      for (int dbm = -30; dbm >= -100; dbm--) {
-        final List<String> hits = <String>[
-          for (final SignalBand b in SignalThresholdsScreen.kSignalBands)
-            if (_rangeContains(b.range, dbm)) b.label,
-        ];
-        if (hits.length != 1) overlaps.add('$dbm dBm: ${hits.join(', ')}');
-      }
-      expect(overlaps, isEmpty, reason: overlaps.join('\n'));
-    });
-
-    test('the -73/-74 dBm regression: both surfaces now say Poor', () {
-      // The 1.7.1 headline bug: the engine fired R-10 "Poor / no plan will
-      // help" while the reference table called -73/-74 "Fair / usable". Pin it
-      // shut on both surfaces.
-      for (final int dbm in <int>[-73, -74]) {
-        expect(WifiGrading.gradeRssi(dbm), QualityGrade.poor, reason: '$dbm');
-        expect(_referenceScreenGrade(dbm), QualityGrade.poor, reason: '$dbm');
+    test('they still agree after the user sets their own bands', () async {
+      for (final RssiScale scale in _customScales) {
+        await RssiScaleStore.instance.save(scale);
+        final List<String> d = _disagreements();
+        expect(d, isEmpty, reason: '$scale:\n${d.join('\n')}');
       }
     });
 
-    test('four bands, no orphaned "Weak", labels strongest-first', () {
+    test('no reading falls inside two printed ranges, or none', () async {
+      for (final RssiScale scale in <RssiScale>[
+        RssiScale.defaults,
+        ..._customScales,
+      ]) {
+        await RssiScaleStore.instance.save(scale);
+        final List<String> overlaps = <String>[];
+        for (int dbm = -30; dbm >= -110; dbm--) {
+          final List<String> hits = <String>[
+            for (final SignalBand b in SignalThresholdsScreen.signalBands())
+              if (_rangeContains(b.range, dbm)) b.label,
+          ];
+          if (hits.length != 1) overlaps.add('$dbm dBm: ${hits.join(', ')}');
+        }
+        expect(overlaps, isEmpty, reason: '$scale\n${overlaps.join('\n')}');
+      }
+    });
+
+    test('five bands, labels strongest-first', () {
       expect(
-        SignalThresholdsScreen.kSignalBands.map((SignalBand b) => b.label),
-        <String>['Excellent', 'Good', 'Fair', 'Poor'],
+        SignalThresholdsScreen.signalBands().map((SignalBand b) => b.label),
+        <String>['Excellent', 'Good', 'Fair', 'Poor', 'Unusable'],
       );
     });
 
-    test('reference colour tier matches the graded quality', () {
-      // Excellent/Good -> success, Fair -> warning, Poor -> danger. Guards the
-      // QualityGrade -> SignalGrade presentation map.
-      for (final SignalBand b in SignalThresholdsScreen.kSignalBands) {
+    test('reference color tier matches the graded quality', () {
+      // Excellent/Good -> success, Fair -> warning, Poor/Unusable -> danger.
+      for (final SignalBand b in SignalThresholdsScreen.signalBands()) {
         final QualityGrade q = _labelToGrade(b.label);
         final SignalGrade expected =
             (q == QualityGrade.excellent || q == QualityGrade.good)
@@ -151,25 +166,27 @@ void main() {
     });
   });
 
-  group('RSSI boundary grades — hand-derived from Keith\'s confirmed bands', () {
-    // Expected values typed from Keith's bands (Excellent > -60, Good -60..-67,
-    // Fair -68..-72, Poor -73 or weaker), NOT read back from WifiGradingBands.
-    test('Excellent: rssi > -60 (so -59 in, -60 out)', () {
-      expect(WifiGrading.gradeRssi(-30), QualityGrade.excellent);
-      expect(WifiGrading.gradeRssi(-59), QualityGrade.excellent);
-      expect(WifiGrading.gradeRssi(-60), isNot(QualityGrade.excellent));
-    });
-    test('Good: -60 down to -67 inclusive', () {
-      expect(WifiGrading.gradeRssi(-60), QualityGrade.good);
-      expect(WifiGrading.gradeRssi(-67), QualityGrade.good);
-    });
-    test('Fair: -68 down to -72 (-67 is Good, -73 is Poor)', () {
-      expect(WifiGrading.gradeRssi(-68), QualityGrade.fair);
-      expect(WifiGrading.gradeRssi(-72), QualityGrade.fair);
-    });
-    test('Poor: -73 and weaker', () {
-      expect(WifiGrading.gradeRssi(-73), QualityGrade.poor);
-      expect(WifiGrading.gradeRssi(-90), QualityGrade.poor);
-    });
+  group('RSSI boundary grades, hand-typed from Keith\'s master scale', () {
+    // Expected values typed from Keith's 19 Nov 2026 defaults (Excellent -66
+    // and stronger, Good -67 to -72, Fair -73 to -78, Poor -79 to -84,
+    // Unusable -85 and weaker), NOT read back from RssiScale.defaults.
+    const Map<int, QualityGrade> expected = <int, QualityGrade>{
+      -30: QualityGrade.excellent,
+      -66: QualityGrade.excellent,
+      -67: QualityGrade.good,
+      -72: QualityGrade.good,
+      -73: QualityGrade.fair,
+      -78: QualityGrade.fair,
+      -79: QualityGrade.poor,
+      -84: QualityGrade.poor,
+      -85: QualityGrade.unusable,
+      -100: QualityGrade.unusable,
+    };
+    for (final MapEntry<int, QualityGrade> e in expected.entries) {
+      test('${e.key} dBm is ${e.value.name} on both surfaces', () {
+        expect(WifiGrading.gradeRssi(e.key), e.value);
+        expect(_referenceScreenGrade(e.key), e.value);
+      });
+    }
   });
 }

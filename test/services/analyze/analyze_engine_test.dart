@@ -255,21 +255,35 @@ void main() {
     });
   });
 
-  group('RSSI rules grade on Keith\'s canonical bands', () {
-    // Expected grades are HAND-DERIVED from Keith's confirmed bands, never read
-    // back from WifiGradingBands — the 1.7.1 failure mode (F2) was tests that
+  group('RSSI rules grade on Keith\'s default bands (19 Nov 2026)', () {
+    // Expected grades are HAND-DERIVED from Keith's master scale, never read
+    // back from RssiScale.defaults: the 1.7.1 failure mode (F2) was tests that
     // derived their expected values from the very constant under test, so a
     // wrong constant stayed green. Literals below fail if the bands ever drift.
-    test('poor RSSI (-73, Keith\'s Poor floor) fires R-10', () {
-      const int rssi = -73; // Poor: -73 or weaker.
+    test('poor RSSI (-79, Keith\'s Poor top edge) fires R-10', () {
+      const int rssi = -79; // Poor: -79 to -84.
       expect(WifiGrading.gradeRssi(rssi), QualityGrade.poor);
       expect(_firedIds(const AnalyzeInput(rssiDbm: rssi)), contains('R-10'));
     });
 
-    test('excellent RSSI (-59, i.e. > -60) alone is suppressed (context-only)',
-        () {
+    test('unusable RSSI (-85) also fires the weak-signal finding R-10', () {
+      const int rssi = -85; // Unusable: -85 and weaker.
+      expect(WifiGrading.gradeRssi(rssi), QualityGrade.unusable);
+      expect(_firedIds(const AnalyzeInput(rssiDbm: rssi)), contains('R-10'));
+    });
+
+    test('fair RSSI (-73 to -78) fires R-11, not R-10', () {
+      for (final int rssi in <int>[-73, -78]) {
+        expect(WifiGrading.gradeRssi(rssi), QualityGrade.fair);
+        final ids = _firedIds(AnalyzeInput(rssiDbm: rssi));
+        expect(ids, contains('R-11'), reason: '$rssi');
+        expect(ids, isNot(contains('R-10')), reason: '$rssi');
+      }
+    });
+
+    test('excellent RSSI (-66) alone is suppressed (context-only)', () {
       // R-12 is context-only: with no other finding it must NOT render.
-      const int rssi = -59; // Excellent: rssi > -60.
+      const int rssi = -66; // Excellent: -66 and stronger.
       expect(WifiGrading.gradeRssi(rssi), QualityGrade.excellent);
       expect(
         _firedIds(const AnalyzeInput(rssiDbm: rssi)),
@@ -278,7 +292,7 @@ void main() {
     });
 
     test('excellent RSSI renders when a real finding also fired', () {
-      const int rssi = -59; // Excellent: rssi > -60.
+      const int rssi = -66; // Excellent: -66 and stronger.
       final report = AnalyzeEngine.analyze(
         const AnalyzeInput(rssiDbm: rssi, lossPct: 5), // loss poor → R-25
       );
@@ -645,7 +659,7 @@ void main() {
 
       // Important advisory -> "Worth a look" (weak RSSI, R-10).
       final AnalysisFinding weak = AnalyzeEngine.analyze(
-        const AnalyzeInput(rssiDbm: -73),
+        const AnalyzeInput(rssiDbm: -80),
       ).findings.firstWhere((AnalysisFinding f) => f.ruleId == 'R-10');
       expect(weak.verdictWord, 'Worth a look');
 

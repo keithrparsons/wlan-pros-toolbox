@@ -5,36 +5,62 @@
 // logic (which is NOT a hard grade).
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:net_quality/net_quality.dart' show QualityGrade;
 import 'package:wlan_pros_toolbox/services/network/wifi_grading.dart';
 
 void main() {
-  group('WifiGrading.gradeRssi — band boundaries (Keith-reviewed 2026-06-01)',
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues(<String, Object>{});
+
+  group('WifiGrading.gradeRssi: Keith Parsons\' default bands (19 Nov 2026)',
       () {
+    setUp(RssiScaleStore.resetForTest);
+    tearDown(RssiScaleStore.resetForTest);
+
     test('null is honestly Unavailable, never guessed', () {
       expect(WifiGrading.gradeRssi(null), QualityGrade.unavailable);
     });
 
-    test('rssi > -60 is Excellent', () {
-      expect(WifiGrading.gradeRssi(-59), QualityGrade.excellent); // just over
-      expect(WifiGrading.gradeRssi(-40), QualityGrade.excellent);
+    test('-66 and stronger is Excellent', () {
       expect(WifiGrading.gradeRssi(-30), QualityGrade.excellent);
+      expect(WifiGrading.gradeRssi(-66), QualityGrade.excellent); // edge
     });
 
-    test('-67 <= rssi <= -60 is Good (edges -60 and -67 both Good)', () {
-      expect(WifiGrading.gradeRssi(-60), QualityGrade.good); // upper edge
-      expect(WifiGrading.gradeRssi(-63), QualityGrade.good);
-      expect(WifiGrading.gradeRssi(-67), QualityGrade.good); // lower edge
+    test('-67 to -72 is Good', () {
+      expect(WifiGrading.gradeRssi(-67), QualityGrade.good); // upper edge
+      expect(WifiGrading.gradeRssi(-72), QualityGrade.good); // lower edge
     });
 
-    test('-72 <= rssi < -67 is Fair (-67 is Good not Fair; -72 is Fair)', () {
-      expect(WifiGrading.gradeRssi(-68), QualityGrade.fair); // just below Good
-      expect(WifiGrading.gradeRssi(-72), QualityGrade.fair); // lower edge
+    test('-73 to -78 is Fair', () {
+      expect(WifiGrading.gradeRssi(-73), QualityGrade.fair);
+      expect(WifiGrading.gradeRssi(-78), QualityGrade.fair);
     });
 
-    test('rssi < -72 is Poor (-73 is Poor)', () {
-      expect(WifiGrading.gradeRssi(-73), QualityGrade.poor); // just below Fair
-      expect(WifiGrading.gradeRssi(-90), QualityGrade.poor);
+    test('-79 to -84 is Poor', () {
+      expect(WifiGrading.gradeRssi(-79), QualityGrade.poor);
+      expect(WifiGrading.gradeRssi(-84), QualityGrade.poor);
+    });
+
+    test('-85 and weaker is Unusable', () {
+      expect(WifiGrading.gradeRssi(-85), QualityGrade.unusable);
+      expect(WifiGrading.gradeRssi(-100), QualityGrade.unusable);
+    });
+
+    test('follows the user\'s own bands from the store', () async {
+      await RssiScaleStore.instance.save(
+        const RssiScale(
+          excellentMinDbm: -60,
+          goodMinDbm: -65,
+          fairMinDbm: -70,
+          poorMinDbm: -80,
+        ),
+      );
+      expect(WifiGrading.gradeRssi(-60), QualityGrade.excellent);
+      expect(WifiGrading.gradeRssi(-61), QualityGrade.good);
+      expect(WifiGrading.gradeRssi(-66), QualityGrade.fair);
+      expect(WifiGrading.gradeRssi(-75), QualityGrade.poor);
+      expect(WifiGrading.gradeRssi(-81), QualityGrade.unusable);
     });
   });
 

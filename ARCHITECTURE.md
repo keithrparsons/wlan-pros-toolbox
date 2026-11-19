@@ -65,6 +65,8 @@ Each dimension is graded on its own (`excellent` / `good` / `fair` / `poor`) and
 
 The Wi-Fi radio metrics (RSSI, SNR, TX rate, MCS, channel width) are **not** in this package. They need platform channels into the OS Wi-Fi APIs and live in app-layer Flutter services. Their metric ids are reserved in the engine's `MetricIds` so both halves share one vocabulary, but the engine never measures them.
 
+RSSI grades use five bands (Excellent, Good, Fair, Poor, Unusable) from one app-layer source, `RssiScaleStore` in `lib/services/network/rssi_scale.dart`. The defaults are Keith Parsons' (Excellent -66 dBm and stronger, Good -67 to -72, Fair -73 to -78, Poor -79 to -84, Unusable -85 and weaker). There is no industry consensus on RSSI bands, so the user can change every boundary in Signal Bands settings, and Reset restores the defaults. Every grade, color, verdict and the Signal Thresholds table read that store.
+
 ## Platform integration
 
 ### macOS: CoreWLAN

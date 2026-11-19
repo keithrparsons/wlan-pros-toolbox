@@ -3366,6 +3366,7 @@ class _GradedMetricChart extends StatelessWidget {
       case QualityGrade.fair:
         return colors.statusWarning;
       case QualityGrade.poor:
+      case QualityGrade.unusable:
         return colors.statusDanger;
       case QualityGrade.unavailable:
         return colors.textTertiary;
@@ -3481,6 +3482,7 @@ class _GradeChip extends StatelessWidget {
       case QualityGrade.fair:
         return (c.statusWarning, c.onPrimary);
       case QualityGrade.poor:
+      case QualityGrade.unusable:
         return (c.statusDanger, c.onPrimary);
       case QualityGrade.unavailable:
         return (c.surface2, c.textSecondary);
@@ -3501,6 +3503,7 @@ class _GradeChip extends StatelessWidget {
       case QualityGrade.fair:
         return (c.statusWarning, Icons.warning_amber);
       case QualityGrade.poor:
+      case QualityGrade.unusable:
         return (c.statusDanger, Icons.error);
       case QualityGrade.unavailable:
         // Neutral solid fill (textSecondary #4A4A4A, white-on-fill 9.0:1).

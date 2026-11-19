@@ -8500,20 +8500,21 @@
       "purpose": "RSSI and SNR design targets: a recommended quality scale for RSSI, minimum RSSI and SNR by application, and the SNR needed to reach each typical MCS index.",
       "whyHere": "For validating a survey or troubleshooting a complaint: \"is -68 dBm good enough for VoIP?\" or \"what SNR do I need to hold MCS 7?\"",
       "howToUse": [
-        "RSSI bands carry a colored verdict dot plus the quality word (green = good, amber = marginal/Fair, red = bad/Poor); the word always carries the meaning, never the color alone.",
+        "RSSI bands carry a colored verdict dot plus the quality word (green = Excellent/Good, amber = Fair, red = Poor/Unusable); the word always carries the meaning, never the color alone.",
         "In the application table, read across to the minimum RSSI and minimum SNR your use case needs.",
-        "The SNR-to-MCS table tells you the SNR floor to sustain a given rate."
+        "The SNR-to-MCS table tells you the SNR floor to sustain a given rate.",
+        "Tap Change signal bands (also in About) to set your own RSSI bands: four whole-number boundaries from -100 to -30 dBm, each weaker than the one above. Save applies them to every signal grade in the app; Reset restores Keith Parsons' defaults."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: three blocks. RSSI quality scale: Excellent (> -60 dBm) / Good (-60 to -67) / Fair (-68 to -72) / Poor (-73 or weaker). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with a minimum RSSI, minimum SNR, and a note. SNR to MCS (80 MHz, 1 spatial stream): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
-        "These are recommended design targets, not an industry standard. IEEE 802.11 does not define \"good\" or \"poor\" signal levels, and appropriate thresholds vary by site and by customer requirement.",
+        "What it shows: three blocks. RSSI quality scale, five bands, Keith Parsons' defaults: Excellent -66 dBm and stronger, Good -67 to -72, Fair -73 to -78, Poor -79 to -84, Unusable -85 and weaker. Every signal grade in the app (Wi-Fi Info, Check My Connection and its findings) uses the same bands, and you can change them in Signal Bands settings. Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with a minimum RSSI, minimum SNR, and a note. SNR to MCS (80 MHz, 1 spatial stream): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
+        "The signal bands are Keith Parsons' defaults, and the application minimums are recommended design targets. There is no industry consensus on RSSI bands: IEEE 802.11 does not define \"good\" or \"poor\" signal levels, and the right thresholds vary by site and by customer requirement.",
         "Values vary by client hardware, environment, and AP vendor; treat them as field-planning guidelines, not guarantees.",
         "The SNR-to-MCS rates are indicative (80 MHz, single stream); the MCS 10 and 11 rates are noted as 802.11ax."
       ],
-      "source": "Recommended design targets. Not an industry standard: IEEE 802.11 does not define signal-quality levels."
+      "source": "Keith Parsons' default signal bands and recommended design targets. There is no industry consensus on RSSI bands: IEEE 802.11 does not define signal-quality levels."
     },
     "80211-standards": {
       "name": "802.11 Standards",
@@ -9056,7 +9057,7 @@
         "Web: a browser cannot read Wi-Fi, so the web version points you to download the app. When the Toolbox is served from a WLAN Pi, the tool shows the Pi's own radio instead."
       ],
       "inputs": [],
-      "algorithm": "All the platforms feed into one common picture of the connected access point. On macOS the details come straight from the system Wi-Fi framework; on Android from the system WifiManager; on Windows from the system Native Wifi interface; on a WLAN Pi from the Pi's own radio; on iOS they come from the companion Shortcut, read tolerantly so small formatting differences don't break anything. In iOS Live mode, RSSI and SNR are graded against the bands below, while Tx/Rx rates get a trend (Rising / Falling / Steady) rather than a hard grade, because a \"good\" data rate depends entirely on band, width, and modulation. RSSI bands (dBm): Excellent -59 or stronger, Good -67 or stronger, Fair -72 or stronger, Poor below that. SNR bands (dB): Excellent 36 or higher, Good 25 or higher, Fair 15 or higher, Poor below that.",
+      "algorithm": "All the platforms feed into one common picture of the connected access point. On macOS the details come straight from the system Wi-Fi framework; on Android from the system WifiManager; on Windows from the system Native Wifi interface; on a WLAN Pi from the Pi's own radio; on iOS they come from the companion Shortcut, read tolerantly so small formatting differences don't break anything. In iOS Live mode, RSSI and SNR are graded against the bands below, while Tx/Rx rates get a trend (Rising / Falling / Steady) rather than a hard grade, because a \"good\" data rate depends entirely on band, width, and modulation. RSSI bands (Keith Parsons' defaults, which you can change in Signal Bands settings): Excellent -66 dBm and stronger, Good -67 to -72, Fair -73 to -78, Poor -79 to -84, Unusable -85 and weaker. SNR bands (dB): Excellent 36 or higher, Good 25 or higher, Fair 15 or higher, Poor below that.",
       "example": null,
       "fieldNotes": [
         "macOS shows SSID/BSSID (Location-gated), RSSI, noise, SNR (reported directly), Tx rate, the 802.11 standard, channel, channel width, band, country code, interface name, and hardware MAC. It does not expose the Rx rate or Tx power (a limitation of the macOS Wi-Fi framework); those read \"Not exposed by macOS CoreWLAN\", never estimated.",

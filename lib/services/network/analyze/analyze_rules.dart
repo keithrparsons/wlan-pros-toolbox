@@ -24,7 +24,8 @@
 //
 // THRESHOLDS ARE IMPORTED, NEVER DUPLICATED. Each condition reads the SAME
 // ratified app constant the rest of the app uses (GL-005, domain-proof):
-//   * RSSI / SNR bands, [WifiGradingBands]   (wifi_grading.dart)
+//   * RSSI bands, [RssiScaleStore] (rssi_scale.dart, user-settable);
+//     SNR bands, [WifiGradingBands] (wifi_grading.dart)
 //   * latency/jitter/loss/responsiveness/download bands, [QualityScoring]
 //     (net_quality scoring.dart), read via the same grade functions
 //   * verdict thresholds, [WifiVsInternetVerdict] (wifi_vs_internet.dart)
@@ -104,7 +105,8 @@ class AnalyzeRule {
 
 bool _present(num? v) => v != null;
 
-/// RSSI grades to [grade] using the SAME ratified bands the live tool uses.
+/// RSSI grades to [grade] using the SAME bands the live tool uses (Keith
+/// Parsons' defaults or the user's own, from [RssiScaleStore]).
 bool _rssiIs(AnalyzeInput i, QualityGrade grade) =>
     i.rssiDbm != null && WifiGrading.gradeRssi(i.rssiDbm) == grade;
 
@@ -661,8 +663,11 @@ bool _isVerdictOnlineUnmeasuredMeasureFailed(AnalyzeInput i) =>
 bool _isVerdictOnlineUnmeasuredSkipped(AnalyzeInput i) =>
     _isVerdictOnlineUnmeasured(i) && i.speedTestSkipped;
 
-// B. RSSI, graded with WifiGradingBands (the ratified app bands).
-bool _rssiPoor(AnalyzeInput i) => _rssiIs(i, QualityGrade.poor);
+// B. RSSI, graded with the app's RSSI scale (Keith's defaults or the user's).
+// Poor and Unusable both fire the weak-signal finding (R-10): Unusable is the
+// fifth band of Keith's 19 Nov 2026 scale, weaker still than Poor.
+bool _rssiPoor(AnalyzeInput i) =>
+    _rssiIs(i, QualityGrade.poor) || _rssiIs(i, QualityGrade.unusable);
 bool _rssiFair(AnalyzeInput i) => _rssiIs(i, QualityGrade.fair);
 bool _rssiExcellent(AnalyzeInput i) => _rssiIs(i, QualityGrade.excellent);
 

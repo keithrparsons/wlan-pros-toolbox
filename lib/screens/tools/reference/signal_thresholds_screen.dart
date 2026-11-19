@@ -12,16 +12,17 @@
 // Three blocks: the RSSI quality scale, the per-application RSSI/SNR threshold
 // table, and the SNR→MCS table.
 //
-// The RSSI quality scale uses KEITH PARSONS' OWN canonical thresholds
-// (Excellent > -60, Good -60..-67, Fair -68..-72, Poor -73 or weaker), confirmed
-// 2026-07-12 — his domain expertise over the internet/vendor-appropriated values
-// that previously shipped (GL-005, domain-proof-over-consensus). These are read
-// from the SINGLE SOURCE, [WifiGradingBands.kRssiBands], the very same list the
-// grading engine ([WifiGrading.gradeRssi], Live mode + the Analyze verdict
-// engine) grades on — so this screen and the verdict a user gets can never
-// disagree about a dBm reading again (1.7.1 shipped three divergent scales;
-// audit findings F1/F2). Do NOT hand-copy the numbers here; edit the bands in
-// wifi_grading.dart. The per-application and SNR→MCS tables are ported from the
+// The RSSI quality scale shows the bands in force right now: KEITH PARSONS'
+// DEFAULTS (master scale, 19 Nov 2026: Excellent -66 dBm and stronger, Good
+// -67 to -72, Fair -73 to -78, Poor -79 to -84, Unusable -85 and weaker) or
+// the boundaries the user set in Signal Bands settings. There is no industry
+// consensus on RSSI bands, so the screen says so and offers the settings
+// button. The rows are read from the SINGLE SOURCE, [RssiScaleStore.instance],
+// the very same store the grading engine ([WifiGrading.gradeRssi], Live mode +
+// the Analyze verdict engine) grades on, so this screen and the verdict a user
+// gets can never disagree about a dBm reading (1.7.1 shipped three divergent
+// scales; audit findings F1/F2). Do NOT hand-copy the numbers here; the
+// defaults live in rssi_scale.dart. The per-application// wifi_grading.dart. The per-application and SNR→MCS tables are ported from the
 // rf-tools-pwa `rssi` tool; thresholds are reproduced, not invented.
 //
 // Signal quality and MCS bands carry a GL-003 §8.13 status verdict color
@@ -33,6 +34,7 @@ import 'package:flutter/material.dart';
 import 'package:net_quality/net_quality.dart' show QualityGrade;
 
 import '../../../data/tool_assets.dart';
+import '../../../router/app_router.dart';
 import '../../../services/network/wifi_grading.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -53,12 +55,12 @@ class SignalBand {
     required this.grade,
   });
 
-  /// Quality word — "Excellent", "Good", "Fair", "Poor" (from the canonical
-  /// [WifiGradingBands.kRssiBands]).
+  /// Quality word: "Excellent", "Good", "Fair", "Poor" or "Unusable" (from
+  /// [WifiGradingBands.rssiBands]).
   final String label;
 
-  /// RSSI range exactly as the canonical band prints it, e.g. "> -60 dBm",
-  /// "-60 to -67". Sourced from [RssiBand.displayRange].
+  /// RSSI range exactly as the band prints it, e.g. "-66 dBm and stronger",
+  /// "-67 to -72". Sourced from [RssiBand.displayRange].
   final String range;
 
   final SignalGrade grade;
@@ -101,14 +103,14 @@ class SignalThresholdsScreen extends StatelessWidget {
   // the PWA source are rendered as hyphens here per the no-em-dash rule; the
   // numeric thresholds are unchanged.
 
-  /// RSSI quality scale — Keith Parsons' canonical field thresholds (confirmed
-  /// 2026-07-12; domain-proof over internet/vendor consensus, GL-005). BUILT
-  /// FROM the single source [WifiGradingBands.kRssiBands], never hand-typed
+  /// RSSI quality scale: the bands in force (Keith Parsons' defaults, or the
+  /// user's own from Signal Bands settings). BUILT FROM the single source
+  /// [WifiGradingBands.rssiBands] (or [scale] when given), never hand-typed
   /// here, so this table and the app's verdict engine grade every dBm reading
   /// identically. Excellent/Good read as a passing verdict, Fair as marginal,
-  /// Poor as failing — paired with the word, never color-only.
-  static final List<SignalBand> kSignalBands = <SignalBand>[
-    for (final RssiBand b in WifiGradingBands.kRssiBands)
+  /// Poor and Unusable as failing, paired with the word, never color-only.
+  static List<SignalBand> signalBands({RssiScale? scale}) => <SignalBand>[
+    for (final RssiBand b in scale?.bands ?? WifiGradingBands.rssiBands)
       SignalBand(
         label: b.label,
         range: b.displayRange,
@@ -116,10 +118,10 @@ class SignalThresholdsScreen extends StatelessWidget {
       ),
   ];
 
-  /// Maps a canonical [QualityGrade] to the reference table's §8.13 status
-  /// tier. Excellent and Good both read as a passing verdict (success), Fair is
-  /// marginal (warning), Poor is failing (danger). Presentation only — the
-  /// grading itself lives in [WifiGradingBands.kRssiBands].
+  /// Maps a [QualityGrade] to the reference table's §8.13 status tier.
+  /// Excellent and Good both read as a passing verdict (success), Fair is
+  /// marginal (warning), Poor and Unusable are failing (danger). Presentation
+  /// only; the grading itself lives in [RssiScaleStore].
   static SignalGrade signalGradeForQuality(QualityGrade grade) {
     switch (grade) {
       case QualityGrade.excellent:
@@ -128,10 +130,11 @@ class SignalThresholdsScreen extends StatelessWidget {
       case QualityGrade.fair:
         return SignalGrade.marginal;
       case QualityGrade.poor:
+      case QualityGrade.unusable:
         return SignalGrade.bad;
       case QualityGrade.unavailable:
-        // No canonical band grades Unavailable; this arm is unreachable for
-        // kRssiBands. Fail safe to the failing tier rather than a false pass.
+        // No band grades Unavailable; this arm is unreachable for the RSSI
+        // bands. Fail safe to the failing tier rather than a false pass.
         return SignalGrade.bad;
     }
   }
@@ -265,7 +268,7 @@ class SignalThresholdsScreen extends StatelessWidget {
       ..writeln()
       ..writeln('RSSI quality scale')
       ..writeln(<String>['Quality', 'Verdict', 'RSSI range'].join(tab));
-    for (final SignalBand b in kSignalBands) {
+    for (final SignalBand b in signalBands()) {
       buf.writeln(<String>[b.label, gradeWord(b.grade), b.range].join(tab));
     }
     buf
@@ -350,16 +353,17 @@ class SignalThresholdsScreen extends StatelessWidget {
 
   /// The honest framing, confirmed by Keith.
   ///
-  /// These bands are his RECOMMENDATIONS. No standard blesses them: IEEE 802.11
-  /// defines no "good" or "poor" signal level at all. Saying so plainly matters
-  /// more here than on most screens, because a numeric threshold table reads as
-  /// though it were normative unless it says otherwise, and a reader who quotes
-  /// these back to a customer as "the standard" would be repeating a
-  /// fabricated authority the app handed them.
+  /// The signal bands are HIS DEFAULTS (19 Nov 2026), and there is no industry
+  /// consensus on RSSI bands: IEEE 802.11 defines no "good" or "poor" signal
+  /// level at all. Saying so plainly matters more here than on most screens,
+  /// because a numeric threshold table reads as though it were normative unless
+  /// it says otherwise. The user can change every band in Signal Bands settings.
   static const String kThresholdFraming =
-      'These are recommended design targets, not an industry standard. '
-      'IEEE 802.11 does not define "good" or "poor" signal levels, and '
-      'appropriate thresholds vary by site and by customer requirement.';
+      "The signal bands are Keith Parsons' defaults, and the application "
+      'minimums are recommended design targets. There is no industry '
+      'consensus on RSSI bands: IEEE 802.11 does not define "good" or "poor" '
+      'signal levels, and the right thresholds vary by site and by customer '
+      'requirement.';
 
   Widget _intro(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -370,12 +374,39 @@ class SignalThresholdsScreen extends StatelessWidget {
     );
   }
 
+  /// Label of the button that opens Signal Bands settings.
+  static const String kChangeBandsLabel = 'Change signal bands';
+
   Widget _signalScaleCard(BuildContext context) {
-    return _Card(
-      heading: 'RSSI quality scale',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: kSignalBands.map(_SignalBandRow.new).toList(),
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return ValueListenableBuilder<RssiScale>(
+      valueListenable: RssiScaleStore.instance,
+      builder: (BuildContext context, RssiScale scale, Widget? _) => _Card(
+        heading: 'RSSI quality scale',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            ...signalBands(scale: scale).map(_SignalBandRow.new),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              scale.isDefault
+                  ? "Keith Parsons' defaults. You can change every band."
+                  : "Your own bands. Reset restores Keith Parsons' defaults.",
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(
+                  context,
+                ).pushNamed(AppRouter.signalBandsSettings),
+                icon: const Icon(Icons.tune, size: 18),
+                label: const Text(kChangeBandsLabel),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

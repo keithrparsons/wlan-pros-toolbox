@@ -71,7 +71,7 @@ void main() {
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(
         verdict: WifiVsInternetVerdict.wifiLimiter,
-        rssiDbm: -73, // poor -> R-10
+        rssiDbm: -80, // poor -> R-10
       ),
     );
     await _precacheCategorySvgs(tester);
@@ -91,7 +91,7 @@ void main() {
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(
         verdict: WifiVsInternetVerdict.wifiLimiter,
-        rssiDbm: -73, // poor RSSI -> R-10 (important -> "Worth a look")
+        rssiDbm: -80, // poor RSSI -> R-10 (important -> "Worth a look")
         security: WifiSecurity.open, // R-35 (critical -> "Issue")
       ),
     );
@@ -232,7 +232,7 @@ void main() {
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(
         verdict: WifiVsInternetVerdict.bothContributing,
-        rssiDbm: -73,
+        rssiDbm: -80,
         snrDb: 10,
         security: WifiSecurity.open,
         lossPct: 5,
@@ -266,7 +266,7 @@ void main() {
   testWidgets('triage ladder: absent by default, first with reasons when given',
       (WidgetTester tester) async {
     final AnalysisReport report = AnalyzeEngine.analyze(
-      const AnalyzeInput(rssiDbm: -73),
+      const AnalyzeInput(rssiDbm: -80),
     );
     await tester.pumpWidget(_wrap(report));
     await tester.pumpAndSettle();

@@ -38,6 +38,7 @@ import '../data/app_version.dart';
 import '../router/app_router.dart';
 import '../services/app_update_service.dart';
 import '../services/network/wifi_details_bridge.dart';
+import '../services/network/rssi_scale.dart';
 import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
@@ -169,6 +170,11 @@ class _AboutScreenState extends State<AboutScreen> {
                   // control on the app-level About surface, the standard
                   // reachable home for it.
                   const _AppearanceSection(),
+
+                  // Signal bands: the user's own RSSI bands, or Keith
+                  // Parsons' defaults (19 Nov 2026). Opens Signal Bands
+                  // settings, the same screen the Signal Thresholds tool uses.
+                  const _SignalBandsAboutSection(),
 
                   // Set up live Wi-Fi — iOS-only, findable install entry point
                   // for the "WLAN Pros Live" companion Shortcut. iOS users who
@@ -470,6 +476,74 @@ class _AppearanceSection extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             const AppearanceControl(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Signal bands section: says whose bands grade the signal and opens Signal
+/// Bands settings. Same titled surface1 card register as Appearance.
+class _SignalBandsAboutSection extends StatelessWidget {
+  const _SignalBandsAboutSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(
+            color: colors.border,
+            width: colors.isLight ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Semantics(
+              header: true,
+              child: Text(
+                'Signal bands',
+                style: text.headlineSmall?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: colors.isLight
+                      ? FontWeight.w700
+                      : FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ValueListenableBuilder<RssiScale>(
+              valueListenable: RssiScaleStore.instance,
+              builder: (BuildContext context, RssiScale scale, Widget? _) =>
+                  Text(
+                    scale.isDefault
+                        ? "Signal grades use Keith Parsons' default bands. "
+                              'You can change every band.'
+                        : 'Signal grades use your own bands.',
+                    style: text.bodyLarge?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(
+                  context,
+                ).pushNamed(AppRouter.signalBandsSettings),
+                icon: const Icon(Icons.tune, size: 20),
+                label: const Text('Change signal bands'),
+              ),
+            ),
           ],
         ),
       ),

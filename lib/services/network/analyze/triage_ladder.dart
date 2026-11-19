@@ -264,7 +264,7 @@ TriageRung _wifiLink(TriageInput i, WifiVsInternetVerdict verdict) {
   // what was measured, and say "signal", not "link".
   final bool rateUnread = verdict == WifiVsInternetVerdict.wifiUnknown;
   if (verdict != WifiVsInternetVerdict.upstream &&
-      signal == QualityGrade.poor) {
+      (signal == QualityGrade.poor || signal == QualityGrade.unusable)) {
     return rung(TriageStatus.looksOff, 'The Wi-Fi signal is weak.');
   }
   // Looks fine needs a reading. upstream and bothHealthy are built from the

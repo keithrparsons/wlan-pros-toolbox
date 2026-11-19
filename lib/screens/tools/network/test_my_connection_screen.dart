@@ -5221,6 +5221,7 @@ class _LiveSignalCard extends StatelessWidget {
       case QualityGrade.fair:
         return colors.statusWarning;
       case QualityGrade.poor:
+      case QualityGrade.unusable:
         return colors.statusDanger;
       case QualityGrade.unavailable:
         return colors.textTertiary;
@@ -6244,6 +6245,7 @@ class _GradeChip extends StatelessWidget {
         case QualityGrade.fair:
           return (c.statusWarning, null, white);
         case QualityGrade.poor:
+        case QualityGrade.unusable:
           return (c.statusDanger, null, white);
         case QualityGrade.unavailable:
           // Neutral solid fill (textSecondary #4A4A4A, white-on-fill 9.0:1).
@@ -6257,6 +6259,7 @@ class _GradeChip extends StatelessWidget {
       case QualityGrade.fair:
         return (c.statusWarning, null, c.onPrimary);
       case QualityGrade.poor:
+      case QualityGrade.unusable:
         return (c.statusDanger, null, c.onPrimary);
       case QualityGrade.unavailable:
         return (c.surface2, c.borderStrong, c.textSecondary);
@@ -6273,6 +6276,7 @@ class _GradeChip extends StatelessWidget {
       case QualityGrade.fair:
         return Icons.warning_amber_rounded;
       case QualityGrade.poor:
+      case QualityGrade.unusable:
         return Icons.error;
       case QualityGrade.unavailable:
         return Icons.info_outline;

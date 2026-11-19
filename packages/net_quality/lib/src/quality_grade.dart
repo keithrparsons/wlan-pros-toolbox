@@ -17,6 +17,10 @@ enum QualityGrade {
   /// Below the threshold for a good experience.
   poor,
 
+  /// Too weak to hold a working connection. Only the Wi-Fi signal (RSSI)
+  /// grades use this fifth band today; the transport metrics stop at [poor].
+  unusable,
+
   /// The metric could not be measured on this platform or run, for example
   /// SNR on iOS where the OS does not expose it. Shown honestly as
   /// "Unavailable"; it is never faked or substituted with a guess.
@@ -36,6 +40,8 @@ extension QualityGradeLabel on QualityGrade {
         return 'Fair';
       case QualityGrade.poor:
         return 'Poor';
+      case QualityGrade.unusable:
+        return 'Unusable';
       case QualityGrade.unavailable:
         return 'Unavailable';
     }

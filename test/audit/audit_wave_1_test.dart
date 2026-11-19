@@ -20,6 +20,7 @@ import 'package:wlan_pros_toolbox/data/vendor_model_decode_data.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/poe_budget_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/command/linux_wlan_commands_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/dbm_watt_converter.dart';
+import 'package:wlan_pros_toolbox/services/network/rssi_scale.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/icmp_ping_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/adjacent_radio_systems_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/ascii_reference_screen.dart';
@@ -140,13 +141,14 @@ void main() {
   // ─────────────────────────────────────────────────────────────────────────
   // Signal thresholds — the help must match the screen's CANONICAL scale.
   //
-  // Canonical (Keith, confirmed 2026-07-12): Excellent > -60 / Good -60..-67 /
-  // Fair -68..-72 / Poor -73 or weaker. Earlier the help and the screen carried
-  // different numbers (the app told the user one scale and showed another); this
-  // pins the help to the single canonical scale the screen renders.
+  // Keith Parsons' defaults (master scale, 19 Nov 2026): Excellent -66 dBm and
+  // stronger / Good -67 to -72 / Fair -73 to -78 / Poor -79 to -84 / Unusable
+  // -85 and weaker. Earlier the help and the screen carried different numbers
+  // (the app told the user one scale and showed another); this pins the help to
+  // the default scale the screen renders.
   // ─────────────────────────────────────────────────────────────────────────
   group('signal thresholds — help matches the screen', () {
-    test('the help carries Keith\'s canonical bands, not a superseded scale',
+    test('the help carries Keith\'s default bands, not a superseded scale',
         () async {
       final String help =
           await rootBundle.loadString('assets/help/tool_help.json');
@@ -174,17 +176,36 @@ void main() {
       }
       expect(notes, isNot(contains('Weak')));
 
-      // Keith's canonical bands, as rendered by the screen.
-      expect(notes, contains('-60'));
-      expect(notes, contains('-67'));
-      expect(notes, contains('-72'));
-      expect(notes, contains('-73'));
+      // Superseded scales: 12 Jul 2026 (> -60 / -60 to -67 / -68 to -72 /
+      // -73 or weaker) and 1 Nov 2026 (-67 or better / -68 to -72 / -73 to
+      // -75 / -76 or worse).
+      for (final String stale in <String>[
+        '> -60',
+        '-60 to -67',
+        '-68 to -72',
+        '-73 or weaker',
+        '-67 dBm or better',
+        '-73 to -75',
+        '-76 or worse',
+      ]) {
+        expect(notes, isNot(contains(stale)), reason: stale);
+      }
+
+      // Keith's default bands, exactly as the screen renders them.
+      expect(notes, contains('-66 dBm and stronger'));
+      expect(notes, contains('-67 to -72'));
+      expect(notes, contains('-73 to -78'));
+      expect(notes, contains('-79 to -84'));
+      expect(notes, contains('-85 and weaker'));
+      expect(notes, contains('Signal Bands settings'));
     });
 
     test('every band the screen renders is named in the help', () async {
       final String help =
           await rootBundle.loadString('assets/help/tool_help.json');
-      for (final SignalBand b in SignalThresholdsScreen.kSignalBands) {
+      for (final SignalBand b in SignalThresholdsScreen.signalBands(
+        scale: RssiScale.defaults,
+      )) {
         expect(
           help,
           contains(b.range),
@@ -200,7 +221,8 @@ void main() {
       // would be a fabricated authority.
       final String help =
           await rootBundle.loadString('assets/help/tool_help.json');
-      expect(help, contains('not an industry standard'));
+      expect(help, contains('no industry consensus on RSSI bands'));
+      expect(help, contains("Keith Parsons' defaults"));
       expect(help, contains('IEEE 802.11 does not define'));
     });
   });

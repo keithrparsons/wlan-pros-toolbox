@@ -11,7 +11,8 @@
 //
 // Every numeric threshold the rules compare against is imported from the
 // ratified app constants, NOT duplicated here:
-//   * RSSI / SNR bands → WifiGradingBands (wifi_grading.dart, Keith 2026-06-01)
+//   * RSSI bands → RssiScaleStore (rssi_scale.dart; Keith's defaults, user-settable)
+//   * SNR bands → WifiGradingBands (wifi_grading.dart, Keith 2026-06-01)
 //   * latency / jitter / loss / responsiveness / download bands → QualityScoring
 //     (net_quality scoring.dart)
 //   * verdict thresholds → WifiVsInternetEngine (wifi_vs_internet.dart)

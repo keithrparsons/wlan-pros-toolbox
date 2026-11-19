@@ -843,7 +843,9 @@ void main() {
       // help; this pins the SCREEN's copy of the framing, which is where the
       // numbers are actually read. One const, rendered — not a second string.
       expect(SignalThresholdsScreen.kThresholdFraming,
-          contains('not an industry standard'));
+          contains('no industry consensus on RSSI bands'));
+      expect(SignalThresholdsScreen.kThresholdFraming,
+          contains("Keith Parsons' defaults"));
       expect(SignalThresholdsScreen.kThresholdFraming,
           contains('IEEE 802.11 does not define'));
       expect(
