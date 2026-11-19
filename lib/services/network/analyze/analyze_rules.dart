@@ -15,8 +15,8 @@
 //      never call the access point a router (Keith, 19 Nov 2026: an access
 //      point is never a router; this replaces the earlier "router/access
 //      point" form). "router" alone is only for the home gateway (R-28 SQM,
-//      R-32 DNS). R-40 still reads "router/access point" pending Keith's
-//      wording for its restart advice.
+//      R-32 DNS, R-40 restart advice: Keith, 19 Nov 2026, "restart your
+//      router").
 //   2. Zero em-dashes. Every pause is a comma, a period, a colon, or a fragment.
 //
 // WHY THIS IS A DATA FILE: the engine ([AnalyzeEngine]) NEVER hardcodes prose.
@@ -568,7 +568,7 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
         "a sign-in page you have not gotten past yet, a DNS hiccup, or an "
         "outage upstream. Open a web browser first, since that often triggers "
         "a hidden sign-in screen. If no sign-in page appears, restart your "
-        "router/access point, and if that does not bring it back, call your "
+        "router, and if that does not bring it back, call your "
         "internet provider.",
   ),
   AnalyzeRule(

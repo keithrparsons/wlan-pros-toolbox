@@ -809,7 +809,7 @@ void main() {
       });
 
       test(
-        'only R-40 still carries "router/access point" (held for Keith)',
+        'no rule carries "router/access point"; R-40 says "restart your router"',
         () {
           final List<String> ids = kAnalyzeRules
               .where(
@@ -818,7 +818,11 @@ void main() {
               )
               .map((AnalyzeRule r) => r.id)
               .toList();
-          expect(ids, <String>['R-40']);
+          expect(ids, isEmpty);
+          final AnalyzeRule r40 = kAnalyzeRules.firstWhere(
+            (AnalyzeRule r) => r.id == 'R-40',
+          );
+          expect(r40.responseDraft, contains('restart your router,'));
         },
       );
     },
