@@ -2373,11 +2373,11 @@ The 802.11k/r/v fast-roaming protocols (what each does, what it requires) plus R
 
 **How to use**
 1. The protocol heading shows the designation (lime) and full name.
-2. In the thresholds table, the scenario word is status-tinted with a dot: green = good (the two design targets), amber = marginal (the overlap zone), red = bad (sticky-client trigger and unusable).
+2. In the thresholds table, the scenario word is status-tinted with a dot: green = good (the two design targets), amber = marginal (the overlap zone), red = bad (sticky-client trigger and roam immediately).
 3. Design rules carry the actionable target (e.g. "≥ 2 APs at −67 dBm everywhere," "second AP at −72 dBm or better across the overlap zone").
 
 **Field notes**
-- What it shows: Protocols block: 802.11r (Fast BSS Transition), 802.11k (Neighbor Report), 802.11v (BSS Transition Management), each with what it does, deployment requirements, and a field note. Thresholds block: five scenarios (VoIP/UC design target, standard data design target, roaming overlap zone, sticky-client trigger, unusable) each with min RSSI, min SNR, roam latency, design rule, and a status verdict.
+- What it shows: Protocols block: 802.11r (Fast BSS Transition), 802.11k (Neighbor Report), 802.11v (BSS Transition Management), each with what it does, deployment requirements, and a field note. Thresholds block: five scenarios (VoIP/UC design target, standard data design target, roaming overlap zone, sticky-client trigger, roam immediately) each with min RSSI, min SNR, roam latency, design rule, and a status verdict.
 - The intro states targets vary by client hardware and AP vendor: design guidelines, not guarantees.
 - Field notes flag real client behavior: some legacy clients have 802.11r compatibility issues; Android/iOS generally honor 802.11v but some Windows drivers ignore BSS-TM entirely.
 - Data source: IEEE 802.11k/r/v. The reference defines exactly these three protocols; OKC is deliberately not included.

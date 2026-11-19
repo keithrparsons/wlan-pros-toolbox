@@ -180,7 +180,7 @@ class RoamingScreen extends StatelessWidget {
       grade: RoamGrade.bad,
     ),
     RoamingThreshold(
-      scenario: 'Unusable - roam immediately',
+      scenario: 'Roam immediately (connection unreliable)',
       minRssi: '< −80 dBm',
       minSnr: '< 10 dB',
       roamLatency: '—',

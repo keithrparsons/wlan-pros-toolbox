@@ -8544,14 +8544,14 @@
       "whyHere": "For designing or troubleshooting roaming for VoIP and unified comms, confirming the role of each protocol and the signal-overlap targets that make handoffs work.",
       "howToUse": [
         "Each protocol heading shows the designation (lime) and the full name.",
-        "In the thresholds table, the scenario word is color-tinted with a dot: green = good (the two design targets), amber = marginal (the overlap zone), red = bad (the sticky-client trigger and the unusable level).",
+        "In the thresholds table, the scenario word is color-tinted with a dot: green = good (the two design targets), amber = marginal (the overlap zone), red = bad (the sticky-client trigger and the roam-immediately level).",
         "Design rules carry the actionable target (for example, \"at least 2 APs at -67 dBm everywhere\" or \"a second AP at -72 dBm or better across the overlap zone\")."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: a Protocols block covering 802.11r (Fast BSS Transition), 802.11k (Neighbor Report), and 802.11v (BSS Transition Management), each with what it does, its deployment requirements, and a field note. A Thresholds block covers five scenarios (VoIP/UC design target, standard data design target, roaming overlap zone, sticky-client trigger, and unusable), each with a minimum RSSI, minimum SNR, roam latency, design rule, and a status verdict.",
+        "What it shows: a Protocols block covering 802.11r (Fast BSS Transition), 802.11k (Neighbor Report), and 802.11v (BSS Transition Management), each with what it does, its deployment requirements, and a field note. A Thresholds block covers five scenarios (VoIP/UC design target, standard data design target, roaming overlap zone, sticky-client trigger, and roam immediately), each with a minimum RSSI, minimum SNR, roam latency, design rule, and a status verdict.",
         "The intro notes that targets vary by client hardware and AP vendor: these are design guidelines, not guarantees.",
         "Field notes flag real client behavior: some older clients have 802.11r compatibility issues; Android and iOS generally honor 802.11v, but some Windows drivers ignore BSS Transition Management entirely.",
         "Data source: IEEE 802.11k/r/v. This reference covers exactly these three protocols; OKC is not included."

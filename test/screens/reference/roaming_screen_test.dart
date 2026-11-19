@@ -97,7 +97,7 @@ void main() {
             r.scenario == 'Sticky client trigger (typical)',
       );
       final RoamingThreshold unusable = RoamingScreen.kThresholds.firstWhere(
-        (RoamingThreshold r) => r.scenario == 'Unusable - roam immediately',
+        (RoamingThreshold r) => r.scenario == 'Roam immediately (connection unreliable)',
       );
       expect(sticky.minRssi, '−75 to −80 dBm');
       expect(sticky.grade, RoamGrade.bad);
