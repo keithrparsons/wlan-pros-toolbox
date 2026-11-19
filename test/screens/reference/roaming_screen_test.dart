@@ -76,7 +76,7 @@ void main() {
         (RoamingThreshold r) => r.scenario == 'VoIP / UC design target',
       );
       final RoamingThreshold data = RoamingScreen.kThresholds.firstWhere(
-        (RoamingThreshold r) => r.scenario == 'Standard data design target',
+        (RoamingThreshold r) => r.scenario == 'General data design target',
       );
       // VoIP target: ≥ −67 dBm / ≥ 25 dB / < 50 ms with FT, a convention
       // (IEEE TGr submission 11-04/0989), not a requirement.

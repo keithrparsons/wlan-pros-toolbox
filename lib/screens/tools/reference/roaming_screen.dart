@@ -156,7 +156,7 @@ class RoamingScreen extends StatelessWidget {
       grade: RoamGrade.good,
     ),
     RoamingThreshold(
-      scenario: 'Standard data design target',
+      scenario: 'General data design target',
       minRssi: '≥ −70 dBm',
       minSnr: '≥ 20 dB',
       roamLatency: 'no published target',
