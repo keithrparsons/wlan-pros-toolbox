@@ -11,9 +11,12 @@
 //
 // The copy is ship-ready. The two style rules baked into every line are
 // non-negotiable on any future edit:
-//   1. "Router/Access Point" is the device term throughout. Never bare "AP",
-//      never bare "Access Point", never "Router" alone. "router/access point"
-//      in a sentence is the intended form for this audience.
+//   1. "access point" is the device term for the AP. Never bare "AP", and
+//      never call the access point a router (Keith, 19 Nov 2026: an access
+//      point is never a router; this replaces the earlier "router/access
+//      point" form). "router" alone is only for the home gateway (R-28 SQM,
+//      R-32 DNS). R-40 still reads "router/access point" pending Keith's
+//      wording for its restart advice.
 //   2. Zero em-dashes. Every pause is a comma, a period, a colon, or a fragment.
 //
 // WHY THIS IS A DATA FILE: the engine ([AnalyzeEngine]) NEVER hardcodes prose.
@@ -132,10 +135,10 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
         "Your Wi-Fi is the limit here, not your internet. Your internet plan "
         "can carry more than your Wi-Fi is currently passing through the air. "
         "The slowdown is the wireless hop between your device and your "
-        "router/access point. Try this first: get closer to the router/access "
+        "access point. Try this first: get closer to the access "
         "point, and clear out what sits between you and it, like walls and "
         "floors. Then run the check again. If it stays low even up close, the "
-        "channel, the channel width, or the router/access point itself is "
+        "channel, the channel width, or the access point itself is "
         "worth a look.",
   ),
   AnalyzeRule(
@@ -145,7 +148,7 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
     condition: _isVerdictUpstream,
     responseDraft:
         "This one is your internet service, not your Wi-Fi. Your Wi-Fi has "
-        "plenty of room to spare. The limit is past your router/access point, "
+        "plenty of room to spare. The limit is past your access point, "
         "out on the internet side. Changing Wi-Fi settings will not move this "
         "number. What helps: a faster plan, or a call to your internet "
         "provider to find out why you are not getting what you pay for.",
@@ -159,7 +162,7 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
         "Both your Wi-Fi and your internet are holding you back, and they are "
         "close enough that neither one is clearly the culprit. The good news: "
         "fixing either one helps, and fixing both helps most. Start with the "
-        "easy win. Usually that means getting closer to your router/access "
+        "easy win. Usually that means getting closer to your access "
         "point first, then taking a second look at your internet plan.",
   ),
   AnalyzeRule(
@@ -265,8 +268,8 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
         "mind a signal reading is a guideline: some connections still run fine "
         "at this level, and others struggle a little above it. If speed or "
         "stalls are the problem here, coverage is the first place to look. Two "
-        "things help, in order: move closer to your router/access point, or "
-        "move the router/access point closer to the area where you need better "
+        "things help, in order: move closer to your access point, or "
+        "move the access point closer to the area where you need better "
         "coverage. If you still need range in a far corner, adding a second "
         "access point or a mesh node out there is the real fix. A weak signal "
         "is usually a coverage problem rather than a plan problem, so a faster "
@@ -279,9 +282,9 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
     condition: _rssiFair,
     responseDraft:
         "Your signal is fair. Usable, but not strong. Farther from the "
-        "router/access point you may notice slower speeds or a little "
+        "access point you may notice slower speeds or a little "
         "hesitation before things load. If performance matters where you are "
-        "sitting, moving a bit closer to the router/access point will help.",
+        "sitting, moving a bit closer to the access point will help.",
   ),
   AnalyzeRule(
     id: 'R-12',
@@ -338,8 +341,8 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
     responseDraft:
         "Strong signal, but a low link rate, so something else is getting in "
         "the way. Your signal is healthy, which means the slow speed points to "
-        "interference, retries, or your router/access point holding you to an "
-        "older, slower data rate. The router/access point's channel and "
+        "interference, retries, or your access point holding you to an "
+        "older, slower data rate. The access point's channel and "
         "configuration are the place to look.",
   ),
 
@@ -359,7 +362,7 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
         "2.4 GHz reaches a long way, which is exactly why it gets shared with "
         "microwaves, Bluetooth, your neighbors, and nearly everything else in "
         "the building, so it runs slower and noisier. If your device and your "
-        "router/access point both support it, connecting to the 5 GHz or 6 GHz "
+        "access point both support it, connecting to the 5 GHz or 6 GHz "
         "network usually gives you a real jump in speed. One honest caveat: "
         "2.4 GHz is sometimes the right choice on purpose, for long range or "
         "for older smart-home gadgets. If that is what you are doing, you are "
@@ -375,8 +378,8 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
         "Your device is connected using an older Wi-Fi standard, 802.11n or "
         "earlier. Older standards top out at much lower speeds no matter how "
         "strong your signal is or how fast your plan is. This is almost always "
-        "the age of the device or the router/access point. A newer "
-        "router/access point, or connecting a newer device, lifts the ceiling. "
+        "the age of the device or the access point. A newer "
+        "access point, or connecting a newer device, lifts the ceiling. "
         "If the device itself is old, this may simply be as fast as it goes.",
   ),
   AnalyzeRule(
@@ -406,7 +409,7 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
         "can carry more, but wider is not automatically better. In a busy "
         "area, a narrow channel is often the more reliable choice, and forcing "
         "it wide just invites more interference. If you control the "
-        "router/access point and your area is genuinely quiet, a wider channel "
+        "access point and your area is genuinely quiet, a wider channel "
         "may raise your speed. In a crowded area, leave it where it is.",
   ),
   AnalyzeRule(
@@ -418,7 +421,7 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
         "Your 2.4 GHz channel is overlapping with the networks around you. On "
         "2.4 GHz, only channels 1, 6, and 11 stay out of each other's way. Any "
         "other channel is guaranteed to step on a neighbor and pick up "
-        "interference. If you control the router/access point, set it to "
+        "interference. If you control the access point, set it to "
         "channel 1, 6, or 11.",
   ),
 
@@ -536,7 +539,7 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
     responseDraft:
         "You are on WPA2, or an older flavor of WPA. It is still widely used "
         "and okay for now, so this is a gentle nudge, not an alarm. WPA3 is "
-        "meaningfully more secure, and if your router/access point and your "
+        "meaningfully more secure, and if your access point and your "
         "devices support it, turning it on, or using WPA2/WPA3 transition "
         "mode, is worth doing when you get the chance.",
   ),

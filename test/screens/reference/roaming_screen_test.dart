@@ -20,12 +20,15 @@ import 'package:wlan_pros_toolbox/theme/app_tokens.dart';
 
 void main() {
   group('RoamingScreen dataset (verbatim from rf-tools-pwa)', () {
-    test('defines exactly the three PWA protocols: 802.11r, 802.11k, 802.11v',
-        () {
-      final List<String> protos =
-          RoamingScreen.kProtocols.map((RoamingProtocol p) => p.proto).toList();
-      expect(protos, <String>['802.11r', '802.11k', '802.11v']);
-    });
+    test(
+      'defines exactly the three PWA protocols: 802.11r, 802.11k, 802.11v',
+      () {
+        final List<String> protos = RoamingScreen.kProtocols
+            .map((RoamingProtocol p) => p.proto)
+            .toList();
+        expect(protos, <String>['802.11r', '802.11k', '802.11v']);
+      },
+    );
 
     test('802.11r is Fast BSS Transition (FT), spelled lowercase r', () {
       final RoamingProtocol ft = RoamingScreen.kProtocols.firstWhere(
@@ -37,17 +40,19 @@ void main() {
       expect(ft.proto.contains('R'), isFalse);
     });
 
-    test('802.11k is the Neighbor Report; 802.11v is BSS Transition Management',
-        () {
-      final RoamingProtocol k = RoamingScreen.kProtocols.firstWhere(
-        (RoamingProtocol p) => p.proto == '802.11k',
-      );
-      final RoamingProtocol v = RoamingScreen.kProtocols.firstWhere(
-        (RoamingProtocol p) => p.proto == '802.11v',
-      );
-      expect(k.name, 'Neighbor Report');
-      expect(v.name, 'BSS Transition Management');
-    });
+    test(
+      '802.11k is the Neighbor Report; 802.11v is BSS Transition Management',
+      () {
+        final RoamingProtocol k = RoamingScreen.kProtocols.firstWhere(
+          (RoamingProtocol p) => p.proto == '802.11k',
+        );
+        final RoamingProtocol v = RoamingScreen.kProtocols.firstWhere(
+          (RoamingProtocol p) => p.proto == '802.11v',
+        );
+        expect(k.name, 'Neighbor Report');
+        expect(v.name, 'BSS Transition Management');
+      },
+    );
 
     test('802.11k Neighbor Report lists no RSSI field', () {
       // The Neighbor Report element carries BSSID, BSSID Information,
@@ -84,7 +89,7 @@ void main() {
       expect(voip.minSnr, '≥ 25 dB');
       expect(voip.roamLatency, '< 50 ms (FT; convention)');
       expect(voip.grade, RoamGrade.good);
-      // Standard data target: ≥ −70 dBm / ≥ 20 dB. The old < 150 ms was the
+      // General data target: ≥ −70 dBm / ≥ 20 dB. The old < 150 ms was the
       // ITU-T G.114 voice budget, not a published roam target for data.
       expect(data.minRssi, '≥ −70 dBm');
       expect(data.minSnr, '≥ 20 dB');
@@ -93,16 +98,32 @@ void main() {
 
     test('sticky-client and unusable rows grade as bad', () {
       final RoamingThreshold sticky = RoamingScreen.kThresholds.firstWhere(
-        (RoamingThreshold r) =>
-            r.scenario == 'Sticky client trigger (typical)',
+        (RoamingThreshold r) => r.scenario == 'Sticky client trigger (typical)',
       );
       final RoamingThreshold unusable = RoamingScreen.kThresholds.firstWhere(
-        (RoamingThreshold r) => r.scenario == 'Roam immediately (connection unreliable)',
+        (RoamingThreshold r) =>
+            r.scenario == 'Roam immediately (connection unreliable)',
       );
       expect(sticky.minRssi, '−75 to −80 dBm');
       expect(sticky.grade, RoamGrade.bad);
       expect(unusable.minRssi, '< −80 dBm');
       expect(unusable.grade, RoamGrade.bad);
+    });
+
+    test('rows with no roam latency target read n/a, never a dash', () {
+      // Keith, 19 Nov 2026: the empty latency cells say "n/a"; no em dash.
+      for (final RoamingThreshold r in RoamingScreen.kThresholds) {
+        expect(r.roamLatency, isNot(contains('\u2014')), reason: r.scenario);
+      }
+      final List<String> na = RoamingScreen.kThresholds
+          .where((RoamingThreshold r) => r.roamLatency == 'n/a')
+          .map((RoamingThreshold r) => r.scenario)
+          .toList();
+      expect(na, <String>[
+        'Roaming overlap zone (target)',
+        'Sticky client trigger (typical)',
+        'Roam immediately (connection unreliable)',
+      ]);
     });
 
     test('grade maps to the §8.13 status palette', () {
@@ -137,10 +158,7 @@ void main() {
         addTearDown(() => FlutterError.onError = previous);
 
         await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const RoamingScreen(),
-          ),
+          MaterialApp(theme: AppTheme.dark(), home: const RoamingScreen()),
         );
         await tester.pump();
 
@@ -154,22 +172,28 @@ void main() {
         expect(
           overflow,
           isEmpty,
-          reason: 'RoamingScreen must not overflow at 375x900 — '
+          reason:
+              'RoamingScreen must not overflow at 375x900 — '
               'got: ${overflow.map((Object e) => e.toString()).join("; ")}',
         );
       });
     },
   );
 
-  testWidgets('renders without overflow at 320/375/768/1280 widths',
-      (tester) async {
+  testWidgets('renders without overflow at 320/375/768/1280 widths', (
+    tester,
+  ) async {
     for (final double width in <double>[320, 375, 768, 1280]) {
       await _withViewport(tester, Size(width, 1200), () async {
         await tester.pumpWidget(
           MaterialApp(theme: AppTheme.dark(), home: const RoamingScreen()),
         );
         await tester.pump();
-        expect(tester.takeException(), isNull, reason: 'overflow at ${width}px');
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'overflow at ${width}px',
+        );
       });
     }
   });

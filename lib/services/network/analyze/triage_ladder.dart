@@ -6,7 +6,7 @@
 // specific services. It is a PRESENTATION of facts the run already has: no probe
 // is added and no threshold is forked ([kDnsSlowMs] is the Analyze rule's own
 // constant). A rung with no basis on the platform is omitted, never shown as a
-// permanent "Not checked" (the router/access point rung exists only on the WLAN
+// permanent "Not checked" (the access point rung exists only on the WLAN
 // Pi path, phase 3, and is not built here).
 //
 // PURE DART, a total function of [TriageInput]: no Flutter, no network, no radio,
@@ -24,7 +24,7 @@
 //     nullable millisecond value cannot tell "failed" from "not landed yet".
 //
 // User-facing words: US spelling, no em dashes, hedged "Looks..." wording, the
-// phrase "router/access point" never bare "AP". Status is always a WORD (and a
+// phrase "access point" (never bare "AP", never "router/access point"). Status is always a WORD (and a
 // glyph in the widget), never color alone.
 
 import '../wifi_grading.dart';
@@ -329,7 +329,7 @@ TriageRung _internet(TriageInput i, WifiVsInternetVerdict verdict) {
     case WifiVsInternetVerdict.bothContributing:
       return rung(
         TriageStatus.looksOff,
-        'The internet connection is slow past your router/access point.',
+        'The internet connection is slow past your access point.',
       );
     case WifiVsInternetVerdict.bothHealthy:
       return rung(TriageStatus.looksFine, 'Speed and response look healthy.');

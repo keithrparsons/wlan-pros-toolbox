@@ -32,7 +32,7 @@
 //
 // ZERO em-dashes anywhere in this file (UI, strings, comments), per the
 // standing Analyze Results rule. No bare "AP": the device term is
-// "router/access point".
+// "access point" (an access point is never a router).
 //
 // DRAFT-COPY HONESTY (vestigial as of 2026-06-16): all rules are now ratified
 // and Penn-voiced, so no finding is pendingRatification and the draft note
@@ -107,12 +107,12 @@ _CategoryIcon _categoryIconFor(FindingCategory category) {
     case FindingCategory.signal:
     case FindingCategory.noise:
       return const _CategoryIcon.material(Icons.wifi);
-    // Band / capability findings are about the router/access point itself
+    // Band / capability findings are about the access point itself
     // (its band, standard, channel, and width configuration), so they lead
     // with the router/access-point icon, not the over-the-air Wi-Fi fan.
     case FindingCategory.capability:
       return _routerApIcon;
-    // Internet service / reachability past the router/access point.
+    // Internet service / reachability past the access point.
     case FindingCategory.internetQuality:
     case FindingCategory.cloudReachability:
       return const _CategoryIcon.material(Icons.public);

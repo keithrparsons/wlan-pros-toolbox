@@ -81,7 +81,7 @@ void main() {
       expect(l.summary, isNull);
     });
 
-    test('there is no router/access point rung on native input', () {
+    test('there is no access point rung on native input', () {
       for (final WifiVsInternetVerdict v in WifiVsInternetVerdict.values) {
         final TriageLadder l = TriageLadder.compute(healthy(verdict: v));
         expect(

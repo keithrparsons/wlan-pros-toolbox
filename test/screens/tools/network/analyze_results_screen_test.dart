@@ -293,7 +293,7 @@ void main() {
     expect(find.text('Where it looks off'), findsOneWidget);
     expect(
       find.text(
-        'The internet connection is slow past your router/access point.',
+        'The internet connection is slow past your access point.',
       ),
       findsOneWidget,
     );

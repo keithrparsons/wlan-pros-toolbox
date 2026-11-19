@@ -79,7 +79,7 @@ class RoamingThreshold {
   final String scenario;
   final String minRssi; // e.g. "≥ −67 dBm"
   final String minSnr; // e.g. "≥ 25 dB"
-  final String roamLatency; // e.g. "< 50 ms (FT; convention)" or "—"
+  final String roamLatency; // e.g. "< 50 ms (FT; convention)" or "n/a"
   final String designRule;
   final RoamGrade grade;
 }
@@ -167,7 +167,7 @@ class RoamingScreen extends StatelessWidget {
       scenario: 'Roaming overlap zone (target)',
       minRssi: '−70 to −72 dBm',
       minSnr: '≥ 15 dB',
-      roamLatency: '—',
+      roamLatency: 'n/a',
       designRule: '2nd AP ≥ −72 dBm across the overlap zone',
       grade: RoamGrade.marginal,
     ),
@@ -175,7 +175,7 @@ class RoamingScreen extends StatelessWidget {
       scenario: 'Sticky client trigger (typical)',
       minRssi: '−75 to −80 dBm',
       minSnr: '< 15 dB',
-      roamLatency: '—',
+      roamLatency: 'n/a',
       designRule: 'NIC should roam here - many do not',
       grade: RoamGrade.bad,
     ),
@@ -183,7 +183,7 @@ class RoamingScreen extends StatelessWidget {
       scenario: 'Roam immediately (connection unreliable)',
       minRssi: '< −80 dBm',
       minSnr: '< 10 dB',
-      roamLatency: '—',
+      roamLatency: 'n/a',
       designRule: 'Connection unreliable below this',
       grade: RoamGrade.bad,
     ),
